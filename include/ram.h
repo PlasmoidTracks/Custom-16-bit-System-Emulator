@@ -1,0 +1,29 @@
+#ifndef _RAM_H_
+#define _RAM_H_
+
+#include <stdint.h>
+#include "device.h"
+
+typedef struct RAM_t {
+    uint64_t clock;
+    
+    uint32_t capacity;
+    uint8_t *data;
+
+    Device_t device;
+} RAM_t;
+
+
+RAM_t* ram_create(uint32_t capacity);
+
+void ram_delete(RAM_t* ram);
+
+uint8_t ram_read(RAM_t* ram, uint16_t address);
+
+void ram_write(RAM_t* ram, uint16_t address, uint8_t data);
+
+void ram_clock(RAM_t* ram);
+
+
+#endif
+

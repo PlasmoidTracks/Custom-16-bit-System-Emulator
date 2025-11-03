@@ -1,0 +1,29 @@
+This abstraction layer should introduce typed variables. 
+Variable assignments and operations may only take place on the same type (thus no mixed types, casting has to be done explicitly still). 
+Here the types 'int16', 'uint16' and 'float16' are introduced (IR needs unsigned operations then!)
+as well as 'int8' and 'uint8', which will be treated like a normal 16-bit value but the bits will be explicitly masked with 0x00ff. 
+(IMPORTANT: How to deal with signed 8 bits? Bit extension to emulate. When 8-bit signed is negative, set upper 8 bits to 1, making it true 16-bit negative)
+Also 'int32' and 'uint32' are present...?
+
+Casts are done C-style, like
+uint16 vari;
+vari = 123;
+float16 varf;
+varf = (float16) vari;
+
+
+but how do we deal with literals?
+float16 varf;
+varf = 1;       // integer 1!
+I guess now our problem, still need to explicitly use right literal types... 
+So the above example would translate to varf = 0.0000001f or something similar
+
+Everything stays the same, but operations are automatically type adjusted
+
+
+
+Save type of all variables
+Rewrite all assignments
+implement casting
+
+

@@ -1,0 +1,259 @@
+/*
+r0 is a general purpose register, usually holding addresses
+r1 is a general purpose register, usually holding expressions
+r2 is probably gonna be used as a counter for loops? NEW IDEA: Use as cache for frequently used variables IN THE OPTIMIZER!
+r3 is the frame pointer, in case the functions uses arguments and the sp is used for local memory
+*/
+
+
+/*
+Add type modifiers:
+anon, static, const
+turn "var" or "[modifier(s)] var" into PAR_TYPE_DEFINITION
+add static section in memory
+*/
+
+/*
+TODO GENERAL!!!:
+MMIO        - interrupts that print to terminal
+ADC / SBC   - necessary for 32-bit value emulation ???
+Check wether 32-bit value emulation is possible
+*/
+
+/*
+BUGS:
+commented strings count as strings : // "string"
+keywords only check prefix, so "variable" turns into "var"/LEX_VAR + "iable"/LEX_IDENTIFIER
+*/
+
+/*
+Currently strings in stack are reversed!
+
+TODO for IR:
+more verbose errors
+array allocation (no, this is a feature of higher level languages, we alread got anon's)
+string values (16-bit per char) (perhaps same reasoning as arrays? Keep them in higher level langs, though asm DOES support strings...)
+display the scope context for variable names in the commented section after variable fetch in asm
+warn on assigning too large values
+make the lexer check for FULL words, not just check for matching prefixes
+make code segments explicitly use ".code", or should it be part of the IR?
+string assignment (var = "test";) [NO, this is high level]
+add copmiler options:
+- keep comments             inserts the original comments into the assembly
+- show variable names       shows the refered variable name at the instruction that moves the variable into a register
+- verbose                   show the compiler steps like "variable assignment" etc. 
+allow negative number assignments "ident = -1;"
+interrupt vector function definitions? (done with irqbegin / irqend)
+*/
+
+/*
+Deoptimizer Idea: 
+Similar to peephole optimization step, but replaces complex operations with simpler ones. 
+One example would be replacing multiplication with looped addition
+*/
+
+
+/*
+Other TODO:
+Dirty cachelines
+Cache instructions
+GUI
+snapshots (export import of cpu state (also ram, bus, etc))
+*/
+
+
+/*typedef struct {
+    void (*clock)(void*);
+    void* device;
+} GenericClocker_t;
+
+
+void clocker(GenericClocker_t gc) {
+    gc.clock(gc.device);
+}*/
+
+
+/*
+rules: 
+
+variables and binary operations can ONLY be done on the SAME type. 
+Thus casting should be handled by the user / higher level language. 
+
+
+Then the next higher language could do this:
+lets assume ix, iy, iz etc are integers and fx, fy, fz etc are floats:
+
+ix = fx
+would translate to this, which would include a temporary variable for type conversion:
+var tmpx;
+tmpx = fti fx;
+ix = tmpx;
+
+ix = fx + fy;
+would translate to this:
+var tmpx;
+tmpx = fti fx;
+var tmpy;
+tmpy = fti fy;
+ix = tmpx + tmpy;
+
+
+*/
+
+/*
+NEW OPTIMIZATIONS: 
+
+lea rN, [$0004 + r3]
+lea rM, [$0002 + rN]
+mov rN, rM
+mov/lea rM, ???
+->
+lea rN, [$0006 + r3]
+mov/lea rM, ???
+
+
+
+
+Assembly optimizations
+
+mov rN, rN
+-> delete
+
+
+add ?, $0
+-> delete
+
+
+mov rN, ?
+mov rN, ??
+-> delete
+mov rN, ??
+
+
+mov rN, $0
+add ?, rN
+-> replace with
+mov rN, $0
+
+
+mov rN, $0
+add rN, rM
+-> replace with
+mov rN, rM
+
+
+lea rN [???]
+mov rN, [rN]
+-> replace with
+mov rN, [???]
+
+
+sub sp, N
+... (no call, return or jmps)
+sub sp, M
+-> combine
+sub sp, N+M
+...
+
+
+mov rN, rM 
+add rN, x
+-> replace
+lea rN, [rM + x]
+
+
+mov r0 x
+add r0 y
+-> replace with
+mov r0, x+y
+
+
+lea rN [ imm16 ]
+-> replace with (saves 1-2 cycles)
+mov rN imm16
+
+
+    ---
+
+push rN
+pop rN
+-> delete
+
+
+    [These do not preserve Status register]
+
+
+and ?, $ffff
+-> delete
+
+
+or ?, 0
+-> delete
+
+
+mov rN, 0
+-> replace with
+xor rN, rN
+: low prio, done to save on cache since it is only 2 bytes instead of 4
+
+
+
+
+    [These do not preserve registers]
+
+
+mov rN, ?
+oper rN, ?
+mov rM, rN
+-> replace with
+mov rM, ?
+oper rM, ?
+
+
+lea r1, [...]
+...
+mov ?, [r1]
+-> replace with
+...
+mov ?, [...]
+
+
+mov rN, x
+mov ?, [rN + y]
+-> combine
+mov ?, [z] ; z = x+y
+
+
+
+
+
+Situations: 
+
+mov r1 -1 
+lea r0 [ -4 + r3 ] 
+mov [ r0 ] r1 
+lea r1 [ -4 + r3 ] 
+-> can be optimized to
+lea r0 [ -4 + r3 ] 
+mov [ r0 ] -1 
+lea r1 [ -4 + r3 ] 
+ 
+
+mov r0, [16384] 
+add r0, 1 
+mov r1, r0 
+mov r0, 16384
+->
+mov r1, [16384] 
+add r1, 1 
+mov r0, 16384
+
+
+
+Major lang feature:
+- expression-tree
+- typing, casting and auto casting
+
+
+*/
+

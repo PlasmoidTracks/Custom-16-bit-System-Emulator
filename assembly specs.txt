@@ -1,0 +1,102 @@
+Assembler Handbook
+=================
+
+Immediate Values
+----------------
+These values can be used as operands anywhere immediates are accepted:
+
+  Modes     Syntax          Example
+- Decimal:  1234            mov r0, 100
+- Hex:      $1234, 0x1234   mov r0, $ffff / mov r0, 0xffff
+- Octal:    0o1234          mov r0, 0o741
+- Binary:   0b10101010      mov r0, 0b11100
+- Float16:  f1.25           mov r0, f1.25
+
+
+Syntax
+------
+instructions and their operands can be written in any format, as long as they are separated by a space or a newline. 
+This would make the following code legal:
+- "mov r0 1 mov r1 2 hlt"
+- "mov \n\n\n      r0 \n\n\n      1"
+Comments can be written after a semicolon character ';', that extend up until the end of a line
+- "mov r0, r1 ; THIS HERE IS A COMMENT AND WILL BE IGNORED"
+
+
+Addressing Modes
+----------------
+admr (Reduced Operand)
+-----------------------
+Used as destination in two-operand instructions or in single-operand writeback instructions.
+
+- Register Direct:      r0, r1, r2, r3, sp, fp
+- Indirect Immediate:   [$1234]
+- Indirect Register:    [r0]
+
+admx (Extended Operand)
+------------------------
+Used as source in instructions.
+
+- Immediate 16-bit:                     $1234
+- Register Direct:                      r0, r1, r2, r3, sp, fp, pc
+- Indirect Immediate:                   [$1234]
+- Indirect Register:                    [r0], [r1], [sp], [pc], etc.
+- Indirect Register + Immediate Offset: [$1234 + r0], [$1234 + sp], etc.
+- Indirect Register + Scaled Offset:    [$1234 + $56 * r0], [$0080 + $02 * pc]
+
+
+Labels
+------
+- Define a label: .my_label
+- Use it as an immediate or offset: 
+  - jmp .my_label
+  - mov r0, [.my_label + r1]
+- Use it to address data from a data segment:
+  - .code
+  - mov r0, [.my_label]
+  - .data
+  - .my_label
+  - $1234
+  
+Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed.
+
+
+Address Control
+---------------
+- Manual address override:
+  - .address $1234  
+  Forces the next instruction or data to be placed at the given RAM address.
+
+
+Segments
+--------
+- Code Segment (default):  
+  .code  
+  Everything here is assembled as instructions.
+  
+- Data Segment:  
+  .data  
+  Everything here is treated as raw data (16-bit by default).
+  It is imperative that an alignment has been set before any data is written
+
+- Text:
+  .text "string"
+  Text will be written sequentially, with a null terminator
+
+
+
+Other stuff
+-----------
+- Arguments can also be '_', thus instructions like mov _, _ are valid. 
+  - This will just translate to null arguments and will be illegal instructions when missused. 
+  - This is done to allow the decompiled comments to also be valid when uncommented. 
+  - This is to allow for instructions to also fully encode raw data. 
+
+
+
+mov r0, [$1234 + $12 * r0] can also be written as:
+- mov r0, [$1234 + r0 * $12]
+- mov r0, [$12 * r0 + $1234]
+- mov r0, [r0 * $12 + $1234]
+
+The disassembler should avoid labelling sources where the source is in a code segment. Only in data segments

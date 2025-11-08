@@ -42,7 +42,7 @@ IRAParserToken_t** ira_parser_parse(IRALexerToken_t* lexer_token, long lexer_tok
             .child_count = 0,
             .parent = NULL,
         };
-        log_msg(LP_INFO,
+        /*log_msg(LP_INFO,
             "token[%d], l/c/i : %d/%d/%d, length:%d, %s, \"%s\"",
             i,
             parser_token[i]->token.line,
@@ -51,7 +51,7 @@ IRAParserToken_t** ira_parser_parse(IRALexerToken_t* lexer_token, long lexer_tok
             parser_token[i]->token.length,
             ira_token_name[parser_token[i]->token.type],
             parser_token[i]->token.raw
-        );
+        );*/
     }
 
 
@@ -149,10 +149,10 @@ IRAParserToken_t** ira_parser_parse(IRALexerToken_t* lexer_token, long lexer_tok
         // 5) If we found a rule to apply, apply it. Otherwise, we are done.
         if (best_rule_index >= 0) {
             something_changed = 1;
-            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
+            /*log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
                     ira_parser_ruleset[best_rule_index].description,
                     best_rule_priority,
-                    best_rule_startpos);
+                    best_rule_startpos);*/
 
             // Create the new parser token node
             IRAParserToken_t* new_token = malloc(sizeof(IRAParserToken_t));

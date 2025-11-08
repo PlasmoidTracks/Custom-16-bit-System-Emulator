@@ -450,13 +450,13 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
 
         // failure
         else {
-            log_msg(LP_ERROR, "Parsing tokens: Faulty expression!");
-            log_msg(LP_INFO, "Parsing tokens: Previous Expression: \"%s\"", expression_type_string[expression[expression_index - 1].type]);
-            log_msg(LP_INFO, "Parsing tokens: Here is a breakdown of all the tokens:");
-            for (int i = 0; i < token_count; i++) {
-                log_msg(LP_INFO, "Parsing tokens: Token %d :: [%s] \"%s\"", i + 1, token_type_string[tokens[i].type], tokens[i].raw);
+            log_msg(LP_ERROR, "ASSEMBLER: Parsing tokens: Faulty expression!");
+            log_msg(LP_INFO, "ASSEMBLER: Parsing tokens: Previous Expression: \"%s\"", expression_type_string[expression[expression_index - 1].type]);
+            log_msg(LP_INFO, "ASSEMBLER: Parsing tokens: Here is a breakdown of all the tokens:");
+            for (int i = ((token_index - 8 > 0) ? (token_index - 8) : 0); i < ((token_index + 8 < token_count) ? (token_index + 8) : token_count); i++) {
+                log_msg(LP_INFO, "ASSEMBLER: Parsing tokens: Token %d :: [%s] \"%s\"", i + 1, token_type_string[tokens[i].type], tokens[i].raw);
                 if (i == token_index) {
-                    log_msg(LP_NOTICE, "Parsing tokens: ^^^ The sequence of tokens, starting with the upper one, is unknown ^^^");
+                    log_msg(LP_NOTICE, "ASSEMBLER: Parsing tokens: ^^^ The sequence of tokens, starting with the upper one, is unknown ^^^");
                 }
             }
             exit(1);
@@ -542,7 +542,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         address += instruction[i].argument_bytes + 2;
                     }
                     jump_label[jump_label_index].value = address;
-                    log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
+                    //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
                     jump_label_index ++;
                     if (jump_label_index >= MAX_LABELS) {
                         log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d)", MAX_LABELS);
@@ -559,14 +559,14 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                     instruction[instruction_index].address = value;
 
-                    log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                    //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                     
                     instruction_index ++;
 
                     while (instruction_index >= allocated_instructions) {
                         allocated_instructions *= 2;
                         instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
-                        log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                        //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                     }
                     
                     expression_index += 2;
@@ -918,7 +918,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             while (instruction_index >= allocated_instructions) {
                 allocated_instructions *= 2;
                 instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
-                log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
             }
 
         } else if (mode == DATA) {  // |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -965,7 +965,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 if (current_byte_align == 1) {
                     jump_label[jump_label_index].value += 1; // accomodate for shift by 1 byte
                 }
-                log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
+                //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
                 jump_label_index ++;
                 if (jump_label_index >= MAX_LABELS) {
                     log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d)", MAX_LABELS);
@@ -1018,14 +1018,14 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                 instruction[instruction_index].address = value;
 
-                log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                 
                 instruction_index ++;
 
                 while (instruction_index >= allocated_instructions) {
                     allocated_instructions *= 2;
                     instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
-                    log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                    //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                 }
                 
                 expression_index += 2;
@@ -1057,7 +1057,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         while (instruction_index >= allocated_instructions) {
                             allocated_instructions *= 2;
                             instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
-                            log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                            //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                         }
                         
                         instruction[instruction_index].expression[0] = expression[expression_index];
@@ -1087,7 +1087,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             while (instruction_index >= allocated_instructions) {
                 allocated_instructions *= 2;
                 instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
-                log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
             }
         }
     }
@@ -1123,7 +1123,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             exit(1);
                             break;
                         }
-                        log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
+                        //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
                         instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
                         instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
                     } else {
@@ -1147,7 +1147,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             exit(1);
                             break;
                         }
-                        log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
+                        //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
                         instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
                         instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
                     } else {
@@ -1171,7 +1171,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             exit(1);
                             break;
                         }
-                        log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
+                        //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
                         instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
                         instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
                     } else {
@@ -1195,7 +1195,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             exit(1);
                             break;
                         }
-                        log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
+                        //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
                         instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
                         instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
                     } else {
@@ -1215,7 +1215,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             exit(1);
                             break;
                         }
-                        log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
+                        //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
                         instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
                         if (jump_label[corresponding_label_found].value > 0x00ff) {
                             log_msg(LP_WARNING, "Solving label: While resolving label, value for \"%s\" will be cutoff to 8 bits", jump_label[corresponding_label_found].name);
@@ -1255,7 +1255,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
     //printf("instruction_count: %d\n", instruction_count);
     while (instruction_index < instruction_count) {
         if (instruction[instruction_index].is_address) {
-            log_msg(LP_INFO, "Parsing instruction: Jumping in address from 0x%.4x to 0x%.4x", index, instruction[instruction_index].address);
+            //log_msg(LP_INFO, "Parsing instruction: Jumping in address from 0x%.4x to 0x%.4x", index, instruction[instruction_index].address);
             index = instruction[instruction_index].address;
             instruction_index ++;
             if (index > *binary_size) {
@@ -1327,6 +1327,16 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 
 
 uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count) {
+    // char* content - holds the raw assembly in text form
+    // long* binary_size - deref will be overwritten with the final binary size in bytes
+    // uint16_t** segment - will be allocated to hold the segment offsets
+    // int* segment_count - deref will be overwritten with the final segment count
+    // usually each variable should be stack allocated and a reference should be passed. 
+    if (!binary_size) {
+        log_msg(LP_ERROR, "binary_size is a required argument for assembler_compile");
+        return NULL;
+    }
+    *binary_size = 0;
     if (segment_count && segment) {
         *segment_count = 0;
         *segment = malloc(sizeof(uint16_t));
@@ -1403,6 +1413,10 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
 uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count) {
     // load raw text from file
     char* content = read_file(filename, binary_size);
+    if (!content) {
+        log_msg(LP_ERROR, "read_file failed");
+        return NULL;
+    }
     uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count);
     
     return machine_code;

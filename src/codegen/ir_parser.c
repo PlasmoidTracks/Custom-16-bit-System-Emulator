@@ -42,7 +42,7 @@ IRParserToken_t** ir_parser_parse(IRLexerToken_t* lexer_token, long lexer_token_
             .child_count = 0,
             .parent = NULL,
         };
-        log_msg(LP_INFO,
+        /*log_msg(LP_INFO,
             "token[%d], l/c/i : %d/%d/%d, length:%d, %s, \"%s\"",
             i,
             parser_token[i]->token.line,
@@ -51,7 +51,7 @@ IRParserToken_t** ir_parser_parse(IRLexerToken_t* lexer_token, long lexer_token_
             parser_token[i]->token.length,
             ir_token_name[parser_token[i]->token.type],
             parser_token[i]->token.raw
-        );
+        );*/
     }
 
 
@@ -149,10 +149,10 @@ IRParserToken_t** ir_parser_parse(IRLexerToken_t* lexer_token, long lexer_token_
         // 5) If we found a rule to apply, apply it. Otherwise, we are done.
         if (best_rule_index >= 0) {
             something_changed = 1;
-            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
+            /*log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
                     parser_ruleset[best_rule_index].description,
                     best_rule_priority,
-                    best_rule_startpos);
+                    best_rule_startpos);*/
 
             // Create the new parser token node
             IRParserToken_t* new_token = malloc(sizeof(IRParserToken_t));
@@ -223,7 +223,7 @@ IRParserToken_t** ir_parser_parse(IRLexerToken_t* lexer_token, long lexer_token_
     // 6) Done reducing. Let's display the final AST forest.
     for (int i = 0; i < lexer_token_count; i++) {
         //log_msg(LP_INFO, "AST root %d", i);
-        ir_recursion(parser_token[i], 0);
+        //ir_recursion(parser_token[i], 0);
     }
 
     return parser_token;

@@ -234,3 +234,17 @@ char* append_to_output_ext(char* output, long* length, const char* text, int tex
     *length = new_len;
     return output;
 }
+
+char* append_filename_ext(char* filename, const char* text, int text_len) {
+    if (text_len <= 0) text_len = strlen(text);
+    
+    long current_len = strlen(filename);
+    long new_len = current_len + text_len;
+
+    filename = realloc(filename, new_len + 1);  // +1 for null terminator
+    memcpy(filename + current_len, text, text_len);
+    filename[new_len] = '\0';
+
+    return filename;
+}
+

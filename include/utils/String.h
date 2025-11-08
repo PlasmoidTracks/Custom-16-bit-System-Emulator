@@ -21,9 +21,11 @@ extern int string_is_string(char text[]);
 
 extern uint16_t parse_immediate(const char text[]);
 
-#define append_to_output(output, length, string) append_to_output_ext(output, length, string, strlen(string))
+#define append_to_output(output, length, text) append_to_output_ext(output, length, text, strlen(text))
 extern char* append_to_output_ext(char* output, long* length, const char* text, int text_len);
 
+#define append_filename(filename, text) append_filename_ext(filename, text, strlen(text))
+extern char* append_filename_ext(char* filename, const char* text, int text_len);
 
 
 #endif

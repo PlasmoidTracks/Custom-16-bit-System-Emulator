@@ -53,6 +53,10 @@ One example would be replacing multiplication with looped addition
 */
 
 
+Add assembler examples for minus, like: 
+mov r0, [r0 + -1]
+
+
 /*
 Other TODO:
 Dirty cachelines
@@ -101,159 +105,15 @@ ix = tmpx + tmpy;
 */
 
 /*
+
+The OPTIMIZER requires some normalization to work, especially for indirect offset and scaled offset optimizations
+
 NEW OPTIMIZATIONS: 
 
-lea rN, [$0004 + r3]
-lea rM, [$0002 + rN]
-mov rN, rM
-mov/lea rM, ???
+mov r0, $x
+mov [r0], rN
 ->
-lea rN, [$0006 + r3]
-mov/lea rM, ???
-
-
-
-
-Assembly optimizations
-
-mov rN, rN
--> delete
-
-
-add ?, $0
--> delete
-
-
-mov rN, ?
-mov rN, ??
--> delete
-mov rN, ??
-
-
-mov rN, $0
-add ?, rN
--> replace with
-mov rN, $0
-
-
-mov rN, $0
-add rN, rM
--> replace with
-mov rN, rM
-
-
-lea rN [???]
-mov rN, [rN]
--> replace with
-mov rN, [???]
-
-
-sub sp, N
-... (no call, return or jmps)
-sub sp, M
--> combine
-sub sp, N+M
-...
-
-
-mov rN, rM 
-add rN, x
--> replace
-lea rN, [rM + x]
-
-
-mov r0 x
-add r0 y
--> replace with
-mov r0, x+y
-
-
-lea rN [ imm16 ]
--> replace with (saves 1-2 cycles)
-mov rN imm16
-
-
-    ---
-
-push rN
-pop rN
--> delete
-
-
-    [These do not preserve Status register]
-
-
-and ?, $ffff
--> delete
-
-
-or ?, 0
--> delete
-
-
-mov rN, 0
--> replace with
-xor rN, rN
-: low prio, done to save on cache since it is only 2 bytes instead of 4
-
-
-
-
-    [These do not preserve registers]
-
-
-mov rN, ?
-oper rN, ?
-mov rM, rN
--> replace with
-mov rM, ?
-oper rM, ?
-
-
-lea r1, [...]
-...
-mov ?, [r1]
--> replace with
-...
-mov ?, [...]
-
-
-mov rN, x
-mov ?, [rN + y]
--> combine
-mov ?, [z] ; z = x+y
-
-
-
-
-
-Situations: 
-
-mov r1 -1 
-lea r0 [ -4 + r3 ] 
-mov [ r0 ] r1 
-lea r1 [ -4 + r3 ] 
--> can be optimized to
-lea r0 [ -4 + r3 ] 
-mov [ r0 ] -1 
-lea r1 [ -4 + r3 ] 
- 
-
-mov r0, [16384] 
-add r0, 1 
-mov r1, r0 
-mov r0, 16384
-->
-mov r1, [16384] 
-add r1, 1 
-mov r0, 16384
-
-
-
-Major lang feature:
-- expression-tree
-- typing, casting and auto casting
-
+mov [$x], rN
 
 */
 

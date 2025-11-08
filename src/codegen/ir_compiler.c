@@ -429,7 +429,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         log_msg(LP_ERROR, "IR: Static variables cannot be anonymous");
                         return NULL;
                     } else {
-                        log_msg(LP_DEBUG, "IR: Added anonymous ir_identifier");
+                        //log_msg(LP_DEBUG, "IR: Added anonymous ir_identifier");
                         identifier_offset[ir_identifier_scope_depth] += 1;
                         code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                     }
@@ -441,7 +441,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].absolute_address = data_segment_address + (2 * static_identifier_count);
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = static_identifier_count;
-                        log_msg(LP_DEBUG, "IR: Added static ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
+                        //log_msg(LP_DEBUG, "IR: Added static ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         static_identifier_count ++;
                     } else {
@@ -451,7 +451,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].stack_offset = -2 * (1 + identifier_offset[ir_identifier_scope_depth]);
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = ir_identifier_index[ir_identifier_scope_depth];
-                        log_msg(LP_DEBUG, "IR: Added ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
+                        //log_msg(LP_DEBUG, "IR: Added ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         identifier_offset[ir_identifier_scope_depth] += 1;
 

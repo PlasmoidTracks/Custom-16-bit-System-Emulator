@@ -11,12 +11,14 @@
 #include "cache.h"
 #include "cpu/cpu.h"
 #include "cpu/cpu_utils.h"
+#include "include/utils/Log.h"
 #include "ram.h"
 #include "ticker.h"
 
 #include "asm/assembler.h"
 #include "asm/disassembler.h"
 #include "asm/optimizer.h"
+#include "asm/canonicalizer.h"
 #include "asm/macro_code_expansion.h"
 
 #include "codegen/ir_lexer.h"
@@ -34,7 +36,16 @@
 #undef COMPILE_IRA
 
 #define COMPILE_IR
-#undef COMPILE_IR
+//#undef COMPILE_IR
+
+#define CANONICALIZE
+//#undef CANONICALIZE     // Canonicalization breaks optimization!!!
+
+#define MACRO_EXPAND
+//#undef MACRO_EXPAND
+
+#define OPTIMIZE
+//#undef OPTIMIZE
 
 
 int main(int argc, char* argv[]) {
@@ -61,82 +72,110 @@ int main(int argc, char* argv[]) {
 
     bus_add_device(bus, &cpu->device);
     bus_add_device(bus, &ram->device);
-    bus_add_device(bus, &ticker->device);
+    //bus_add_device(bus, &ticker->device);
     
 
 
 
+
+    char** words = split(argv[1], ".", "");
+    char* filename = malloc(128);
+    sprintf(filename, "%s", words[0]);
 
     // Compiling step
     // from ira to ir
     long content_size;
     long lexer_token_count = 0;
     char* content;
+
     #ifdef COMPILE_IRA
-    content = read_file(argv[1], &content_size);
+        content = read_file(argv[1], &content_size);
+        if (!content) {
+            log_msg(LP_ERROR, "read_file failed");
+            return 1;
+        }
 
-    IRALexerToken_t* ira_lexer_token = ira_lexer_parse(content, content_size, &lexer_token_count);
-    if (!ira_lexer_token) {
-        log_msg(LP_ERROR, "lexer returned NULL");
-        return 1;
-    }
+        IRALexerToken_t* ira_lexer_token = ira_lexer_parse(content, content_size, &lexer_token_count);
+        if (!ira_lexer_token) {
+            log_msg(LP_ERROR, "lexer returned NULL");
+            return 1;
+        }
 
-    long ira_parser_root_count = 0;
-    IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &ira_parser_root_count);
+        long ira_parser_root_count = 0;
+        IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &ira_parser_root_count);
 
-    char* ir = ira_compile(ira_parser_token, ira_parser_root_count, 0xffffffff);
-    if (!ir) {
-        log_msg(LP_ERROR, "ira compiler returned NULL");
-        return 1;
-    }
-    #endif
-
-    char** words = split(argv[1], ".", "");
-    char filename[128];
-    sprintf(filename, "%s.ir", words[0]);
-    #ifdef COMPILE_IRA
-    data_export(filename, ir, strlen(ir));
+        char* ir = ira_compile(ira_parser_token, ira_parser_root_count, 0xffffffff);
+        if (!ir) {
+            log_msg(LP_ERROR, "ira compiler returned NULL");
+            return 1;
+        }
+        data_export(filename, ir, strlen(ir));
+    #else
+        sprintf(filename, "%s", argv[1]);
     #endif
 
 
     // from ir to asm
     #ifdef COMPILE_IR
-    content = read_file(filename, &content_size);
-    IRLexerToken_t* lexer_token = ir_lexer_parse(content, content_size, &lexer_token_count);
-    if (!lexer_token) {
-        log_msg(LP_ERROR, "lexer returned NULL");
-        return 1;
-    }
+        content = read_file(filename, &content_size);
+        if (!content) {
+            log_msg(LP_ERROR, "read_file failed");
+            return 1;
+        }
+        IRLexerToken_t* lexer_token = ir_lexer_parse(content, content_size, &lexer_token_count);
+        if (!lexer_token) {
+            log_msg(LP_ERROR, "lexer returned NULL");
+            return 1;
+        }
 
-    long parser_root_count = 0;
-    IRParserToken_t** parser_token = ir_parser_parse(lexer_token, lexer_token_count, &parser_root_count);
+        long parser_root_count = 0;
+        IRParserToken_t** parser_token = ir_parser_parse(lexer_token, lexer_token_count, &parser_root_count);
 
-    char* asm = ir_compile(parser_token, parser_root_count, 0xffffffff);
-    if (!asm) {
-        log_msg(LP_ERROR, "ir compiler returned NULL");
-        return 1;
-    }
+        char* asm = ir_compile(parser_token, parser_root_count, 0xffffffff);
+        if (!asm) {
+            log_msg(LP_ERROR, "ir compiler returned NULL");
+            return 1;
+        }
+
+        //sprintf(filename, "%s.asm", filename);
+        
+        filename = append_filename(filename, ".asm");
+        
+        data_export(filename, asm, strlen(asm));
     #endif
 
-    words = split(argv[1], ".", "");
-    sprintf(filename, "%s.asm", words[0]);
-    #ifdef COMPILE_IR
-    data_export(filename, asm, strlen(asm));
+    // canonicalizes the assembly code to a standard format
+    #ifdef CANONICALIZE
+        char* canon_asm = canonicalizer_compile_from_file(filename);
+        //sprintf(filename, "%s.can", filename);
+        
+        filename = append_filename(filename, ".can");
+        
+        data_export(filename, canon_asm, strlen(canon_asm));
     #endif
 
     // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
-    char* expanded_asm = macro_code_expand_from_file(filename);
-    sprintf(filename, "%s.exp.asm", words[0]);
-    data_export(filename, expanded_asm, strlen(expanded_asm));
+    #ifdef MACRO_EXPAND
+        char* expanded_asm = macro_code_expand_from_file(filename);
+        //sprintf(filename, "%s.exp", filename);
+        
+        filename = append_filename(filename, ".exp");
+        
+        data_export(filename, expanded_asm, strlen(expanded_asm));
+    #endif
 
     // optimizing asm to asm
-    char* optimized_asm = optimizer_compile_from_file(filename);
-    if (!optimized_asm) {
-        log_msg(LP_ERROR, "optimizer returned NULL");
-        return 1;
-    }
-    sprintf(filename, "%s.opt.exp.asm", words[0]);
-    data_export(filename, optimized_asm, strlen(optimized_asm));
+    #ifdef OPTIMIZE
+        char* optimized_asm = optimizer_compile_from_file(filename);
+        if (!optimized_asm) {
+            log_msg(LP_ERROR, "optimizer returned NULL");
+            return 1;
+        }
+        //sprintf(filename, "%s.opt", filename);
+        filename = append_filename(filename, ".opt");
+
+        data_export(filename, optimized_asm, strlen(optimized_asm));
+    #endif
 
 
     // from asm to bytecode
@@ -155,11 +194,8 @@ int main(int argc, char* argv[]) {
     }
 
     disassembler_decompile_to_file(ram->data, "disassemble.asm", binary_size, segment, segment_count, 
-        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | DO_ALIGN_ADDRESS_JUMP));
-    free(segment);
-
-
-    
+        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP)));
+    free(segment);    
 
     // Execution step
     uint16_t min_sp = cpu->regs.sp;
@@ -171,13 +207,13 @@ int main(int argc, char* argv[]) {
         bus_clock(bus);
         ram_clock(ram);
         bus_clock(bus);
-        //ticker_clock(ticker);
+        ticker_clock(ticker);
         //if (test) {cpu_print_state_compact(cpu);
         //cpu_print_stack_compact(cpu, ram, 12);
         //printf("\n");}
-        if (cpu->regs.sp < min_sp) {min_sp = cpu->regs.sp;}
+        //if (cpu->regs.sp < min_sp) {min_sp = cpu->regs.sp;}
     }
-    printf("%.4x\n", min_sp);
+    //printf("%.4x\n", min_sp);
 
     //cpu_print_cache(cpu);
     cpu_print_state(cpu);
@@ -189,4 +225,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
 

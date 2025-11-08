@@ -39,7 +39,7 @@
 //#undef COMPILE_IR
 
 #define CANONICALIZE
-//#undef CANONICALIZE     // Canonicalization breaks optimization!!!
+//#undef CANONICALIZE
 
 #define MACRO_EXPAND
 //#undef MACRO_EXPAND
@@ -72,10 +72,7 @@ int main(int argc, char* argv[]) {
 
     bus_add_device(bus, &cpu->device);
     bus_add_device(bus, &ram->device);
-    //bus_add_device(bus, &ticker->device);
-    
-
-
+    bus_add_device(bus, &ticker->device);
 
 
     char** words = split(argv[1], ".", "");
@@ -147,20 +144,22 @@ int main(int argc, char* argv[]) {
     // canonicalizes the assembly code to a standard format
     #ifdef CANONICALIZE
         char* canon_asm = canonicalizer_compile_from_file(filename);
-        //sprintf(filename, "%s.can", filename);
-        
+        if (!canon_asm) {
+            log_msg(LP_ERROR, "canonicalizer returned NULL");
+            return 1;
+        }
         filename = append_filename(filename, ".can");
-        
         data_export(filename, canon_asm, strlen(canon_asm));
     #endif
 
     // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
     #ifdef MACRO_EXPAND
         char* expanded_asm = macro_code_expand_from_file(filename);
-        //sprintf(filename, "%s.exp", filename);
-        
+        if (!expanded_asm) {
+            log_msg(LP_ERROR, "macro expander returned NULL");
+            return 1;
+        }
         filename = append_filename(filename, ".exp");
-        
         data_export(filename, expanded_asm, strlen(expanded_asm));
     #endif
 
@@ -171,7 +170,6 @@ int main(int argc, char* argv[]) {
             log_msg(LP_ERROR, "optimizer returned NULL");
             return 1;
         }
-        //sprintf(filename, "%s.opt", filename);
         filename = append_filename(filename, ".opt");
 
         data_export(filename, optimized_asm, strlen(optimized_asm));

@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
     free(segment);    
 
     // Execution step
-    uint16_t min_sp = cpu->regs.sp;
+    //uint16_t min_sp = cpu->regs.sp;
     for (int i = 0; i < 100000000 && cpu->state != CS_HALT && cpu->state != CS_EXCEPTION; i++) {
         //int test = 0;
         //if (cpu->state == CS_EXECUTE) {test = 1;}

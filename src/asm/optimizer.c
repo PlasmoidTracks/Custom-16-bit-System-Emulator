@@ -158,7 +158,7 @@ char* optimizer_compile(char* content) {
             // (removed)
             if (instruction[i].instruction == MOV) {
                 if (is_same_adm(instruction[i].admr, instruction[i].admx)) {
-                    //log_msg(LP_DEBUG, "Optimizer: removed self assigning mov instruction");
+                    //log_msg(LP_DEBUG, "Optimizer: removed self assigning mov instruction (line %d)", i);
                     remove_instruction(instruction, &instruction_count, i);
                     i --;
                     changes_applied = 1;
@@ -173,7 +173,7 @@ char* optimizer_compile(char* content) {
                 instruction[i].instruction == ADDF || instruction[i].instruction == SUBF) {
                 if (instruction[i].admx == ADMX_IMM16) {
                     if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0) {
-                        //log_msg(LP_DEBUG, "Optimizer: removed additive identity operation");
+                        //log_msg(LP_DEBUG, "Optimizer: removed additive identity operation (line %d)", i);
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
@@ -189,7 +189,7 @@ char* optimizer_compile(char* content) {
             if (instruction[i].instruction == MUL || instruction[i].instruction == DIV) {
                 if (instruction[i].admx == ADMX_IMM16) {
                     if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 1) {
-                        //log_msg(LP_DEBUG, "Optimizer: removed multiplicative identity operation");
+                        //log_msg(LP_DEBUG, "Optimizer: removed multiplicative identity operation (line %d)", i);
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
@@ -205,7 +205,7 @@ char* optimizer_compile(char* content) {
             if (instruction[i].instruction == MULF || instruction[i].instruction == DIVF) {
                 if (instruction[i].admx == ADMX_IMM16) {
                     if (float_from_f16(parse_immediate(instruction[i].expression[2].tokens[0].raw)) == 1.0) {
-                        //log_msg(LP_DEBUG, "Optimizer: removed float multiplicative identity operation");
+                        //log_msg(LP_DEBUG, "Optimizer: removed float multiplicative identity operation (line %d)", i);
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
@@ -219,11 +219,12 @@ char* optimizer_compile(char* content) {
             // mov rN, x
             // mov rN, y
             // =>
+            // (removed)
             // mov rN, y
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == MOV) {
                     if (instruction[i].admr == instruction[i + 1].admr) {
-                        //log_msg(LP_DEBUG, "Optimizer: removed overshadowed mov instruction");
+                        //log_msg(LP_DEBUG, "Optimizer: removed overshadowed mov instruction (line %d)", i);
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
@@ -236,13 +237,14 @@ char* optimizer_compile(char* content) {
             // mov rN, $0
             // add rN, rM
             // =>
+            // (removed)
             // mov rN, rM
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == ADD) {
                     if (instruction[i].admx == ADMX_IMM16) {
                         if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0) {
                             if (instruction[i].admr == instruction[i + 1].admr) {
-                                //log_msg(LP_DEBUG, "Optimizer: replaced additive identity from register with direct mov operation");
+                                //log_msg(LP_DEBUG, "Optimizer: replaced additive identity from register with direct mov operation (line %d)", i);
                                 instruction[i + 1].instruction = MOV;
                                 sprintf(instruction[i + 1].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
                                 remove_instruction(instruction, &instruction_count, i);
@@ -266,7 +268,7 @@ char* optimizer_compile(char* content) {
                     if (instruction[i].admx == ADMX_IMM16) {
                         if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0) {
                             if (is_same_adm(instruction[i].admr, instruction[i + 1].admx)) {
-                                //log_msg(LP_DEBUG, "Optimizer: removed additive identity from register operation");
+                                //log_msg(LP_DEBUG, "Optimizer: removed additive identity from register operation (line %d)", i);
                                 remove_instruction(instruction, &instruction_count, i + 1);
                                 changes_applied = 1;
                             }
@@ -277,17 +279,40 @@ char* optimizer_compile(char* content) {
             if (changes_applied) break;
             
 
-            // lea rN [???]
+            // lea rN, [???]
             // mov rN, [rN]
             // =>
             // mov rN, [???]
+            // (removed)
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == LEA && instruction[i + 1].instruction == MOV) {
                     if (instruction[i].admr == instruction[i + 1].admr && is_same_indirect_adm(instruction[i + 1].admr, instruction[i + 1].admx)) {
-                        //log_msg(LP_DEBUG, "Optimizer: replaced two step dereference with one step dereference");
+                        //log_msg(LP_DEBUG, "Optimizer: replaced two step dereference with one step dereference (line %d)", i);
                         sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
                         instruction[i].instruction = MOV;
                         remove_instruction(instruction, &instruction_count, i + 1);
+                        changes_applied = 1;
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+
+            // mov r0, $x
+            // mov [r0], ?
+            // =>
+            // (removed)
+            // mov [$x], ?
+            if (i < instruction_count - 1) {
+                if (instruction[i].instruction == MOV && instruction[i + 1].instruction == MOV) {
+                    if (   instruction[i].admr == ADMR_R0 
+                        && instruction[i].admx == ADMX_IMM16
+                        && instruction[i + 1].admr == ADMR_IND_R0
+                    ) {
+                        //log_msg(LP_DEBUG, "Optimizer: replaced two step immediate dereference write with one step dereference");
+                        sprintf(instruction[i + 1].expression[1].tokens[1].raw, "%s", instruction[i].expression[2].tokens[0].raw);
+                        instruction[i + 1].admr = ADMR_IND16; 
+                        remove_instruction(instruction, &instruction_count, i);
                         changes_applied = 1;
                     }
                 }
@@ -299,6 +324,7 @@ char* optimizer_compile(char* content) {
             // op rM, rN
             // mov rN, y
             // =>
+            // (removed)
             // op rM, x
             // mov rN, y
             if (i < instruction_count - 2) {
@@ -319,7 +345,7 @@ char* optimizer_compile(char* content) {
                     instruction[i + 1].instruction == XOR
                 ) && instruction[i + 2].instruction == MOV) {
                     if (instruction[i].admr == instruction[i + 2].admr && is_same_adm(instruction[i].admr, instruction[i + 1].admx)) {
-                        //log_msg(LP_DEBUG, "Optimizer: eliminated temporary register forwarding");
+                        //log_msg(LP_DEBUG, "Optimizer: eliminated temporary register forwarding (line %d)", i);
                         instruction[i + 1].expression[2] = instruction[i].expression[2];
                         instruction[i + 1].admx = instruction[i].admx;
                         remove_instruction(instruction, &instruction_count, i);
@@ -335,6 +361,7 @@ char* optimizer_compile(char* content) {
             // op rM, rN
             // lea rN, [?]
             // =>
+            // (removed)
             // op rM, x
             // lea rN, [?]
             if (i < instruction_count - 2) {
@@ -355,7 +382,7 @@ char* optimizer_compile(char* content) {
                     instruction[i + 1].instruction == XOR
                 ) && instruction[i + 2].instruction == LEA) {
                     if (instruction[i].admr == instruction[i + 2].admr && is_same_adm(instruction[i].admr, instruction[i + 1].admx)) {
-                        //log_msg(LP_DEBUG, "Optimizer: eliminated temporary register forwarding");
+                        //log_msg(LP_DEBUG, "Optimizer: eliminated temporary register forwarding (line %d)", i);
                         instruction[i + 1].expression[2] = instruction[i].expression[2];
                         instruction[i + 1].admx = instruction[i].admx;
                         remove_instruction(instruction, &instruction_count, i);
@@ -371,6 +398,7 @@ char* optimizer_compile(char* content) {
             // add rN, x
             // =>
             // lea rN, [x + rM]
+            // (removed)
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && (
                     instruction[i + 1].instruction == ADD ||
@@ -412,6 +440,7 @@ char* optimizer_compile(char* content) {
             // =>
             // [precompute] z :: x OP y
             // mov rN, z
+            // (removed)
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && is_arithmetic_operation(instruction[i + 1].instruction)) {
                     if (instruction[i].admr == instruction[i + 1].admr && instruction[i].admx == ADMX_IMM16 && instruction[i + 1].admx == ADMX_IMM16) {
@@ -455,7 +484,7 @@ char* optimizer_compile(char* content) {
                                 value ^= value2;
                                 break;
                             default:
-                                log_msg(LP_ERROR, "Optimizer");
+                                log_msg(LP_ERROR, "Optimizer, I dont even know how this would be possible, yet here we are...");
                                 break;
                         }
 
@@ -469,15 +498,22 @@ char* optimizer_compile(char* content) {
             if (changes_applied) break;
 
 
-            // lea rN [ imm16 ]
+            // lea rN [ imm16 ] // or indirect register
             // =>
             // mov rN, imm16
             if (i < instruction_count - 1) {
-                if (instruction[i].instruction == LEA && cpu_extended_addressing_mode_category[instruction[i].admx] == ADMC_IND && 
-                    instruction[i].admx < ADMX_IND_R0_OFFSET16) {
+                if (   instruction[i].instruction == LEA 
+                    && cpu_extended_addressing_mode_category[instruction[i].admx] == ADMC_IND 
+                    && instruction[i].admx < ADMX_IND_R0_OFFSET16  // ADMX_IND16, ADMX_IND_R0, ADMX_IND_R1, ADMX_IND_R2, ADMX_IND_R3, ADMX_IND_SP, ADMX_IND_PC, 
+                ) {
                     //log_msg(LP_DEBUG, "Optimizer: replaced lea with direct move instruction (line %d)", i);
                     sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
                     instruction[i].instruction = MOV;
+                    if (instruction[i].admx == ADMX_IND16) {
+                        instruction[i].admx = ADMX_IMM16;
+                    } else {
+                        instruction[i].admx = ADMX_R0 + instruction[i].admx - ADMX_IND_R0;
+                    }
                     instruction[i].expression[2].tokens[0] = instruction[i].expression[2].tokens[1];
                     instruction[i].expression[2].token_count = 1;
                     changes_applied = 1;
@@ -754,6 +790,8 @@ char* optimizer_compile(char* content) {
             // mov/lea rM, ???      < or any instruction that completely rewrites rM
             // ->
             // lea rN, [$z + rO] where $z = (uint16) ($x + $y)
+            // (removed)
+            // (removed)
             // mov/lea rM, ???
             if (instruction[i].instruction == LEA               // lea
                 && is_register_admr(instruction[i].admr)        // rN
@@ -784,6 +822,7 @@ char* optimizer_compile(char* content) {
         changes_applied = 0;
         // Optimize
         for (int i = 0; i < instruction_count; i++) {
+            
             // mov r0, 0
             // =>
             // xor r0, r0 

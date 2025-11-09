@@ -657,7 +657,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     }
 
                     default:
-                        log_msg(LP_ERROR, "Parsing expressions: Unknown admr \"%s\"", expression_type_string[expression[expression_index].type]);
+                        log_msg(LP_ERROR, "Assembler: Parsing expressions: Unknown admr \"%s\"", expression_type_string[expression[expression_index].type]);
                         /*int index = 0;
                         while (expression[expression_index].tokens[index].raw) {
                             log_msg(LP_INFO, "expression token %d: \"%s\"", index, expression[expression_index].tokens[index].raw);
@@ -666,7 +666,15 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         break;
                 }
                 if ((int) admr == -1) {
-                    log_msg(LP_ERROR, "Parsing expressions: admr is invalid! \"%s\"", expression[expression_index].tokens[0].raw);
+                    log_msg(LP_ERROR, "Assembler: Parsing expressions: admr is invalid! \"%s\"", expression[expression_index].tokens[0].raw);
+                    log_msg_inline(LP_INFO, "line: ");
+                    for (int t = 0; t < expression[expression_index - 1].token_count; t++) {
+                        printf("%s ", expression[expression_index - 1].tokens[t].raw);
+                    }
+                    for (int t = 0; t < expression[expression_index].token_count; t++) {
+                        printf("%s ", expression[expression_index].tokens[t].raw);
+                    }
+                    printf("...\n");
                     exit(1);
                 }
                 instruction[instruction_index].admr = admr;

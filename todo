@@ -110,10 +110,12 @@ The OPTIMIZER requires some normalization to work, especially for indirect offse
 
 NEW OPTIMIZATIONS: 
 
-mov r0, $x
-mov [r0], rN
+mov rN, ?
+mov rM, sp
+mov [rM], rN
 ->
-mov [$x], rN
-
+mov rM, sp
+mov [rM], ?
+// as long as rM != rN and not status checks, and also only if rN is fully replaced before reuse... 
 */
 

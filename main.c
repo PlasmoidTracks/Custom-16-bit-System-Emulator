@@ -65,11 +65,6 @@ int main(int argc, char* argv[]) {
     cpu_mount_cache(cpu, cache);                      // cache is only faster when ram is slow. thus high bus/ram speed is better than cache
     Ticker_t* ticker = ticker_create(1000.0);
 
-    /*GenericClocker_t gc = {
-        .clock = (void(*)(void*)) cpu_clock, 
-        .device = (void*) cpu, 
-    };*/
-
     bus_add_device(bus, &cpu->device);
     bus_add_device(bus, &ram->device);
     bus_add_device(bus, &ticker->device);

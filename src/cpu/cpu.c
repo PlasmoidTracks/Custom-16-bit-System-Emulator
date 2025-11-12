@@ -1669,7 +1669,7 @@ void cpu_clock(CPU_t* cpu) {
 
         default:
             if (!halted) {
-                log_msg(LP_ERROR, "CPU %d: EXCEPTION", cpu->clock);
+                log_msg(LP_ERROR, "CPU %d: UNKNOWN STATE", cpu->clock);
                 halted = 1;
             }
             break;

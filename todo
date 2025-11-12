@@ -5,19 +5,6 @@ r2 is probably gonna be used as a counter for loops? NEW IDEA: Use as cache for 
 r3 is the frame pointer, in case the functions uses arguments and the sp is used for local memory
 
 
-ADD CPU INFORMATION INSTRUCTIONS, maybe through interrupt requests? Which would maybe access MMIO to gather info, or from the PCU itself.
-Things like clock, instruction, etc.?
-CID_CLOCK could gather the clock count in r0-r4 as 64-bits in 4x16-bit regs
-CID_INSTR could gather instruction count in r0-r4
-
-
-
-Add type modifiers:
-anon, static, const
-turn "var" or "[modifier(s)] var" into PAR_TYPE_DEFINITION
-add static section in memory
-
-
 
 TODO GENERAL!!!:
 MMIO        - interrupts that print to terminal
@@ -66,21 +53,9 @@ mov r0, $1234 ; 0x32 0xa0 0x34 0x12
 
 Other TODO:
 Dirty cachelines
-Cache CPU instructions
 GUI
 snapshots (export import of cpu state (also ram, bus, etc))
 add binary dump as well of finished program?
-
-
-typedef struct {
-    void (*clock)(void*);
-    void* device;
-} GenericClocker_t;
-
-
-void clocker(GenericClocker_t gc) {
-    gc.clock(gc.device);
-}
 
 
 
@@ -108,7 +83,7 @@ tmpy = fti fy;
 ix = tmpx + tmpy;
 
 
-
+Add note to Report, that optimizer is not safe for custom asm, only for ir output. 
 
 
 
@@ -146,6 +121,4 @@ cmovz r1, 0
 cmp r0, 1
 mov r1, sp
 and r1, $0002
-
-
 

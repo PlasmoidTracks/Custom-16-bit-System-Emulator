@@ -788,39 +788,6 @@ char* optimizer_compile(char* content) {
             }
             if (changes_applied) break;
             
-
-
-            
-            // lea rN, [$x + rO]
-            // lea rM, [$y + rN]
-            // mov rN, rM
-            // mov/lea rM, ???      < or any instruction that completely rewrites rM
-            // ->
-            // lea rN, [$z + rO] where $z = (uint16) ($x + $y)
-            // (removed)
-            // (removed)
-            // mov/lea rM, ???
-            if (i < instruction_count - 3) {
-                if (instruction[i].instruction == LEA               // lea
-                    && is_register_admr(instruction[i].admr)        // rN
-                    && is_register_offset_admx(instruction[i].admx) // [$x + rO]
-                    && register_offset_admx_contains_admr_register(instruction[i + 1].admx, instruction[i].admr)    // lea -rN-, [...] == lea rM, [$y + -rN-]
-                    && instruction[i].admr == instruction[i + 2].admr   // lea -rN-, [...] == mov -rN-, rM
-                    && is_same_adm(instruction[i + 1].admr, instruction[i + 2].admx)    // lea -rM-, [...] == mov rN, -rM-
-                    && instruction[i + 1].admr == instruction[i + 3].admr
-                    && is_overwriting_instruction(instruction[i + 3].instruction)
-                ) {
-                    //log_msg(LP_DEBUG, "Optimizer: reduced lea accumulation (line %d)", i);
-                    uint16_t x = parse_immediate(instruction[i].expression[2].tokens[1].raw);
-                    uint16_t y = parse_immediate(instruction[i + 1].expression[2].tokens[1].raw);
-                    sprintf(instruction[i].expression[2].tokens[1].raw, "$%.4X", x + y);            // replacing "$x" with new precomputed z
-                    remove_instruction(instruction, &instruction_count, i + 1);      // removing "lea rM, [$y + rN]"
-                    remove_instruction(instruction, &instruction_count, i + 2);      // removing "mov rN, rM"
-                    changes_applied = 1;
-                }
-            }
-            if (changes_applied) break;
-            
         }
     }
 

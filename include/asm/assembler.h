@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "cpu/cpu.h"
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"
 

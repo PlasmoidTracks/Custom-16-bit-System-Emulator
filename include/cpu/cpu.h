@@ -2,6 +2,7 @@
 #define _CPU_H_
 
 #include <stdint.h>
+#include "asm/assembler.h"
 #include "device.h"
 #include "ram.h"
 #include "cache.h"
@@ -111,6 +112,7 @@ typedef struct CpuMemoryLayout_t {
 typedef struct CPU_t {
     uint64_t clock;             // keeps track of the number of cycles
     uint64_t instruction;       // keeps track of the number of executed instructions
+    CPU_INSTRUCTION_MNEMONIC_t last_instruction; // the last executed/pending instruction of the cpu
 
     Cache_t* cache;
     CpuMemoryLayout_t memory_layout;

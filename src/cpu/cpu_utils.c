@@ -5,6 +5,7 @@
 #include "ExtendedTypes.h"
 
 #include "cpu/cpu.h"
+#include "cpu/cpu_instructions.h"
 #include "ram.h"
 
 
@@ -96,6 +97,13 @@ void cpu_print_state(CPU_t* cpu) {
         cpu->regs.sr.Z, cpu->regs.sr.L, cpu->regs.sr.UL, cpu->regs.sr.FL, 
         cpu->regs.sr.SO, cpu->regs.sr.AO, cpu->regs.sr.SRC, cpu->regs.sr.SWC, 
         cpu->regs.sr.MI);
+
+    printf(" \033[1;32mCS\033[0m  %d\n", cpu->state);
+    if (cpu->last_instruction < INSTRUCTION_COUNT) {
+        printf(" \033[1;32mLast Instruction\033[0m %s (%d)\n", cpu_instruction_string[cpu->last_instruction], (int) cpu->last_instruction);
+    } else {
+        printf(" \033[1;32mLast Instruction\033[0m ??? (%d)\n", (int) cpu->last_instruction);
+    }
     
     // Cache
     if (!cpu->cache) {

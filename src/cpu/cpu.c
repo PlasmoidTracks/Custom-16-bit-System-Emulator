@@ -173,6 +173,7 @@ void cpu_clock(CPU_t* cpu) {
                     cpu->intermediate.argument_count = cpu_instruction_argument_count[cpu->intermediate.instruction];
 
                     if (cpu->intermediate.instruction < INSTRUCTION_COUNT) {
+                        cpu->last_instruction = (CPU_INSTRUCTION_MNEMONIC_t) cpu->intermediate.instruction;
                         #ifdef _CPU_DEBUG_
                         if (cpu->intermediate.argument_count == 0) {
                             log_msg(LP_DEBUG, "CPU %d: PC %.4x - instruction: %s - sp: %.4x", 
@@ -1658,6 +1659,13 @@ void cpu_clock(CPU_t* cpu) {
                 //exit(1);
                 break;
             }
+
+        case CS_EXCEPTION:
+            if (!halted) {
+                log_msg(LP_ERROR, "CPU %d: EXCEPTION", cpu->clock);
+                halted = 1;
+            }
+            break;
 
         default:
             if (!halted) {

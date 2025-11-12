@@ -611,7 +611,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].admx = ADMX_NONE;
             instruction[instruction_index].admr = ADMR_NONE;
             int admr_expression_index = expression_index;
-            if (argument_count == 2 || cpu_instruction_single_operant_writeback[instruction[instruction_index].instruction]) {
+            if (argument_count == 2 || cpu_instruction_single_operand_writeback[instruction[instruction_index].instruction]) {
                 
                 instruction[instruction_index].expression[instruction[instruction_index].expression_count] = expression[expression_index];
                 instruction[instruction_index].expression_count ++;
@@ -633,7 +633,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         break;
                     
                     case EXPR_IMMEDIATE: // cant be immediate, so it must have been the placeholder '_'
-                        log_msg(LP_WARNING, "Implicitly treating garbage arguments as raw data");
+                        log_msg(LP_WARNING, "Assembler: Implicitly treating garbage arguments as raw data (Immediate cannot be writeback address in single operand admr)");
                         admr = ADMR_NONE;
                         break;
 
@@ -682,7 +682,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             }
 
             int admx_expression_index = expression_index;
-            if (argument_count >= 1 && !cpu_instruction_single_operant_writeback[instruction[instruction_index].instruction]) {
+            if (argument_count >= 1 && !cpu_instruction_single_operand_writeback[instruction[instruction_index].instruction]) {
 
                 instruction[instruction_index].expression[instruction[instruction_index].expression_count] = expression[expression_index];
                 instruction[instruction_index].expression_count ++;
@@ -755,7 +755,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     case EXPR_IMMEDIATE:
                         {
                             if (expression[expression_index].tokens[0].raw[0] == '_') {
-                                log_msg(LP_WARNING, "Implicitly treating garbage arguments as raw data");
+                                log_msg(LP_WARNING, "Assembler: Implicitly treating garbage arguments as raw data ('_' Token found)");
                                 admx = ADMX_NONE;
                             } else {
                                 admx = ADMX_IMM16;

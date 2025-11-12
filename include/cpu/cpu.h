@@ -144,9 +144,6 @@ typedef struct CPU_t {
     Device_t device;
 } CPU_t;
 
-// skip reading cache
-// skip writing cache
-
 
 CPU_t* cpu_create(void);
 
@@ -172,19 +169,3 @@ void cpu_clock(CPU_t* cpu);
 
 
 #endif
-
-/*
-read instruction [first 6 bits]
-decode argument count [from table of instruction]
-read next byte
-decode addressing modes 
-read source argument
-    - if source adm is reg, then take register value
-    - if source is imm, then read from memory directly
-    - if source is ind, then read from memory directly
-        - read all arguments
-        - compute address
-        - read from address
-
-*/
-

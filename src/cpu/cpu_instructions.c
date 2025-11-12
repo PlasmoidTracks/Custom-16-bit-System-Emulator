@@ -32,6 +32,9 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     // Cache Operations
     "inv", "ftc",
 
+    // Self Identification and HW-Info Operations
+    "hwclock", "hwinstr", 
+
     // Other
     "int", "hlt"
 };
@@ -59,12 +62,14 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     2, 2, 2, 2, 2, 2, 2, 2, 
     // Cache Operations
     0, 1, 
+    // Self Identification and HW-Info Operations
+    0, 0, 
     // Other
     1, 0
 };
 
 // If an entry is one, it only uses admr, else admx
-const int cpu_instruction_single_operant_writeback[INSTRUCTION_COUNT] = {
+const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Data Manipulation
     0, 0, 0, 1, 0, 0, 0, 
     // Jumps and Calls
@@ -85,6 +90,8 @@ const int cpu_instruction_single_operant_writeback[INSTRUCTION_COUNT] = {
     // Conditional Operations
     0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
+    0, 0, 
+    // Self Identification and HW-Info Operations
     0, 0, 
     // Other
     0, 0
@@ -113,6 +120,8 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Conditional Operations
     0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
+    0, 0, 
+    // Self Identification and HW-Info Operations
     0, 0, 
     // Other
     0, 0

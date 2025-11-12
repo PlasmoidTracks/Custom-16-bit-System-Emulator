@@ -37,5 +37,7 @@ int cache_read(Cache_t* cache, uint16_t address, uint8_t* data, int skipRead);
 // cache_write returns 1 if a dirty write has happened, else 0
 int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size, int skipWrite);
 
+int cache_invalidate(Cache_t* cache);
+
 #endif
 

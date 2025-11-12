@@ -34,10 +34,7 @@ CPU_t* cpu_create(void) {
     cpu->clock = 0ULL;
 
     cpu->memory_layout = (CpuMemoryLayout_t) {
-        .segment_data = 0x4000, 
-        .segment_code = 0x0000, 
         .segment_stack = 0x3FFF, 
-        .segment_mmio = 0xF000, 
         .segment_irq_table = 0xEF00, // currently space for 128 interrupt vectors
     };
 
@@ -106,33 +103,6 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     return 0;
 }
 
-
-/*int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
-    //log_msg(LP_DEBUG, "CPU %d: Attempting to write data 0x%.2x at address 0x%.4x", cpu->clock, data, address);
-
-    if (cpu->device.processed) {
-        //log_msg(LP_DEBUG, "CPU %d: Update went through", cpu->clock);
-        cpu->device.processed = 0;
-        cpu->device.device_state = DS_IDLE;
-
-        //log_msg(LP_DEBUG, "CPU %d: Requesting write to cache", cpu->clock);
-        cache_write(cpu->cache, cpu->device.address, (uint8_t*) &data, 1, cpu->regs.sr.SWC);
-        
-        return 1;
-    }
-
-    //log_msg(LP_DEBUG, "CPU %d: \tNo device response. Making request", cpu->clock);
-    if (cpu->device.device_state != DS_IDLE) {
-        //log_msg(LP_DEBUG, "CPU %d: \t\tDevice is not idle, cannot make request", cpu->clock);
-        return 0;
-    }
-    cpu->device.address = address;
-    cpu->device.data = data;
-    cpu->device.processed = 0;
-    cpu->device.device_state = DS_STORE;
-
-    return 0;
-}*/
 
 int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
     //log_msg(LP_DEBUG, "CPU %d: Attempting to write data 0x%.2x at address 0x%.4x", cpu->clock, data, address);
@@ -260,7 +230,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_EXCEPTION;
                         }
                     } else {
-                        if (cpu_instruction_single_operant_writeback[cpu->intermediate.instruction]) {
+                        if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
                             #ifdef _CPU_DEBUG_
                                 log_msg(LP_DEBUG, "CPU %d: PC %.4x - instruction: %s %s - sp: %.4x", 
                                     cpu->clock, 
@@ -1298,6 +1268,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1307,6 +1278,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1316,6 +1288,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1325,6 +1298,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1334,6 +1308,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1343,6 +1318,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1352,6 +1328,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
 
@@ -1361,15 +1338,50 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_WRITEBACK_LOW;
                             break;
                         }
+                        cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         break;
                     
 
                     case INV:
                         //log_msg(LP_ERROR, "CPU %d: undefined instruction INV");
-                        cpu->state = CS_EXCEPTION;
+                        //cpu->state = CS_EXCEPTION;
+                        cache_invalidate(cpu->cache);
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
                         break;
+                    
+                    case FTC: {
+                        //log_msg(LP_ERROR, "CPU %d: undefined instruction FTC");
+                        // doesnt even improve performance on optimal scenraios
+                        uint8_t data;
+                        int success = cpu_read_memory(cpu, cpu->intermediate.data_address_extended, &data);
+                        if (success) {
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                        }
+                        break;
+                    }
 
+                    
+                    case HWCLOCK:
+                        cpu->regs.r0 = cpu->clock & ((uint64_t) 0xffff << 0);
+                        cpu->regs.r1 = cpu->clock & ((uint64_t) 0xffff << 16);
+                        cpu->regs.r2 = cpu->clock & ((uint64_t) 0xffff << 32);
+                        cpu->regs.r3 = cpu->clock & ((uint64_t) 0xffff << 48);
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        break;
+                    
+                    case HWINSTR:
+                        cpu->regs.r0 = cpu->instruction & ((uint64_t) 0xffff << 0);
+                        cpu->regs.r1 = cpu->instruction & ((uint64_t) 0xffff << 16);
+                        cpu->regs.r2 = cpu->instruction & ((uint64_t) 0xffff << 32);
+                        cpu->regs.r3 = cpu->instruction & ((uint64_t) 0xffff << 48);
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        break;
+                    
 
                     case INT:
                         //log_msg(LP_ERROR, "CPU %d: undefined instruction INT");
@@ -1382,12 +1394,14 @@ void cpu_clock(CPU_t* cpu) {
                         break;
 
                     case HLT:
+                        cpu->instruction ++;
                         cpu->state = CS_HALT;
                         break;
                         
 
                     default:
                         //log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d]", cpu->intermediate.instruction);
+                        cpu->instruction ++;
                         cpu->state = CS_EXCEPTION;
                         break;
                 }

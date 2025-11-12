@@ -76,11 +76,17 @@ int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_siz
         cache->data[index] = data[byte];
         cache->state[index].dirty = 0;
         cache->state[index].valid = 1;
-        cache->state[index].uses = (byte == 0);
+        cache->state[index].uses = (byte == 0); // only set use to 1 for the first byte, else 0. Why? I forgor
         cache->state[index].age = 0;
     }
 
     return 0;
 }
 
-
+int cache_invalidate(Cache_t* cache) {
+    if (!cache) return 0;
+    for (int i = 0; i < cache->capacity; i++) {
+        cache->state[i].valid = 0;
+    }
+    return 1;
+}

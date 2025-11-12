@@ -1,32 +1,37 @@
-/*
+
 r0 is a general purpose register, usually holding addresses
 r1 is a general purpose register, usually holding expressions
 r2 is probably gonna be used as a counter for loops? NEW IDEA: Use as cache for frequently used variables IN THE OPTIMIZER!
 r3 is the frame pointer, in case the functions uses arguments and the sp is used for local memory
-*/
 
 
-/*
+ADD CPU INFORMATION INSTRUCTIONS, maybe through interrupt requests? Which would maybe access MMIO to gather info, or from the PCU itself.
+Things like clock, instruction, etc.?
+CID_CLOCK could gather the clock count in r0-r4 as 64-bits in 4x16-bit regs
+CID_INSTR could gather instruction count in r0-r4
+
+
+
 Add type modifiers:
 anon, static, const
 turn "var" or "[modifier(s)] var" into PAR_TYPE_DEFINITION
 add static section in memory
-*/
 
-/*
+
+
 TODO GENERAL!!!:
 MMIO        - interrupts that print to terminal
 ADC / SBC   - necessary for 32-bit value emulation ???
 Check wether 32-bit value emulation is possible
-*/
 
-/*
+
+
 BUGS:
 commented strings count as strings : // "string"
 keywords only check prefix, so "variable" turns into "var"/LEX_VAR + "iable"/LEX_IDENTIFIER
-*/
 
-/*
+
+
 Currently strings in stack are reversed!
 
 TODO for IR:
@@ -44,29 +49,30 @@ add copmiler options:
 - verbose                   show the compiler steps like "variable assignment" etc. 
 allow negative number assignments "ident = -1;"
 interrupt vector function definitions? (done with irqbegin / irqend)
-*/
 
-/*
+
+
 Deoptimizer Idea: 
 Similar to peephole optimization step, but replaces complex operations with simpler ones. 
 One example would be replacing multiplication with looped addition
-*/
 
 
-Add assembler examples for minus, like: 
-mov r0, [r0 + -1]
+Add timing to know which compile steps takes how long
 
 
-/*
+Add disassembler option that shows the raw bytes for each instruction
+mov r0, $1234 ; 0x32 0xa0 0x34 0x12
+
+
 Other TODO:
 Dirty cachelines
-Cache instructions
+Cache CPU instructions
 GUI
 snapshots (export import of cpu state (also ram, bus, etc))
-*/
+add binary dump as well of finished program?
 
 
-/*typedef struct {
+typedef struct {
     void (*clock)(void*);
     void* device;
 } GenericClocker_t;
@@ -74,10 +80,10 @@ snapshots (export import of cpu state (also ram, bus, etc))
 
 void clocker(GenericClocker_t gc) {
     gc.clock(gc.device);
-}*/
+}
 
 
-/*
+
 rules: 
 
 variables and binary operations can ONLY be done on the SAME type. 
@@ -102,9 +108,9 @@ tmpy = fti fy;
 ix = tmpx + tmpy;
 
 
-*/
 
-/*
+
+
 
 The OPTIMIZER requires some normalization to work, especially for indirect offset and scaled offset optimizations
 
@@ -117,5 +123,29 @@ mov [rM], rN
 mov rM, sp
 mov [rM], ?
 // as long as rM != rN and not status checks, and also only if rN is fully replaced before reuse... 
-*/
+
+
+
+Also: 
+cmp r0, 1
+mov r1, 0
+cmovnl r1, 1
+cmovz r1, 0
+->
+cmp r0, 1
+mov r1, 0
+cmovnl r1, 1
+(delete)
+
+
+cmp r0, 1
+mov r1, 0
+cmovnl r1, 1
+cmovz r1, 0
+->
+cmp r0, 1
+mov r1, sp
+and r1, $0002
+
+
 

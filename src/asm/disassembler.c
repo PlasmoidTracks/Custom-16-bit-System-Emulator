@@ -69,7 +69,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
             return "";
         }
     } else if (argument_count == 1) {
-        if (cpu_instruction_single_operant_writeback[instruction]) {
+        if (cpu_instruction_single_operand_writeback[instruction]) {
             if (admx != 0) {
                 //log_msg(LP_DEBUG, "Instructions with one writeback argument (admr), but set admx is not realistic. Assuming it is raw data instead");
                 if (valid_instruction) *valid_instruction = 0;
@@ -118,7 +118,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
 
     
 
-    if (argument_count == 2 || (argument_count == 1 && cpu_instruction_single_operant_writeback[instruction])) {
+    if (argument_count == 2 || (argument_count == 1 && cpu_instruction_single_operand_writeback[instruction])) {
         // next up: admr
         switch (admr) {
             case ADMR_R0: reg = "r0"; goto admr_write_register;
@@ -184,7 +184,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 break;
         }
     } 
-    if (argument_count == 2 || (argument_count == 1 && !cpu_instruction_single_operant_writeback[instruction])) {
+    if (argument_count == 2 || (argument_count == 1 && !cpu_instruction_single_operand_writeback[instruction])) {
         if (argument_count == 2) {
             instruction_string[instruction_string_index++] = ',';
             instruction_string[instruction_string_index++] = ' ';

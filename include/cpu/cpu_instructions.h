@@ -99,6 +99,10 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid
     FTC,        // [f]e[t]ches data into [c]ache
 
+    // Self Identification and HW-Info Operations
+    HWCLOCK,    // returns the currrent [h]ard[w]are [clock] count in registers r0-r4 in little endian
+    HWINSTR,    // returns the currrent [h]ard[w]are [instr]uction count in registers r0-r4 in little endian
+
     // Other
     INT,        // int dest         :: trigger interrupt; 0xEF00 + dest -> pc
     HLT,        // halt             :: stops CPU execution
@@ -113,7 +117,7 @@ extern const int cpu_instruction_argument_count[INSTRUCTION_COUNT];
 
 // this list marks all instructions, that write back to memory, but only uses one argument
 // which means that the instruction should be locked to using admr only
-extern const int cpu_instruction_single_operant_writeback[INSTRUCTION_COUNT];
+extern const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT];
 
 extern const int cpu_instruction_is_jump[INSTRUCTION_COUNT];
 

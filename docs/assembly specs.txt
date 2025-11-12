@@ -7,11 +7,12 @@ These values can be used as operands anywhere immediates are accepted:
 
   Modes     Syntax          Example
 - Decimal:  1234            mov r0, 100
+  - decimal also includes negative values, like -100
 - Hex:      $1234, 0x1234   mov r0, $ffff / mov r0, 0xffff
 - Octal:    0o1234          mov r0, 0o741
 - Binary:   0b10101010      mov r0, 0b11100
 - Float16:  f1.25           mov r0, f1.25
-
+  - float16 also includes negative values, like f-1.25
 
 Syntax
 ------
@@ -92,6 +93,9 @@ Other stuff
   - This is done to allow the decompiled comments to also be valid when uncommented. 
   - This is to allow for instructions to also fully encode raw data. 
 
+
+mov r0, [$1234 + r0] can also be written as:
+- mov r0, [r0 + $1234]
 
 
 mov r0, [$1234 + $12 * r0] can also be written as:

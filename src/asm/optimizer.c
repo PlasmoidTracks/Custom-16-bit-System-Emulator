@@ -223,7 +223,8 @@ char* optimizer_compile(char* content) {
             // mov rN, y
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == MOV) {
-                    if (instruction[i].admr == instruction[i + 1].admr) {
+                    if (   cpu_reduced_addressing_mode_category[instruction[i].admr] == ADMC_REG
+                        && instruction[i].admr == instruction[i + 1].admr) {
                         //log_msg(LP_DEBUG, "Optimizer: removed overshadowed mov instruction (line %d)", i);
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
@@ -425,7 +426,7 @@ char* optimizer_compile(char* content) {
                         }
                         sprintf(instruction[i].expression[2].tokens[4].raw, "]");
                         instruction[i].expression[2].token_count = 5;
-                        //log_msg(LP_DEBUG, "%s -> %s", cpu_extended_addressing_mode_string[instruction[i].admx], ADMX_IND_R0_OFFSET16 + instruction[i].admx - ADMX_R0);
+                        //log_msg(LP_DEBUG, "%s -> %s", cpu_extended_addressing_mode_string[instruction[i].admx], cpu_extended_addressing_mode_string[ADMX_IND_R0_OFFSET16 + instruction[i].admx - ADMX_R0]);
                         instruction[i].instruction = LEA;
                         instruction[i].admx = ADMX_IND_R0_OFFSET16 + instruction[i].admx - ADMX_R0;
                         remove_instruction(instruction, &instruction_count, i + 1);
@@ -563,67 +564,69 @@ char* optimizer_compile(char* content) {
             // =>
             // [precompute] z :: x + y
             // sub sp, z (or equivalent for ADD/SUB chain)
-            if ((instruction[i].instruction == SUB || instruction[i].instruction == ADD) && instruction[i].admr == ADMR_SP) {
-                int16_t sub = (int16_t) parse_immediate(instruction[i].expression[2].tokens[0].raw);
-                if (instruction[i].instruction == ADD) {sub = -sub;}
-                int index = i + 1;
-                while (index < instruction_count) {
-                    if (instruction[index].instruction == SUB && instruction[index].admr == ADMR_SP) {
-                        //log_msg(LP_DEBUG, "Optimizer: combined stack allocation (line %d)", i);
-                        sub += (int16_t) parse_immediate(instruction[index].expression[2].tokens[0].raw);
-                        remove_instruction(instruction, &instruction_count, index);
-                        changes_applied = 1;
-                        continue;
+            if (i < instruction_count - 2) {
+                if ((instruction[i].instruction == SUB || instruction[i].instruction == ADD) && instruction[i].admr == ADMR_SP) {
+                    int16_t sub = (int16_t) parse_immediate(instruction[i].expression[2].tokens[0].raw);
+                    if (instruction[i].instruction == ADD) {sub = -sub;}
+                    int index = i + 1;
+                    while (index < instruction_count) {
+                        if (instruction[index].instruction == SUB && instruction[index].admr == ADMR_SP) {
+                            //log_msg(LP_DEBUG, "Optimizer: combined stack allocation (line %d)", i);
+                            sub += (int16_t) parse_immediate(instruction[index].expression[2].tokens[0].raw);
+                            remove_instruction(instruction, &instruction_count, index);
+                            changes_applied = 1;
+                            continue;
+                        }
+                        if (instruction[index].instruction == ADD && instruction[index].admr == ADMR_SP) {
+                            //log_msg(LP_DEBUG, "Optimizer: combined stack allocation (line %d)", i);
+                            sub -= (int16_t) parse_immediate(instruction[index].expression[2].tokens[0].raw);
+                            remove_instruction(instruction, &instruction_count, index);
+                            changes_applied = 1;
+                            continue;
+                        }
+                        if (instruction[index].instruction == CALL || 
+                            instruction[index].instruction == RET || 
+                            instruction[index].instruction == PUSH || 
+                            instruction[index].instruction == POP || 
+                            instruction[index].instruction == PUSHSR || 
+                            instruction[index].instruction == POPSR) {
+                            break;
+                        }
+                        if (instruction[index].admx == ADMX_SP || 
+                            instruction[index].admx == ADMX_IND_SP || 
+                            instruction[index].admx == ADMX_IND_SP_OFFSET16 || 
+                            instruction[index].admx == ADMX_IND16_SCALED8_SP_OFFSET) {
+                            break;
+                        }
+                        if ((instruction[index].instruction == MOV || 
+                            instruction[index].instruction == CMOVZ || 
+                            instruction[index].instruction == CMOVNZ || 
+                            instruction[index].instruction == CMOVL || 
+                            instruction[index].instruction == CMOVNL || 
+                            instruction[index].instruction == CMOVUL || 
+                            instruction[index].instruction == CMOVNUL || 
+                            instruction[index].instruction == CMOVFL || 
+                            instruction[index].instruction == CMOVNFL || 
+                            instruction[index].instruction == LEA || 
+                            instruction[index].instruction == MUL || 
+                            instruction[index].instruction == DIV || 
+                            instruction[index].instruction == ADDF || 
+                            instruction[index].instruction == SUBF || 
+                            instruction[index].instruction == MULF || 
+                            instruction[index].instruction == DIVF || 
+                            instruction[index].instruction == BWS || 
+                            instruction[index].instruction == AND || 
+                            instruction[index].instruction == OR || 
+                            instruction[index].instruction == XOR || 
+                            instruction[index].instruction == NOT) && instruction[index].admr == ADMR_SP) {
+                            break;
+                        }
+                        index ++;
                     }
-                    if (instruction[index].instruction == ADD && instruction[index].admr == ADMR_SP) {
-                        //log_msg(LP_DEBUG, "Optimizer: combined stack allocation (line %d)", i);
-                        sub -= (int16_t) parse_immediate(instruction[index].expression[2].tokens[0].raw);
-                        remove_instruction(instruction, &instruction_count, index);
-                        changes_applied = 1;
-                        continue;
-                    }
-                    if (instruction[index].instruction == CALL || 
-                        instruction[index].instruction == RET || 
-                        instruction[index].instruction == PUSH || 
-                        instruction[index].instruction == POP || 
-                        instruction[index].instruction == PUSHSR || 
-                        instruction[index].instruction == POPSR) {
-                        break;
-                    }
-                    if (instruction[index].admx == ADMX_SP || 
-                        instruction[index].admx == ADMX_IND_SP || 
-                        instruction[index].admx == ADMX_IND_SP_OFFSET16 || 
-                        instruction[index].admx == ADMX_IND16_SCALED8_SP_OFFSET) {
-                        break;
-                    }
-                    if ((instruction[index].instruction == MOV || 
-                        instruction[index].instruction == CMOVZ || 
-                        instruction[index].instruction == CMOVNZ || 
-                        instruction[index].instruction == CMOVL || 
-                        instruction[index].instruction == CMOVNL || 
-                        instruction[index].instruction == CMOVUL || 
-                        instruction[index].instruction == CMOVNUL || 
-                        instruction[index].instruction == CMOVFL || 
-                        instruction[index].instruction == CMOVNFL || 
-                        instruction[index].instruction == LEA || 
-                        instruction[index].instruction == MUL || 
-                        instruction[index].instruction == DIV || 
-                        instruction[index].instruction == ADDF || 
-                        instruction[index].instruction == SUBF || 
-                        instruction[index].instruction == MULF || 
-                        instruction[index].instruction == DIVF || 
-                        instruction[index].instruction == BWS || 
-                        instruction[index].instruction == AND || 
-                        instruction[index].instruction == OR || 
-                        instruction[index].instruction == XOR || 
-                        instruction[index].instruction == NOT) && instruction[index].admr == ADMR_SP) {
-                        break;
-                    }
-                    index ++;
+                    sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[SUB]);
+                    sprintf(instruction[i].expression[2].tokens[0].raw, "%d", sub);
+                    instruction[i].instruction = SUB;
                 }
-                sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[SUB]);
-                sprintf(instruction[i].expression[2].tokens[0].raw, "%d", sub);
-                instruction[i].instruction = SUB;
             }
             if (changes_applied) break;
             
@@ -633,71 +636,73 @@ char* optimizer_compile(char* content) {
             // and ?, $ffff
             // =>
             // (removed, if no status register reads follow)
-            if (instruction[i].instruction == AND) {
-                if (instruction[i].admx == ADMX_IMM16) {
-                    if (instruction[i].admr == ADMR_R0 || instruction[i].admr == ADMR_R1 || 
-                        instruction[i].admr == ADMR_R2 || instruction[i].admr == ADMR_R3 || 
-                        instruction[i].admr == ADMR_SP) {
-                        if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0xffff) {
-                            // now also check if any conditional instruction is present before another statur-register changing operation is done
-                            int changed_sr = 0;
-                            int index = i + 1;
-                            while (index < instruction_count) {
-                                if (instruction[index].instruction == JZ || 
-                                    instruction[index].instruction == JNZ || 
-                                    instruction[index].instruction == JL || 
-                                    instruction[index].instruction == JNL ||
-                                    instruction[index].instruction == JUL || 
-                                    instruction[index].instruction == JNUL ||
-                                    instruction[index].instruction == JFL || 
-                                    instruction[index].instruction == JNFL ||
-                                    instruction[index].instruction == JSO || 
-                                    instruction[index].instruction == JNSO ||
-                                    instruction[index].instruction == JAO || 
-                                    instruction[index].instruction == JNAO ||
-                                    instruction[index].instruction == CMOVZ || 
-                                    instruction[index].instruction == CMOVNZ ||
-                                    instruction[index].instruction == CMOVL || 
-                                    instruction[index].instruction == CMOVNL ||
-                                    instruction[index].instruction == CMOVUL || 
-                                    instruction[index].instruction == CMOVNUL ||
-                                    instruction[index].instruction == CMOVFL || 
-                                    instruction[index].instruction == CMOVNFL ||
-                                    instruction[index].instruction < 0 ||
-                                    instruction[index].instruction >= INSTRUCTION_COUNT
-                                ) {
-                                    break;
+            if (i < instruction_count) {
+                if (instruction[i].instruction == AND) {
+                    if (instruction[i].admx == ADMX_IMM16) {
+                        if (instruction[i].admr == ADMR_R0 || instruction[i].admr == ADMR_R1 || 
+                            instruction[i].admr == ADMR_R2 || instruction[i].admr == ADMR_R3 || 
+                            instruction[i].admr == ADMR_SP) {
+                            if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0xffff) {
+                                // now also check if any conditional instruction is present before another statur-register changing operation is done
+                                int changed_sr = 0;
+                                int index = i + 1;
+                                while (index < instruction_count) {
+                                    if (instruction[index].instruction == JZ || 
+                                        instruction[index].instruction == JNZ || 
+                                        instruction[index].instruction == JL || 
+                                        instruction[index].instruction == JNL ||
+                                        instruction[index].instruction == JUL || 
+                                        instruction[index].instruction == JNUL ||
+                                        instruction[index].instruction == JFL || 
+                                        instruction[index].instruction == JNFL ||
+                                        instruction[index].instruction == JSO || 
+                                        instruction[index].instruction == JNSO ||
+                                        instruction[index].instruction == JAO || 
+                                        instruction[index].instruction == JNAO ||
+                                        instruction[index].instruction == CMOVZ || 
+                                        instruction[index].instruction == CMOVNZ ||
+                                        instruction[index].instruction == CMOVL || 
+                                        instruction[index].instruction == CMOVNL ||
+                                        instruction[index].instruction == CMOVUL || 
+                                        instruction[index].instruction == CMOVNUL ||
+                                        instruction[index].instruction == CMOVFL || 
+                                        instruction[index].instruction == CMOVNFL ||
+                                        instruction[index].instruction < 0 ||
+                                        instruction[index].instruction >= INSTRUCTION_COUNT
+                                    ) {
+                                        break;
+                                    }
+                                    if (instruction[index].instruction == CMP || 
+                                        instruction[index].instruction == TST || 
+                                        instruction[index].instruction == POPSR ||
+                                        instruction[index].instruction == ADD || 
+                                        instruction[index].instruction == SUB || 
+                                        instruction[index].instruction == MUL || 
+                                        instruction[index].instruction == DIV || 
+                                        instruction[index].instruction == ADDF || 
+                                        instruction[index].instruction == SUBF || 
+                                        instruction[index].instruction == MULF || 
+                                        instruction[index].instruction == DIVF || 
+                                        instruction[index].instruction == NEG || 
+                                        instruction[index].instruction == INC || 
+                                        instruction[index].instruction == DEC || 
+                                        instruction[index].instruction == BWS || 
+                                        instruction[index].instruction == AND || 
+                                        instruction[index].instruction == OR || 
+                                        instruction[index].instruction == XOR || 
+                                        instruction[index].instruction == NOT
+                                    ) {
+                                        changed_sr = 1;
+                                        break;
+                                    }
+                                    index ++;
                                 }
-                                if (instruction[index].instruction == CMP || 
-                                    instruction[index].instruction == TST || 
-                                    instruction[index].instruction == POPSR ||
-                                    instruction[index].instruction == ADD || 
-                                    instruction[index].instruction == SUB || 
-                                    instruction[index].instruction == MUL || 
-                                    instruction[index].instruction == DIV || 
-                                    instruction[index].instruction == ADDF || 
-                                    instruction[index].instruction == SUBF || 
-                                    instruction[index].instruction == MULF || 
-                                    instruction[index].instruction == DIVF || 
-                                    instruction[index].instruction == NEG || 
-                                    instruction[index].instruction == INC || 
-                                    instruction[index].instruction == DEC || 
-                                    instruction[index].instruction == BWS || 
-                                    instruction[index].instruction == AND || 
-                                    instruction[index].instruction == OR || 
-                                    instruction[index].instruction == XOR || 
-                                    instruction[index].instruction == NOT
-                                ) {
-                                    changed_sr = 1;
-                                    break;
+                                if (changed_sr) {
+                                    //log_msg(LP_DEBUG, "Optimizer: removed redundant and operation (line %d)", i);
+                                    remove_instruction(instruction, &instruction_count, i);
+                                    i --;
+                                    changes_applied = 1;
                                 }
-                                index ++;
-                            }
-                            if (changed_sr) {
-                                //log_msg(LP_DEBUG, "Optimizer: removed redundant and operation (line %d)", i);
-                                remove_instruction(instruction, &instruction_count, i);
-                                i --;
-                                changes_applied = 1;
                             }
                         }
                     }
@@ -709,71 +714,73 @@ char* optimizer_compile(char* content) {
             // or ?, 0
             // =>
             // (removed, if no status register reads follow)
-            if (instruction[i].instruction == OR) {
-                if (instruction[i].admx == ADMX_IMM16) {
-                    if (instruction[i].admr == ADMR_R0 || instruction[i].admr == ADMR_R1 || 
-                        instruction[i].admr == ADMR_R2 || instruction[i].admr == ADMR_R3 || 
-                        instruction[i].admr == ADMR_SP) {
-                        if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0 && string_is_immediate(instruction[i].expression[2].tokens[0].raw)) {
-                            // now also check if any conditional instruction is present before another statur-register changing operation is done
-                            int changed_sr = 0;
-                            int index = i + 1;
-                            while (index < instruction_count) {
-                                if (instruction[index].instruction == JZ || 
-                                    instruction[index].instruction == JNZ || 
-                                    instruction[index].instruction == JL || 
-                                    instruction[index].instruction == JNL ||
-                                    instruction[index].instruction == JUL || 
-                                    instruction[index].instruction == JNUL ||
-                                    instruction[index].instruction == JFL || 
-                                    instruction[index].instruction == JNFL ||
-                                    instruction[index].instruction == JSO || 
-                                    instruction[index].instruction == JNSO ||
-                                    instruction[index].instruction == JAO || 
-                                    instruction[index].instruction == JNAO ||
-                                    instruction[index].instruction == CMOVZ || 
-                                    instruction[index].instruction == CMOVNZ ||
-                                    instruction[index].instruction == CMOVL || 
-                                    instruction[index].instruction == CMOVNL ||
-                                    instruction[index].instruction == CMOVUL || 
-                                    instruction[index].instruction == CMOVNUL ||
-                                    instruction[index].instruction == CMOVFL || 
-                                    instruction[index].instruction == CMOVNFL ||
-                                    instruction[index].instruction < 0 ||
-                                    instruction[index].instruction >= INSTRUCTION_COUNT
-                                ) {
-                                    break;
+            if (i < instruction_count) {
+                if (instruction[i].instruction == OR) {
+                    if (instruction[i].admx == ADMX_IMM16) {
+                        if (instruction[i].admr == ADMR_R0 || instruction[i].admr == ADMR_R1 || 
+                            instruction[i].admr == ADMR_R2 || instruction[i].admr == ADMR_R3 || 
+                            instruction[i].admr == ADMR_SP) {
+                            if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0 && string_is_immediate(instruction[i].expression[2].tokens[0].raw)) {
+                                // now also check if any conditional instruction is present before another statur-register changing operation is done
+                                int changed_sr = 0;
+                                int index = i + 1;
+                                while (index < instruction_count) {
+                                    if (instruction[index].instruction == JZ || 
+                                        instruction[index].instruction == JNZ || 
+                                        instruction[index].instruction == JL || 
+                                        instruction[index].instruction == JNL ||
+                                        instruction[index].instruction == JUL || 
+                                        instruction[index].instruction == JNUL ||
+                                        instruction[index].instruction == JFL || 
+                                        instruction[index].instruction == JNFL ||
+                                        instruction[index].instruction == JSO || 
+                                        instruction[index].instruction == JNSO ||
+                                        instruction[index].instruction == JAO || 
+                                        instruction[index].instruction == JNAO ||
+                                        instruction[index].instruction == CMOVZ || 
+                                        instruction[index].instruction == CMOVNZ ||
+                                        instruction[index].instruction == CMOVL || 
+                                        instruction[index].instruction == CMOVNL ||
+                                        instruction[index].instruction == CMOVUL || 
+                                        instruction[index].instruction == CMOVNUL ||
+                                        instruction[index].instruction == CMOVFL || 
+                                        instruction[index].instruction == CMOVNFL ||
+                                        instruction[index].instruction < 0 ||
+                                        instruction[index].instruction >= INSTRUCTION_COUNT
+                                    ) {
+                                        break;
+                                    }
+                                    if (instruction[index].instruction == CMP || 
+                                        instruction[index].instruction == TST || 
+                                        instruction[index].instruction == POPSR ||
+                                        instruction[index].instruction == ADD || 
+                                        instruction[index].instruction == SUB || 
+                                        instruction[index].instruction == MUL || 
+                                        instruction[index].instruction == DIV || 
+                                        instruction[index].instruction == ADDF || 
+                                        instruction[index].instruction == SUBF || 
+                                        instruction[index].instruction == MULF || 
+                                        instruction[index].instruction == DIVF || 
+                                        instruction[index].instruction == NEG || 
+                                        instruction[index].instruction == INC || 
+                                        instruction[index].instruction == DEC || 
+                                        instruction[index].instruction == BWS || 
+                                        instruction[index].instruction == AND || 
+                                        instruction[index].instruction == OR || 
+                                        instruction[index].instruction == XOR || 
+                                        instruction[index].instruction == NOT
+                                    ) {
+                                        changed_sr = 1;
+                                        break;
+                                    }
+                                    index ++;
                                 }
-                                if (instruction[index].instruction == CMP || 
-                                    instruction[index].instruction == TST || 
-                                    instruction[index].instruction == POPSR ||
-                                    instruction[index].instruction == ADD || 
-                                    instruction[index].instruction == SUB || 
-                                    instruction[index].instruction == MUL || 
-                                    instruction[index].instruction == DIV || 
-                                    instruction[index].instruction == ADDF || 
-                                    instruction[index].instruction == SUBF || 
-                                    instruction[index].instruction == MULF || 
-                                    instruction[index].instruction == DIVF || 
-                                    instruction[index].instruction == NEG || 
-                                    instruction[index].instruction == INC || 
-                                    instruction[index].instruction == DEC || 
-                                    instruction[index].instruction == BWS || 
-                                    instruction[index].instruction == AND || 
-                                    instruction[index].instruction == OR || 
-                                    instruction[index].instruction == XOR || 
-                                    instruction[index].instruction == NOT
-                                ) {
-                                    changed_sr = 1;
-                                    break;
+                                if (changed_sr) {
+                                    //log_msg(LP_DEBUG, "Optimizer: removed redundant and operation (line %d)", i);
+                                    remove_instruction(instruction, &instruction_count, i);
+                                    i --;
+                                    changes_applied = 1;
                                 }
-                                index ++;
-                            }
-                            if (changed_sr) {
-                                //log_msg(LP_DEBUG, "Optimizer: removed redundant and operation (line %d)", i);
-                                remove_instruction(instruction, &instruction_count, i);
-                                i --;
-                                changes_applied = 1;
                             }
                         }
                     }
@@ -793,22 +800,24 @@ char* optimizer_compile(char* content) {
             // (removed)
             // (removed)
             // mov/lea rM, ???
-            if (instruction[i].instruction == LEA               // lea
-                && is_register_admr(instruction[i].admr)        // rN
-                && is_register_offset_admx(instruction[i].admx) // [$x + rO]
-                && register_offset_admx_contains_admr_register(instruction[i + 1].admx, instruction[i].admr)    // lea -rN-, [...] == lea rM, [$y + -rN-]
-                && instruction[i].admr == instruction[i + 2].admr   // lea -rN-, [...] == mov -rN-, rM
-                && is_same_adm(instruction[i + 1].admr, instruction[i + 2].admx)    // lea -rM-, [...] == mov rN, -rM-
-                && instruction[i + 1].admr == instruction[i + 3].admr
-                && is_overwriting_instruction(instruction[i + 3].instruction)
-            ) {
-                //log_msg(LP_DEBUG, "Optimizer: reduced lea accumulation (line %d)", i);
-                uint16_t x = parse_immediate(instruction[i].expression[2].tokens[1].raw);
-                uint16_t y = parse_immediate(instruction[i + 1].expression[2].tokens[1].raw);
-                sprintf(instruction[i].expression[2].tokens[1].raw, "$%.4X", x + y);            // replacing "$x" with new precomputed z
-                remove_instruction(instruction, &instruction_count, i + 1);      // removing "lea rM, [$y + rN]"
-                remove_instruction(instruction, &instruction_count, i + 2);      // removing "mov rN, rM"
-                changes_applied = 1;
+            if (i < instruction_count - 3) {
+                if (instruction[i].instruction == LEA               // lea
+                    && is_register_admr(instruction[i].admr)        // rN
+                    && is_register_offset_admx(instruction[i].admx) // [$x + rO]
+                    && register_offset_admx_contains_admr_register(instruction[i + 1].admx, instruction[i].admr)    // lea -rN-, [...] == lea rM, [$y + -rN-]
+                    && instruction[i].admr == instruction[i + 2].admr   // lea -rN-, [...] == mov -rN-, rM
+                    && is_same_adm(instruction[i + 1].admr, instruction[i + 2].admx)    // lea -rM-, [...] == mov rN, -rM-
+                    && instruction[i + 1].admr == instruction[i + 3].admr
+                    && is_overwriting_instruction(instruction[i + 3].instruction)
+                ) {
+                    //log_msg(LP_DEBUG, "Optimizer: reduced lea accumulation (line %d)", i);
+                    uint16_t x = parse_immediate(instruction[i].expression[2].tokens[1].raw);
+                    uint16_t y = parse_immediate(instruction[i + 1].expression[2].tokens[1].raw);
+                    sprintf(instruction[i].expression[2].tokens[1].raw, "$%.4X", x + y);            // replacing "$x" with new precomputed z
+                    remove_instruction(instruction, &instruction_count, i + 1);      // removing "lea rM, [$y + rN]"
+                    remove_instruction(instruction, &instruction_count, i + 2);      // removing "mov rN, rM"
+                    changes_applied = 1;
+                }
             }
             if (changes_applied) break;
             

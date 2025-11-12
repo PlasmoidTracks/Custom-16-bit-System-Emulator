@@ -150,7 +150,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
     } else if (expr->child_count == 2) {
         *output = append_to_output(*output, length, "; unary operation\n");
         IRParserToken_t* token0 = expr->child[0];     // unary operator
-        IRParserToken_t* op = token0->child[0];       // operant
+        IRParserToken_t* op = token0->child[0];       // operand
         IRParserToken_t* token1 = expr->child[1];
         // mov token1 to r0?
         // then do the operation, which will be set in r1, r0 can be discarded
@@ -275,7 +275,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_INTEGER_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> less\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_INTEGER_LESS_EQUAL:
@@ -290,12 +290,12 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_INTEGER_GREATER_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> greater equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnl r1, 1\ncmovz r1, 1\n");
                 break;
 
             case IR_LEX_FLOAT_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> float less\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_FLOAT_LESS_EQUAL:
@@ -310,12 +310,12 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_FLOAT_GREATER_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> float greater equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\ncmovz r1, 1\n");
                 break;
 
             case IR_LEX_UNSIGNED_INTEGER_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> unsigned less\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovul r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovul r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL:
@@ -330,7 +330,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> unsigned greater equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnul r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnul r1, 1\ncmovz r1, 1\n");
                 break;
 
             case IR_LEX_SHIFT_RIGHT:
@@ -807,10 +807,6 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
             }
         }
     }
-
-    char* output = NULL;
-    //output = append_to_output(data_output, &data_output_len, code_output);
-    //return output;
 
     return code_output;
 }

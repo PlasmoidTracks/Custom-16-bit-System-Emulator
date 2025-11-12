@@ -87,7 +87,7 @@ typedef enum {
 
 
 typedef struct {
-    IRLexerTokenType_t type;  // token type
+    IRLexerTokenType_t type; // token type
     const char* raw;        // raw form of the token as-is in source
     int length;
     int index;              // total index in file

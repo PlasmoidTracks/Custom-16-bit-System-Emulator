@@ -32,7 +32,9 @@ typedef struct IRIdentifier_t {
 
 
 extern IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
+
 extern int ir_identifier_index[IR_MAX_DEPTH];
+
 extern int ir_identifier_scope_depth;
 
 extern char* ir_compile(IRParserToken_t** lexer_token, long lexer_token_count, IRCompileOption_t options);

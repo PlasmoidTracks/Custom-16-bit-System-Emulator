@@ -47,10 +47,6 @@ One example would be replacing multiplication with looped addition
 Add timing to know which compile steps takes how long
 
 
-Add disassembler option that shows the raw bytes for each instruction
-mov r0, $1234 ; 0x32 0xa0 0x34 0x12
-
-
 Other TODO:
 Dirty cachelines
 GUI
@@ -121,4 +117,14 @@ cmovz r1, 0
 cmp r0, 1
 mov r1, sp
 and r1, $0002
+
+
+lea r0, [$FFF6 + r3]
+mov [r0], r1
+mov r1, [$FFF6 + r3]
+tst r1
+->
+lea r0, [$FFF6 + r3]
+mov [r0], r1
+tst r0
 

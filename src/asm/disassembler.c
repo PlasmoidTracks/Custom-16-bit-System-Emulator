@@ -25,7 +25,7 @@ uint16_t disassembler_read_u16(uint8_t* data) {
 
 
 
-char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, DisassembleOption_t options) {
+char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, int* instruction_bytes, DisassembleOption_t options) {
     uint8_t instruction = binary[(*binary_index) ++];
     uint8_t addressing_mode = binary[(*binary_index) ++];
     if (valid_instruction) *valid_instruction = 1;
@@ -96,6 +96,10 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     }
 
     (*binary_index) += data_size;
+
+    if (instruction_bytes) {
+        *instruction_bytes = data_size + 2;
+    }
 
     // should be plenty of space
     char* instruction_string = calloc(256, sizeof(char)); 
@@ -317,7 +321,8 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
         int previous_binary_index = binary_index;
         int valid_instruction = 0;
-        char* instruction = disassembler_decompile_single_instruction(machine_code, &binary_index, &valid_instruction, &disassembly.admr[assembly_index], &disassembly.admx[assembly_index], options);
+        int instruction_bytes = 0;
+        char* instruction = disassembler_decompile_single_instruction(machine_code, &binary_index, &valid_instruction, &disassembly.admr[assembly_index], &disassembly.admx[assembly_index], &instruction_bytes, options);
 
         disassembly.is_data[assembly_index] = 0;
 
@@ -389,20 +394,24 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                         } else {
                             if (options & DO_ADD_SPECULATIVE_CODE) {
                                 sprintf(disassembly.code[assembly_index++], "$%.2x%.2x                      ; %s%*s; %d byte instruction\n",
-                                    machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index);
+                                    machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index
+                                );
                             } else {
                                 sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n",
-                                    machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
+                                    machine_code[previous_binary_index + 1], machine_code[previous_binary_index]
+                                );
                             }
                         }
                         binary_index = previous_binary_index + 2;
                     } else {
                         if (options & DO_ADD_SPECULATIVE_CODE) {
                             sprintf(disassembly.code[assembly_index++], "$%.2x%.2x                      ; %s%*s; %d byte instruction\n",
-                                machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index);
+                                machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index)
+                                ;
                         } else {
                             sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n",
-                                machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
+                                machine_code[previous_binary_index + 1], machine_code[previous_binary_index]
+                            );
                         }
                     }
                     binary_index = previous_binary_index + 2;
@@ -482,6 +491,18 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         }
 
         //strcpy(disassembly.code[assembly_index], instruction);
+        if (options & DO_ADD_RAW_BYTES) {
+            char tmp[256];
+            sprintf(tmp, "; ");
+            for (int i = 0; i < instruction_bytes; i++) {
+                sprintf(&tmp[strlen(tmp)], "0x%.2x ",
+                    machine_code[previous_binary_index + i]
+                );
+            }
+            sprintf(&tmp[strlen(tmp)], "\n");
+            sprintf(disassembly.code[assembly_index], "%s", tmp);
+            assembly_index++;
+        }
         sprintf(disassembly.code[assembly_index], "%s\n", instruction);
         free(instruction);
         disassembly.binary_index[assembly_index] = previous_binary_index;

@@ -99,11 +99,6 @@ void cpu_print_state(CPU_t* cpu) {
         cpu->regs.sr.MI);
 
     printf(" \033[1;32mCS\033[0m  %d\n", cpu->state);
-    if (cpu->last_instruction < INSTRUCTION_COUNT) {
-        printf(" \033[1;32mLast Instruction\033[0m %s (%d)\n", cpu_instruction_string[cpu->last_instruction], (int) cpu->last_instruction);
-    } else {
-        printf(" \033[1;32mLast Instruction\033[0m ??? (%d)\n", (int) cpu->last_instruction);
-    }
     
     // Cache
     if (!cpu->cache) {
@@ -118,6 +113,11 @@ void cpu_print_state(CPU_t* cpu) {
     printf(" \033[1;32mclock\033[0m    %09ld\n", cpu->clock);
     printf(" \033[1;32minstr\033[0m    %09ld\n", cpu->instruction);
     printf(" \033[1;32mcpi\033[0m      %2.3f\n", (double) cpu->clock / (double) cpu->instruction);
+    if (cpu->last_instruction < INSTRUCTION_COUNT) {
+        printf(" \033[1;32mLast Instruction\033[0m %s (%d)\n", cpu_instruction_string[cpu->last_instruction], (int) cpu->last_instruction);
+    } else {
+        printf(" \033[1;32mLast Instruction\033[0m ??? (%d)\n", (int) cpu->last_instruction);
+    }
 
     printf("\033[1;35m========================================\033[0m\n\n");
 }

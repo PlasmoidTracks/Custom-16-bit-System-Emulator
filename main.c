@@ -13,6 +13,7 @@
 #include "cpu/cpu_utils.h"
 #include "include/utils/Log.h"
 #include "ram.h"
+#include "system.h"
 #include "ticker.h"
 
 #include "asm/assembler.h"
@@ -48,6 +49,10 @@
 //#undef OPTIMIZE
 
 
+#define HW_WATCH
+#undef HW_WATCH
+
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
@@ -58,16 +63,20 @@ int main(int argc, char* argv[]) {
     LOG_LEVEL = LP_MINPRIO;
     
     // Hardware step
-    BUS_t* bus = bus_create();
-    CPU_t* cpu = cpu_create();
-    RAM_t* ram = ram_create(1 << 16);
-    Cache_t* cache = cache_create(64);
-    cpu_mount_cache(cpu, cache);                      // cache is only faster when ram is slow. thus high bus/ram speed is better than cache
-    Ticker_t* ticker = ticker_create(1000.0);
+    System_t* system = system_create(1<<16, 1, 64, 1, 1000.0);
 
-    bus_add_device(bus, &cpu->device);
-    bus_add_device(bus, &ram->device);
-    bus_add_device(bus, &ticker->device);
+    #ifdef HW_WATCH
+        system_hook(
+            system, 
+            (Hook_t) {
+                .target = HOOK_TARGET_RAM(0x3ff5), 
+                .target_bytes = sizeof(uint16_t), 
+                .match = NULL, 
+                .condition = HC_READ_FROM, 
+                .action = hook_action_halt
+            }
+        );
+    #endif
 
 
     char** words = split(argv[1], ".", "");
@@ -183,38 +192,30 @@ int main(int argc, char* argv[]) {
     }
 
     for (long i = 0; i < binary_size; i++) {
-        ram_write(ram, i, bin[i]);
+        ram_write(system->ram, i, bin[i]);
     }
 
-    disassembler_decompile_to_file(ram->data, "disassemble.asm", binary_size, segment, segment_count, 
-        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
+    disassembler_decompile_to_file(system->ram->data, "disassemble.asm", binary_size, segment, segment_count, 
+        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (DO_ADD_RAW_BYTES)));
     free(segment);    
 
     // Execution step
     //uint16_t min_sp = cpu->regs.sp;
-    for (int i = 0; i < 100000000 && cpu->state != CS_HALT && cpu->state != CS_EXCEPTION; i++) {
-        //int test = 0;
-        //if (cpu->state == CS_EXECUTE) {test = 1;}
-        //cpu_clock(cpu);
-        cpu_clock(cpu);
-        bus_clock(bus);
-        ram_clock(ram);
-        bus_clock(bus);
-        ticker_clock(ticker);
-        //if (test) {cpu_print_state_compact(cpu);
-        //cpu_print_stack_compact(cpu, ram, 12);
-        //printf("\n");}
-        //if (cpu->regs.sp < min_sp) {min_sp = cpu->regs.sp;}
+    for (int i = 0; i < 100000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
+        #ifdef HW_WATCH
+            system_clock_debug(system);
+        #else
+            system_clock(system);
+        #endif
     }
-    //printf("%.4x\n", min_sp);
 
     //cpu_print_cache(cpu);
-    cpu_print_state(cpu);
-    cpu_print_stack(cpu, ram, 20);
+    cpu_print_state(system->cpu);
+    cpu_print_stack(system->cpu, system->ram, 20);
 
-    ram_delete(ram);
-    cpu_delete(cpu);
-    bus_delete(bus);
+    ram_delete(system->ram);
+    cpu_delete(system->cpu);
+    bus_delete(system->bus);
 
     return 0;
 }

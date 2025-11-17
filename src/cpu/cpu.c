@@ -1653,7 +1653,6 @@ void cpu_clock(CPU_t* cpu) {
             {
                 cpu->regs.sr.MNI = 1;
                 if (!halted) {
-                    log_msg(LP_ERROR, "CPU %d: HALTED", cpu->clock);
                     halted = 1;
                 }
                 //exit(1);

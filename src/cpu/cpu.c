@@ -39,7 +39,7 @@ CPU_t* cpu_create(void) {
     };
 
     //cpu->regs.pc = cpu->memory_layout.segment_code;
-    cpu->regs.sp = cpu->memory_layout.segment_stack;
+    cpu->regs.sp = cpu->memory_layout.segment_stack + 1;        // sp always writes to the byte below, so we need to start one byte higher
 
     cpu->state = CS_FETCH_INSTRUCTION;
 
@@ -143,7 +143,7 @@ void cpu_clock(CPU_t* cpu) {
     //log_msg(LP_INFO, "CPU %d: Checking for interrupt", cpu->clock);
     if (cpu->device.device_state == DS_INTERRUPT) {
         #ifdef _CPU_DEBUG_
-        log_msg(LP_INFO, "CPU %d: PC %.4x - interrupt on CS %d", cpu->clock, cpu->regs.pc, cpu->state);
+        log_msg(LP_INFO, "CPU %lld/%lld: PC %.4x - interrupt on CS %d", cpu->clock, cpu->instruction, cpu->regs.pc, cpu->state);
         #endif
         // TODO: go into separate interrupt states, that pushes the PC
         if (!cpu->regs.sr.MI && !cpu->regs.sr.MNI) {
@@ -176,8 +176,9 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->last_instruction = (CPU_INSTRUCTION_MNEMONIC_t) cpu->intermediate.instruction;
                         #ifdef _CPU_DEBUG_
                         if (cpu->intermediate.argument_count == 0) {
-                            log_msg(LP_DEBUG, "CPU %d: PC %.4x - instruction: %s - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s - sp: %.4x", 
                                 cpu->clock, 
+                                cpu->instruction, 
                                 cpu->regs.pc, 
                                 cpu_instruction_string[cpu->intermediate.instruction], 
                                 cpu->regs.sp
@@ -217,8 +218,9 @@ void cpu_clock(CPU_t* cpu) {
 
                     if (cpu->intermediate.argument_count == 2) {
                         #ifdef _CPU_DEBUG_
-                            log_msg(LP_DEBUG, "CPU %d: PC %.4x - instruction: %s %s, %s - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s, %s - sp: %.4x", 
                                 cpu->clock, 
+                                cpu->instruction, 
                                 cpu->regs.pc - 1, 
                                 cpu_instruction_string[cpu->intermediate.instruction], 
                                 cpu_reduced_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_reduced], 
@@ -233,8 +235,9 @@ void cpu_clock(CPU_t* cpu) {
                     } else {
                         if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU %d: PC %.4x - instruction: %s %s - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - sp: %.4x", 
                                     cpu->clock, 
+                                    cpu->instruction, 
                                     cpu->regs.pc - 1, 
                                     cpu_instruction_string[cpu->intermediate.instruction], 
                                     cpu_reduced_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_reduced], 
@@ -247,8 +250,9 @@ void cpu_clock(CPU_t* cpu) {
                             }
                         } else {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU %d: PC %.4x - instruction: %s %s - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - sp: %.4x", 
                                     cpu->clock, 
+                                    cpu->instruction, 
                                     cpu->regs.pc - 1, 
                                     cpu_instruction_string[cpu->intermediate.instruction], 
                                     cpu_extended_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_extended], 
@@ -1511,7 +1515,7 @@ void cpu_clock(CPU_t* cpu) {
             }
             break;
         
-        case CS_PUSH_HIGH: 
+            case CS_PUSH_HIGH: 
             //log_msg(LP_INFO, "CPU %d: Pushing low result", cpu->clock);
             {
                 cpu->regs.sr.MNI = 1;

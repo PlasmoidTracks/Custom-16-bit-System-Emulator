@@ -144,7 +144,7 @@ void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
 
     for (int i = 0; i < count; ++i) {
         uint16_t address = base - i * 2;
-        uint16_t value = ram->data[address] | (ram->data[address + 1] << 8);
+        uint16_t value = ram->data[address - 1] | (ram->data[address] << 8);
         char* ascii = cpu_ascii_to_string(value);
 
         int16_t signed_val = (int16_t)value;
@@ -163,11 +163,11 @@ void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
         if (len > 0) reg_label[len - 1] = '\0';
 
         if (len > 0) {
-            printf("  \033[1;32m0x%04X | 0x%04X | %6d | %10.6f | <-- %s \033[0m\n",
-                address, value, signed_val, float_val, reg_label);
+            printf("  \033[1;32m0x%04X/%.1X | 0x%04X | %6d | %10.6f | <-- %s \033[0m\n",
+                address - 1, address & 0x000f, value, signed_val, float_val, reg_label);
         } else {
-            printf("  0x%04X | 0x%04X | %6d | %10.6f |\n",
-                address, value, signed_val, float_val);
+            printf("  0x%04X/%.1X | 0x%04X | %6d | %10.6f |\n",
+                address - 1, address & 0x000f, value, signed_val, float_val);
         }
 
         free(ascii);

@@ -40,13 +40,20 @@ System_t* system_create(
 
     system->bus = bus;
 
-    system->clock_order_size = 5;
+    if (ticker_active) {
+        system->clock_order_size = 4;
+    } else {
+        system->clock_order_size = 3;
+    }
     system->clock_order = malloc(sizeof(SystemClockDevice_t) * system->clock_order_size);
     system->clock_order[0] = SCD_CPU;
     system->clock_order[1] = SCD_RAM;
-    system->clock_order[3] = SCD_BUS;
-    system->clock_order[2] = SCD_TICKER;
-    system->clock_order[3] = SCD_BUS;
+    if (ticker_active) {
+        system->clock_order[2] = SCD_TICKER;
+        system->clock_order[3] = SCD_BUS;
+    } else {
+        system->clock_order[2] = SCD_BUS;
+    }
 
     system->hook = NULL;
     system->hook_count = 0;

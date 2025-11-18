@@ -51,8 +51,6 @@ Other TODO:
 Dirty cachelines
 GUI
 snapshots (export import of cpu state (also ram, bus, etc))
-add binary dump as well of finished program?
-
 
 
 rules: 
@@ -81,9 +79,6 @@ ix = tmpx + tmpy;
 
 Add note to Report, that optimizer is not safe for custom asm, only for ir output. 
 
-
-
-The OPTIMIZER requires some normalization to work, especially for indirect offset and scaled offset optimizations
 
 NEW OPTIMIZATIONS: 
 

@@ -48,6 +48,8 @@
 #define OPTIMIZE
 //#undef OPTIMIZE
 
+#define BINARY_DUMP
+#undef BINARY_DUMP
 
 #define HW_WATCH
 #undef HW_WATCH
@@ -190,6 +192,10 @@ int main(int argc, char* argv[]) {
         log_msg(LP_ERROR, "Compiler returned NULL");
         return 0;
     }
+
+    #ifdef BINARY_DUMP
+        data_export("dump.bin", bin, binary_size);
+    #endif
 
     for (long i = 0; i < binary_size; i++) {
         ram_write(system->ram, i, bin[i]);

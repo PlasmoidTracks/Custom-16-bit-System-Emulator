@@ -15,9 +15,10 @@ typedef enum {
 } SystemClockDevice_t;
 
 typedef enum {
-    HC_CHANGE, 
-    HC_MATCH, 
-    HC_READ_FROM, 
+    HC_CHANGE,          // triggers when the target value changes
+    HC_MATCH,           // triggers when the target value matches match value
+    HC_READ_FROM,       // triggers when the target was read from in ram (currently only RAM can trigger)
+    HC_ALWAYS,          // triggers every clock
 } HookCondition_t;
 
 typedef struct System_t System_t;
@@ -26,7 +27,6 @@ typedef struct Hook_t {
     void* target;
     int target_bytes;       // 2 for 16-bit values, 1 for 8-bit, etc.
     void* match;
-    int match_bytes;
     HookCondition_t condition;
     void (*action)(System_t*);
 } Hook_t;
@@ -54,7 +54,10 @@ void hook_action_halt(System_t* system);
 #define HOOK_TARGET_CPU_R3 ((void*) &system->cpu->regs.r0)
 #define HOOK_TARGET_CPU_SP ((void*) &system->cpu->regs.r0)
 #define HOOK_TARGET_CPU_PC ((void*) &system->cpu->regs.r0)
+#define HOOK_TARGET_CPU_INSTRUCTION ((void*) &system->cpu->instruction)
+#define HOOK_TARGET_CPU_CLOCK ((void*) &system->cpu->clock)
 #define HOOK_TARGET_RAM(address) ((void*) &system->ram->data[address])
+
 
 
 System_t* system_create(uint32_t ram_capacity, int cache_active, uint16_t cache_capacity, int ticker_active, float ticker_frequency);

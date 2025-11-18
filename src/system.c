@@ -204,6 +204,13 @@ void system_clock_debug(System_t *system) {
                 break;
             }
 
+            case HC_ALWAYS: {
+                if (system->hook[h].action) {
+                    system->hook[h].action(system);
+                }
+                break;
+            }
+
 
             default:
                 log_msg(LP_ERROR, "System: Unknown Hook Condition %d", system->hook[h].condition);

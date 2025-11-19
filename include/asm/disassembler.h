@@ -26,10 +26,10 @@ typedef struct Disassembly_t {
     int* is_data;
 } Disassembly_t;
 
-char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, int* instruction_bytes, DisassembleOption_t options);
+extern char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, int* instruction_bytes, DisassembleOption_t options);
 
-char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* segment, int segment_count, DisassembleOption_t options);
+extern char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* segment, int segment_count, DisassembleOption_t options);
 
-void disassembler_decompile_to_file(uint8_t* machine_code, const char filename[], long binary_size, uint16_t* segment, int segment_count, DisassembleOption_t options);
+extern void disassembler_decompile_to_file(uint8_t* machine_code, const char filename[], long binary_size, uint16_t* segment, int segment_count, DisassembleOption_t options);
 
 #endif

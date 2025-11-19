@@ -106,6 +106,4 @@ extern uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** s
 
 extern uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count);
 
-//void assembler_write(CPU_t* cpu, RAM_t* ram, uint8_t* bin, long binary_size);
-
 #endif

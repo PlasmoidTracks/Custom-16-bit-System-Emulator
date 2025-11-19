@@ -45,7 +45,7 @@ typedef struct System_t {
 } System_t;
 
 
-void hook_action_halt(System_t* system);
+extern void hook_action_halt(System_t* system);
 #define hook_action_pass NULL
 
 #define HOOK_TARGET_CPU_R0 ((void*) &system->cpu->regs.r0)
@@ -60,16 +60,16 @@ void hook_action_halt(System_t* system);
 
 
 
-System_t* system_create(uint32_t ram_capacity, int cache_active, uint16_t cache_capacity, int ticker_active, float ticker_frequency);
+extern System_t* system_create(uint32_t ram_capacity, int cache_active, uint16_t cache_capacity, int ticker_active, float ticker_frequency);
 
-void system_clock(System_t* system);
+extern void system_clock(System_t* system);
 
 // This function adds a hardware watch that allows for thorough debugging
 // These hooks include a watch-target, a trigger condition and an action-on-trigger
-void system_hook(System_t* system, Hook_t hook);
+extern void system_hook(System_t* system, Hook_t hook);
 
-void system_hook_print(System_t* system);
+extern void system_hook_print(System_t* system);
 
-void system_clock_debug(System_t *system);
+extern void system_clock_debug(System_t *system);
 
 #endif

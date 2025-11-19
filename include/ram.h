@@ -14,15 +14,15 @@ typedef struct RAM_t {
 } RAM_t;
 
 
-RAM_t* ram_create(uint32_t capacity);
+extern RAM_t* ram_create(uint32_t capacity);
 
-void ram_delete(RAM_t* ram);
+extern void ram_delete(RAM_t* ram);
 
-uint8_t ram_read(RAM_t* ram, uint16_t address);
+extern uint8_t ram_read(RAM_t* ram, uint16_t address);
 
-void ram_write(RAM_t* ram, uint16_t address, uint8_t data);
+extern void ram_write(RAM_t* ram, uint16_t address, uint8_t data);
 
-void ram_clock(RAM_t* ram);
+extern void ram_clock(RAM_t* ram);
 
 
 #endif

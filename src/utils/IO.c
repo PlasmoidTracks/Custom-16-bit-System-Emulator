@@ -34,7 +34,12 @@ char* read_file(const char* const filename, long* filesize) {
         return NULL;
     }
 
-    fread(data, 1, fsize, file);
+    int result = fread(data, 1, fsize, file);
+    if (result == 0) {
+        printf("\tERROR: fread error\n");
+        return NULL;
+    }
+
     fclose(file);
     data[fsize] = '\0';
     return data;
@@ -82,7 +87,11 @@ char* read_file64(const char* const filename, long long int* filesize) {
         return NULL;
     }
 
-    fread(data, 1, fsize, file);
+    int result = fread(data, 1, fsize, file);
+    if (result == 0) {
+        printf("\tERROR: fread error\n");
+        return NULL;
+    }
     fclose(file);
     data[fsize] = '\0';
 

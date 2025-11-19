@@ -40,18 +40,18 @@ typedef struct Device_t {
     uint64_t data;                          // the response to the request
 } Device_t;
 
-Device_t device_create(DEVICE_TYPE_t type);
+extern Device_t device_create(DEVICE_TYPE_t type);
 
 // sets the device back to idle and set processed to 0
-void device_reset(Device_t* device);
+extern void device_reset(Device_t* device);
 
 // returns 1 if the current request has been processed, else 0
-int device_check_response(Device_t* device);
+extern int device_check_response(Device_t* device);
 
 // returns the data of the device
-uint64_t device_get_data(Device_t* device);
+extern uint64_t device_get_data(Device_t* device);
 
-int device_make_request(Device_t* device, uint64_t address, uint64_t data);
+extern int device_make_request(Device_t* device, uint64_t address, uint64_t data);
 
 
 #endif

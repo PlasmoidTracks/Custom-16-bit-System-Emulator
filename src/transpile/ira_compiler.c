@@ -55,7 +55,7 @@ IRAIdentifier_t* ira_get_identifier_from_name(const char* ident_name) {
 IRATypeModifier_t ira_vardec_get_type_modifier(IRAParserToken_t* parser_token) {
     IRATypeModifier_t mod = 0;
     
-    if (parser_token->token.type == IRA_PAR_TYPE || parser_token->token.type == IRA_PAR_TYPE_MODIFIER) {
+    if ((IRAParserTokenType_t) parser_token->token.type == IRA_PAR_TYPE || (IRAParserTokenType_t) parser_token->token.type == IRA_PAR_TYPE_MODIFIER) {
         for (int i = 0; i < parser_token->child_count; i++) {
             mod |= ira_vardec_get_type_modifier(parser_token->child[i]);
         }
@@ -120,6 +120,7 @@ char* ira_compile(IRAParserToken_t** parser_token, long parser_token_count, IRAC
     long code_output_len = 0;         // current length of code output
 
     long parser_token_index = 0;
+    (void) options;
 
     while (parser_token_index < parser_token_count) {
         IRAParserToken_t* token = parser_token[parser_token_index];
@@ -158,7 +159,7 @@ char* ira_compile(IRAParserToken_t** parser_token, long parser_token_count, IRAC
                 // handle type cast operation
                 // check if right side is same type as left side
                 IRAIdentifier_t* ident = ira_get_identifier_from_name(token->child[0]->token.raw);
-                IRAType_t left_ident_type = ident->type;
+                //IRAType_t left_ident_type = ident->type;
                 log_msg(LP_INFO, "name %s - type %d - mod %d", ident->name, ident->type, ident->type_modifier);
 
                 IRAParserToken_t* expr = token->child[2];

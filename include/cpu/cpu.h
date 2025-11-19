@@ -147,27 +147,27 @@ typedef struct CPU_t {
 } CPU_t;
 
 
-CPU_t* cpu_create(void);
+extern CPU_t* cpu_create(void);
 
-void cpu_delete(CPU_t* cpu);
+extern void cpu_delete(CPU_t* cpu);
 
-void cpu_mount_cache(CPU_t* cpu, Cache_t* cache);
+extern void cpu_mount_cache(CPU_t* cpu, Cache_t* cache);
 
-void cpu_print_cache(CPU_t* cpu);
+extern void cpu_print_cache(CPU_t* cpu);
 
-void cpu_print_state(CPU_t* cpu);
+extern void cpu_print_state(CPU_t* cpu);
 
-void cpu_print_state_compact(CPU_t* cpu);
+extern void cpu_print_state_compact(CPU_t* cpu);
 
-void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count);
+extern void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count);
 
-void cpu_print_stack_compact(CPU_t* cpu, RAM_t* ram, int count);
+extern void cpu_print_stack_compact(CPU_t* cpu, RAM_t* ram, int count);
 
-int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data);
+extern int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data);
 
-int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data);
+extern int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data);
 
-void cpu_clock(CPU_t* cpu);
+extern void cpu_clock(CPU_t* cpu);
 
 
 #endif

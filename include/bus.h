@@ -14,13 +14,13 @@ typedef struct BUS_t {
     Device_t* device[16];       // the devices connected to the bus
 } BUS_t;
 
-BUS_t* bus_create(void);
+extern BUS_t* bus_create(void);
 
-void bus_delete(BUS_t* bus);
+extern void bus_delete(BUS_t* bus);
 
-void bus_add_device(BUS_t* bus, Device_t* device);
+extern void bus_add_device(BUS_t* bus, Device_t* device);
 
-void bus_clock(BUS_t* bus);
+extern void bus_clock(BUS_t* bus);
 
 
 #endif

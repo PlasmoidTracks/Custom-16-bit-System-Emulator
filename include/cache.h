@@ -28,16 +28,16 @@ typedef struct Cache_t {
 } Cache_t;
 
 
-Cache_t* cache_create(uint16_t capacity);
+extern Cache_t* cache_create(uint16_t capacity);
 
-void cache_delete(Cache_t* cache);
+extern void cache_delete(Cache_t* cache);
 
-int cache_read(Cache_t* cache, uint16_t address, uint8_t* data, int skipRead);
+extern int cache_read(Cache_t* cache, uint16_t address, uint8_t* data, int skipRead);
 
 // cache_write returns 1 if a dirty write has happened, else 0
-int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size, int skipWrite);
+extern int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size, int skipWrite);
 
-int cache_invalidate(Cache_t* cache);
+extern int cache_invalidate(Cache_t* cache);
 
 #endif
 

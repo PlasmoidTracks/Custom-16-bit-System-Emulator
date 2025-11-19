@@ -916,7 +916,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     break;
 
                 default:
-                    log_msg(LP_ERROR, "Parsing expressions: Unhandled admr: \"%s\"", cpu_reduced_addressing_mode_string[instruction[instruction_index].admr]);
+                    log_msg(LP_ERROR, "Parsing expressions: Unhandled admr: \"%d\"", instruction[instruction_index].admr);
                     break;
             }
             instruction[instruction_index].argument_bytes = argument_bytes_used;

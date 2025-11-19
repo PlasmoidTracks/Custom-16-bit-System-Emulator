@@ -377,6 +377,8 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
 
     long parser_token_index = 0;
 
+    (void) options;
+
     // default header
     code_output = append_to_output(code_output, &code_output_len, "; code setup\n");
     code_output = append_to_output(code_output, &code_output_len, ".address 0\n.code\ncall .main\nhlt\n");

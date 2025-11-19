@@ -48,6 +48,8 @@ extern void log_msg_sparse(LOG_PRIORITY priority, double time, const char* forma
 
 extern void log_count(void);
 
+#define log_tracer() log_msg(LP_DEBUG, "%s :: line %d", __FILE__, __LINE__)
+
 #endif
 
 /*

@@ -320,6 +320,7 @@ char* optimizer_compile(char* content) {
                         && instruction[i + 1].admr == ADMR_IND_R0
                     ) {
                         //log_msg(LP_DEBUG, "Optimizer: replaced two step immediate dereference write with one step dereference");
+                        instruction[i + 1].expression[1].tokens[1].raw = realloc(instruction[i + 1].expression[1].tokens[1].raw, strlen(instruction[i].expression[2].tokens[0].raw) + 1);
                         sprintf(instruction[i + 1].expression[1].tokens[1].raw, "%s", instruction[i].expression[2].tokens[0].raw);
                         instruction[i + 1].admr = ADMR_IND16; 
                         remove_instruction(instruction, &instruction_count, i);
@@ -356,7 +357,13 @@ char* optimizer_compile(char* content) {
                 ) && instruction[i + 2].instruction == MOV) {
                     if (instruction[i].admr == instruction[i + 2].admr && is_same_adm(instruction[i].admr, instruction[i + 1].admx)) {
                         //log_msg(LP_DEBUG, "Optimizer: eliminated temporary register forwarding (line %d)", i);
-                        instruction[i + 1].expression[2] = instruction[i].expression[2];
+                        instruction[i + 1].expression[2].token_count = instruction[i].expression[2].token_count;
+                        instruction[i + 1].expression[2].type = instruction[i].expression[2].type;
+                        for (int j = 0; j < instruction[i].expression[2].token_count; j++) {
+                            instruction[i + 1].expression[2].tokens[j].type = instruction[i].expression[2].tokens[j].type;
+                            instruction[i + 1].expression[2].tokens[j].raw = realloc(instruction[i + 1].expression[2].tokens[j].raw, strlen(instruction[i].expression[2].tokens[j].raw) + 1);
+                            memcpy(instruction[i + 1].expression[2].tokens[j].raw, instruction[i].expression[2].tokens[j].raw, strlen(instruction[i].expression[2].tokens[j].raw) + 1);
+                        }
                         instruction[i + 1].admx = instruction[i].admx;
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
@@ -517,6 +524,7 @@ char* optimizer_compile(char* content) {
                     && instruction[i].admx < ADMX_IND_R0_OFFSET16  // ADMX_IND16, ADMX_IND_R0, ADMX_IND_R1, ADMX_IND_R2, ADMX_IND_R3, ADMX_IND_SP, ADMX_IND_PC, 
                 ) {
                     //log_msg(LP_DEBUG, "Optimizer: replaced lea with direct move instruction (line %d)", i);
+                    instruction[i].expression[0].tokens[0].raw = realloc(instruction[i].expression[0].tokens[0].raw, strlen(cpu_instruction_string[MOV]) + 1);
                     sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
                     instruction[i].instruction = MOV;
                     if (instruction[i].admx == ADMX_IND16) {
@@ -715,12 +723,8 @@ char* optimizer_compile(char* content) {
                         //log_msg(LP_DEBUG, "Optimizer: reduced intermediate register use (line %d)", i);
 
                         for (int t = 0; t < instruction[i].expression[2].token_count; t++) {
-                            if (instruction[i + 2].expression[2].tokens[t].raw != NULL) {
-                                free(instruction[i + 2].expression[2].tokens[t].raw);
-                            }
-                            char* tmp = malloc(strlen(instruction[i].expression[2].tokens[t].raw) + 1);
-                            sprintf(tmp, "%s", instruction[i].expression[2].tokens[t].raw);
-                            instruction[i + 2].expression[2].tokens[t].raw = tmp;
+                            instruction[i + 2].expression[2].tokens[t].raw = realloc(instruction[i + 2].expression[2].tokens[t].raw, strlen(instruction[i].expression[2].tokens[t].raw) + 1);
+                            sprintf(instruction[i + 2].expression[2].tokens[t].raw, "%s", instruction[i].expression[2].tokens[t].raw);
                         }
                         instruction[i + 2].expression[2].token_count = instruction[i].expression[2].token_count;
                         instruction[i + 2].admx = instruction[i].admx;

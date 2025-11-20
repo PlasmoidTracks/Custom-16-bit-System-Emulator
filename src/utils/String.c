@@ -9,6 +9,7 @@
 
 
 int contains(char character, char* matches) {
+    if (!matches) {return 1;}
     int index = 0;
     while (matches[index] != '\0') {
         if (character == matches[index]) {

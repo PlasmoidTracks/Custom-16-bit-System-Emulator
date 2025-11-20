@@ -22,6 +22,7 @@ typedef enum {
 typedef struct IRIdentifier_t {
     char name[256];
     IRTypeModifier_t type_modifier;
+    int is_stack_variable;
     union {
         int stack_offset;
         int absolute_address;

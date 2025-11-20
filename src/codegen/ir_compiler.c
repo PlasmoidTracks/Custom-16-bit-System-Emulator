@@ -443,6 +443,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].absolute_address = data_segment_address + (2 * static_identifier_count);
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = static_identifier_count;
+                        ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].is_stack_variable = 0;
                         //log_msg(LP_DEBUG, "IR: Added static ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         static_identifier_count ++;
@@ -453,6 +454,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].stack_offset = -2 * (1 + identifier_offset[ir_identifier_scope_depth]);
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = ir_identifier_index[ir_identifier_scope_depth];
+                        ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].is_stack_variable = 1;
                         //log_msg(LP_DEBUG, "IR: Added ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         identifier_offset[ir_identifier_scope_depth] += 1;
@@ -790,9 +792,25 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 code_output = append_to_output(code_output, &code_output_len, "; inline assembly\n");
                 // TODO: First solve expression, then save it in r1, the find ir_identifier, set r0 to the ident and mov indirectly?
                 const char* asm = parser_token[parser_token_index]->child[1]->token.raw;
-                char inline_asm[strlen(asm)];
+                char inline_asm[strlen(asm) + 16];
                 strncpy(inline_asm, asm + 1, strlen(asm) - 2);
                 inline_asm[strlen(asm) - 2] = '\0';
+                log_msg(LP_EMERGENCY, "inline asm: \"%s\"", inline_asm);
+                // ToDo: Parse the inline asm and check for keywords matching known variable names
+                char** splits = split(inline_asm, " ,", "");
+                int index = 0;
+                while (splits[index]) {
+                    IRIdentifier_t* ident = ir_get_identifier_from_name(splits[index]);
+                    if (ident) {
+                        if (ident->is_stack_variable) {
+                            sprintf(&inline_asm[strlen(inline_asm) - strlen(ident->name)], "[$%.4X + r3]", ((int16_t) ident->stack_offset) & 0xffff);
+                        } else {
+                            sprintf(&inline_asm[strlen(inline_asm) - strlen(ident->name)], "[$%.4X]", ((int16_t) ident->absolute_address) & 0xffff);
+                        }
+                        break;
+                    }
+                    index ++;
+                }
                 code_output = append_to_output(code_output, &code_output_len, inline_asm);
                 code_output = append_to_output(code_output, &code_output_len, "\n");
                 parser_token_index ++;

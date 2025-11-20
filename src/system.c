@@ -40,20 +40,16 @@ System_t* system_create(
 
     system->bus = bus;
 
+    system->clock_order_size = 0;
+    system->clock_order = malloc(sizeof(SystemClockDevice_t) * 16);
+    system->clock_order[system->clock_order_size++] = SCD_CPU;
+    system->clock_order[system->clock_order_size++] = SCD_BUS;
+    system->clock_order[system->clock_order_size++] = SCD_RAM;
     if (ticker_active) {
-        system->clock_order_size = 4;
-    } else {
-        system->clock_order_size = 3;
+        system->clock_order[system->clock_order_size++] = SCD_BUS;
+        system->clock_order[system->clock_order_size++] = SCD_TICKER;
     }
-    system->clock_order = malloc(sizeof(SystemClockDevice_t) * system->clock_order_size);
-    system->clock_order[0] = SCD_CPU;
-    system->clock_order[1] = SCD_RAM;
-    if (ticker_active) {
-        system->clock_order[2] = SCD_TICKER;
-        system->clock_order[3] = SCD_BUS;
-    } else {
-        system->clock_order[2] = SCD_BUS;
-    }
+    system->clock_order[system->clock_order_size++] = SCD_BUS;
 
     system->hook = NULL;
     system->hook_count = 0;
@@ -138,15 +134,7 @@ void system_clock_debug(System_t *system) {
         return;
     }
     system_clock(system);
-    // here add hw watches, or other breakpoints
-    /*
-    hw_watch: check specific ram addresses or cpu registers to detect certain values, value changes, value ranges, etc. 
-    on HW match CONDITION do ACTION. 
-    HW can be a memory address or a cpu register. 
-    CONDITION can be exact, a range, a change, or "read from"
-    ACTION can be to halt the cpu, to print hw info, to force-set values 
-    */
-
+    
     // save intermediate values again
     int index = 0;
     for (int h = 0; h < system->hook_count; h++) {

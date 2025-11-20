@@ -15,7 +15,6 @@ Check wether 32-bit value emulation is possible
 
 BUGS:
 commented strings count as strings : // "string"
-keywords only check prefix, so "variable" turns into "var"/LEX_VAR + "iable"/LEX_IDENTIFIER
 
 
 
@@ -27,7 +26,6 @@ array allocation (no, this is a feature of higher level languages, we alread got
 string values (16-bit per char) (perhaps same reasoning as arrays? Keep them in higher level langs, though asm DOES support strings...)
 display the scope context for variable names in the commented section after variable fetch in asm
 warn on assigning too large values
-make the lexer check for FULL words, not just check for matching prefixes
 make code segments explicitly use ".code", or should it be part of the IR?
 string assignment (var = "test";) [NO, this is high level]
 add copmiler options:

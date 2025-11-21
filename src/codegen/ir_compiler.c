@@ -795,8 +795,6 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 char inline_asm[strlen(asm) + 16];
                 strncpy(inline_asm, asm + 1, strlen(asm) - 2);
                 inline_asm[strlen(asm) - 2] = '\0';
-                log_msg(LP_EMERGENCY, "inline asm: \"%s\"", inline_asm);
-                // ToDo: Parse the inline asm and check for keywords matching known variable names
                 char** splits = split(inline_asm, " ,", "");
                 int index = 0;
                 while (splits[index]) {

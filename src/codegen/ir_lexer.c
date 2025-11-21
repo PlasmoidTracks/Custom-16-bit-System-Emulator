@@ -355,7 +355,13 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
         for (int i = 0; i < IR_LEX_TOKEN_COUNT; i++) {
             if (!lexer_token_has_fixed_form[i]) {continue;} // not in fixed form, so we skip
             if (!lexer_compare_keyword(source, index, ir_lexer_token_literal[i], source_length)) {continue;} // string comparison failed
-            //if (contains(source[index + strlen(ir_lexer_token_literal[i])], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {continue;}  // keyword cannot be continuing with another alphanumerical
+            if (contains(source[index + strlen(ir_lexer_token_literal[i])], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
+                // keyword cannot be continuing with another alphanumerical
+                // Unless the last character of the matching token was not an alphanumeric itself: 
+                if (contains(source[index + strlen(ir_lexer_token_literal[i]) - 1], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
+                    continue;
+                }
+            }
             //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[i], ir_lexer_token_literal[i]);
             IRLexerToken_t token = {
                 .type = i, 
@@ -432,6 +438,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
 
         log_msg(LP_ERROR, "NO MATCH FOUND!");
         log_msg(LP_INFO, "The following text contains the error: \n=====================\n%s\n=====================", &source[index]);
+        log_msg(LP_INFO, "More context: \n=====================\n%s\n=====================", &source[index - 16]);
         exit(1);
     }
 

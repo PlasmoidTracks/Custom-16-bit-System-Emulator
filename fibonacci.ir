@@ -32,6 +32,8 @@ static var time;
 
     var abc;
     abc = time;
+
+    asm "mov r2, out";
     
     scopeend;
     return;

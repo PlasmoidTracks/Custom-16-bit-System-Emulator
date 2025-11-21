@@ -1,9 +1,6 @@
 static var N;
-static var xyz;
+static var recursive_function_calls;
 static var time;
-
-
-.address 0x3000;
 
 .main
     scopebegin;
@@ -15,83 +12,80 @@ static var time;
     funcptr = .irq_handler;
     deref address = funcptr;
 
-    N = 16;
+    N = 23;
 
     // create the output variable and set to -1
-    var out;
-    out = 0i-1;
+    var result;
+    result = 0i-1;
 
     // create reference of output variable for the function parameter
-    var dout;
-    dout = ref out;
+    var ptr_result;
+    ptr_result = ref result;
 
-    callpusharg dout;
+    callpusharg ptr_result;
     callpusharg N;
     call .fib;
     callfreearg 4;
 
     var abc;
     abc = time;
-
-    asm "mov r2, out";
     
+    asm "mov r0, result";
+    asm "mov r1, time";
+    asm "mov r2, recursive_function_calls";
     scopeend;
     return;
-
-.address 0x1000;
 
 .fib
     scopebegin;
 
-    xyz = xyz i+ 1;
+    recursive_function_calls = recursive_function_calls i+ 1;
 
     // get return argument
-    var ppo;
-    ppo = arg i+ 2;
-    var po;
-    po = deref ppo;
+    var ptrptr_result;
+    ptrptr_result = arg i+ 2;
+    var ptr_result;
+    ptr_result = deref ptrptr_result;
 
     // get argument
-    var pn;
-    pn = arg i+ 0;
-    var n;
-    n = deref pn;
+    var ptr_arg_N;
+    ptr_arg_N = arg i+ 0;
+    var arg_N;
+    arg_N = deref ptr_arg_N;
 
-    // check if n <= 1
-    var cond;
-    cond = n i> 1;
+    // check if arg_N <= 1
+    var condition;
+    condition = arg_N i> 1;
 
-    if cond .valid;
-    deref po = n;
+    if condition .valid;
+    deref ptr_result = arg_N;
     return
     .valid
-
     
     // return fib(n-2) + fib(n-1)
-    var fib_m2;
-    var dfib_m2;
-    dfib_m2 = ref fib_m2;
-    var agm2;
-    agm2 = n i- 2;
-    callpusharg dfib_m2;
-    callpusharg agm2;
+    var result_N_minus_2;
+    var ptr_result_N_minus_2;
+    ptr_result_N_minus_2 = ref result_N_minus_2;
+    var N_minus_2;
+    N_minus_2 = arg_N i- 2;
+    callpusharg ptr_result_N_minus_2;
+    callpusharg N_minus_2;
     call .fib;
     callfreearg 4;
 
-    var fib_m1;
-    var dfib_m1;
-    dfib_m2 = ref fib_m1;
-    var agm1;
-    agm1 = n i- 1;
-    callpusharg dfib_m2;
-    callpusharg agm1;
+    var result_N_minus_1;
+    var ptr_result_N_minus_1;
+    ptr_result_N_minus_1 = ref result_N_minus_1;
+    var N_minus_1;
+    N_minus_1 = arg_N i- 1;
+    callpusharg ptr_result_N_minus_1;
+    callpusharg N_minus_1;
     call .fib;
     callfreearg 4;
 
     var sum;
-    sum = fib_m2 i+ fib_m1;
-    deref po = sum;
-    
+    sum = result_N_minus_2 i+ result_N_minus_1;
+    deref ptr_result = sum;
 
     scopeend;
     return;

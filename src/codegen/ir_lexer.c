@@ -355,10 +355,10 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
         for (int i = 0; i < IR_LEX_TOKEN_COUNT; i++) {
             if (!lexer_token_has_fixed_form[i]) {continue;} // not in fixed form, so we skip
             if (!lexer_compare_keyword(source, index, ir_lexer_token_literal[i], source_length)) {continue;} // string comparison failed
-            if (contains(source[index + strlen(ir_lexer_token_literal[i])], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
+            if (contains(source[index + strlen(ir_lexer_token_literal[i])], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")) {
                 // keyword cannot be continuing with another alphanumerical
                 // Unless the last character of the matching token was not an alphanumeric itself: 
-                if (contains(source[index + strlen(ir_lexer_token_literal[i]) - 1], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
+                if (contains(source[index + strlen(ir_lexer_token_literal[i]) - 1], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")) {
                     continue;
                 }
             }

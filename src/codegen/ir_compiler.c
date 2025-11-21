@@ -6,6 +6,7 @@
 
 #include "Log.h"
 
+#include "asm/assembler.h"
 #include "utils/String.h"
 
 #include "codegen/ir_parser.h"
@@ -795,19 +796,49 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 char inline_asm[strlen(asm) + 16];
                 strncpy(inline_asm, asm + 1, strlen(asm) - 2);
                 inline_asm[strlen(asm) - 2] = '\0';
-                char** splits = split(inline_asm, " ,", "");
+                char** splits = split(inline_asm, " ,\t", "");
                 int index = 0;
+                int found_ident = 0;
                 while (splits[index]) {
                     IRIdentifier_t* ident = ir_get_identifier_from_name(splits[index]);
                     if (ident) {
+                        found_ident = 1;
                         if (ident->is_stack_variable) {
-                            sprintf(&inline_asm[strlen(inline_asm) - strlen(ident->name)], "[$%.4X + r3]", ((int16_t) ident->stack_offset) & 0xffff);
+                            splits[index] = realloc(splits[index], 32);
+                            sprintf(splits[index], "[$%.4X + r3]", ((int16_t) ident->stack_offset) & 0xffff);
                         } else {
-                            sprintf(&inline_asm[strlen(inline_asm) - strlen(ident->name)], "[$%.4X]", ((int16_t) ident->absolute_address) & 0xffff);
+                            sprintf(splits[index], "[$%.4X]", ((int16_t) ident->absolute_address) & 0xffff);
                         }
                         break;
                     }
                     index ++;
+                }
+                // merge splits into one
+                int offset = 0;
+                index = 0;
+                while (splits[index]) {
+                    char tmp[32];
+                    if (splits[index + 1] == NULL || index == 2) {
+                        sprintf(tmp, "%s", splits[index]);
+                    } else if (index == 0) {
+                        sprintf(tmp, "%s ", splits[index]);
+                    } else if (index == 1) {
+                        sprintf(tmp, "%s, ", splits[index]);
+                    }
+                    sprintf(&inline_asm[offset], "%s", tmp);
+                    offset += strlen(tmp);
+                    index++;
+                }
+
+                if (!found_ident) {
+                    int token_count = 0;
+                    Token_t* tokens = assembler_parse_words(splits, index, &token_count);
+                    Expression_t* expr = assembler_parse_token(tokens, token_count, NULL);
+                    if (!expr || expr->type == EXPR_INSTRUCTION) {
+                        log_msg(LP_ERROR, "IR: Symbolic address in inline-assembly either doesn't exist, or is out of scope");
+                        log_msg(LP_INFO, "IR: Symbolic operand in question from this inline-assembly line: %s", asm);
+                        return NULL;
+                    }
                 }
                 code_output = append_to_output(code_output, &code_output_len, inline_asm);
                 code_output = append_to_output(code_output, &code_output_len, "\n");

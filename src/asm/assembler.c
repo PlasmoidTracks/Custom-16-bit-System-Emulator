@@ -174,7 +174,9 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
     }
     //free(word);
 
-    *token_count = word_count;
+    if (token_count) {
+        *token_count = word_count;
+    }
 
     return token;
 }
@@ -459,12 +461,15 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                     log_msg(LP_NOTICE, "ASSEMBLER: Parsing tokens: ^^^ The sequence of tokens, starting with the upper one, is unknown ^^^");
                 }
             }
-            exit(1);
+            //exit(1);
+            return NULL;
             token_index ++;
         }
     }
     
-    *expression_count = expression_index;
+    if (expression_count) {
+        *expression_count = expression_index;
+    }
 
     return expression;
 }
@@ -791,7 +796,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     default:
                         log_msg(LP_ERROR, "Parsing expressions: Unknown admx \"%s\"", expression_type_string[expression[expression_index].type]);
                         log_msg(LP_INFO, "Parsing expressions: Here is a breakdown of all the expressions:");
-                        for (int i = 0; i < expression_count; i++) {
+                        for (int i = ((expression_index - 8 > 0) ? (expression_index - 8) : 0); i < ((expression_index + 8 < expression_count) ? (expression_index + 8) : expression_count); i++) {
                             log_msg_inline(LP_INFO, "Parsing expressions: Expression %d :: \"%s\", [", i + 1, expression_type_string[expression[i].type]);
                             for (int j = 0; j < expression[i].token_count; j++) {
                                 printf("%s", expression[i].tokens[j].raw);

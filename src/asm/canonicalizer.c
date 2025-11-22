@@ -107,7 +107,7 @@ char* canonicalizer_compile(char* content) {
 
                     else {
                         output = append_to_output(output, &output_len, "; UNKNOWN\n");
-                        log_msg(LP_ERROR, "CANONICALIZER: Unknown configuration for indirect register with 16-bit offset");
+                        log_msg(LP_ERROR, "Canonicalizer: Unknown configuration for indirect register with 16-bit offset");
                     }
                 } else if ((instr.admx == ADMX_IND16_SCALED8_R0_OFFSET
                     || instr.admx == ADMX_IND16_SCALED8_R1_OFFSET
@@ -212,7 +212,7 @@ char* canonicalizer_compile(char* content) {
 
                     else {
                         output = append_to_output(output, &output_len, "; UNKNOWN\n");
-                        log_msg(LP_ERROR, "CANONICALIZER: Unknown configuration for scaled indirect register with offset");
+                        log_msg(LP_ERROR, "Canonicalizer: Unknown configuration for scaled indirect register with offset");
                     }
                 } else {
                     int tc = instr.expression[j].token_count;
@@ -251,7 +251,7 @@ char* canonicalizer_compile_from_file(const char* filename) {
     // load raw text from file
     char* content = read_file(filename, NULL);
     if (!content) {
-        log_msg(LP_ERROR, "read_file failed");
+        log_msg(LP_ERROR, "Canonicalizer: read_file failed");
         return NULL;
     }
     char* machine_code = canonicalizer_compile(content);

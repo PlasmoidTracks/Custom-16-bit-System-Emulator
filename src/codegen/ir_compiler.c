@@ -86,6 +86,7 @@ IRTypeModifier_t vardec_get_type_modifier(IRParserToken_t* parser_token) {
 
 
 void parser_evaluate_expression(char** output, long* length, IRParserToken_t* expr) {
+    // Solves the expression and stores the intermediate value in r0
     if (expr->child_count == 1) {
         IRLexerToken_t token = expr->child[0]->token;
         switch (token.type) {
@@ -835,9 +836,20 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                     Token_t* tokens = assembler_parse_words(splits, index, &token_count);
                     Expression_t* expr = assembler_parse_token(tokens, token_count, NULL);
                     if (!expr || expr->type == EXPR_INSTRUCTION) {
-                        log_msg(LP_ERROR, "IR: Symbolic address in inline-assembly either doesn't exist, or is out of scope");
-                        log_msg(LP_INFO, "IR: Symbolic operand in question from this inline-assembly line: %s", asm);
-                        return NULL;
+                        // check if valid instruction
+                        int is_valid_instruction = 0;
+                        for (int i = 0; i < INSTRUCTION_COUNT; i++) {
+                            //printf("%s vs %s : %d\n", expression[expression_index].tokens[0].raw, cpu_instruction_string[i], strcmp(expression[expression_index].tokens[0].raw, cpu_instruction_string[i]));
+                            if (strcmp(expr->tokens[0].raw, cpu_instruction_string[i]) == 0) {
+                                is_valid_instruction = 1;
+                                break;
+                            }
+                        }
+                        if (!is_valid_instruction) {
+                            log_msg(LP_ERROR, "IR: Symbolic address in inline-assembly either doesn't exist, or is out of scope");
+                            log_msg(LP_INFO, "IR: Symbolic operand in question from this inline-assembly line: %s", asm);
+                            return NULL;
+                        }
                     }
                 }
                 code_output = append_to_output(code_output, &code_output_len, inline_asm);

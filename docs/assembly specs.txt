@@ -30,7 +30,7 @@ admr (Reduced Operand)
 -----------------------
 Used as destination in two-operand instructions or in single-operand writeback instructions.
 
-- Register Direct:      r0, r1, r2, r3, sp, fp
+- Register Direct:      r0, r1, r2, r3, sp, pc
 - Indirect Immediate:   [$1234]
 - Indirect Register:    [r0]
 
@@ -39,7 +39,7 @@ admx (Extended Operand)
 Used as source in instructions.
 
 - Immediate 16-bit:                     $1234
-- Register Direct:                      r0, r1, r2, r3, sp, fp, pc
+- Register Direct:                      r0, r1, r2, r3, sp, pc
 - Indirect Immediate:                   [$1234]
 - Indirect Register:                    [r0], [r1], [sp], [pc], etc.
 - Indirect Register + Immediate Offset: [$1234 + r0], [$1234 + sp], etc.

@@ -8,13 +8,11 @@
 
 #include "String.h"
 #include "bus.h"
-#include "cache.h"
 #include "cpu/cpu.h"
 #include "cpu/cpu_utils.h"
 #include "include/utils/Log.h"
 #include "ram.h"
 #include "system.h"
-#include "ticker.h"
 
 #include "asm/assembler.h"
 #include "asm/disassembler.h"
@@ -49,7 +47,7 @@
 //#undef OPTIMIZE
 
 #define BINARY_DUMP
-#undef BINARY_DUMP
+//#undef BINARY_DUMP
 
 #define HW_WATCH
 #undef HW_WATCH
@@ -65,16 +63,23 @@ int main(int argc, char* argv[]) {
     LOG_LEVEL = LP_MINPRIO;
     
     // Hardware step
-    System_t* system = system_create(1<<16, 1, 64, 1, 1000.0);
+    System_t* system = system_create(
+        1<<16, 
+        1, 
+        64, 
+        1, 
+        1000.0
+    );
 
     #ifdef HW_WATCH
+        uint16_t match = 0x10ee;
         system_hook(
             system, 
             (Hook_t) {
-                .target = HOOK_TARGET_RAM(0x3ff5), 
+                .target = HOOK_TARGET_CPU_PC, 
                 .target_bytes = sizeof(uint16_t), 
-                .match = NULL, 
-                .condition = HC_READ_FROM, 
+                .match = &match, 
+                .condition = HC_MATCH, 
                 .action = hook_action_halt
             }
         );
@@ -94,22 +99,23 @@ int main(int argc, char* argv[]) {
     #ifdef COMPILE_IRA
         content = read_file(argv[1], &content_size);
         if (!content) {
-            log_msg(LP_ERROR, "read_file failed");
+            log_msg(LP_ERROR, "IRA: read_file failed");
             return 1;
         }
-
         IRALexerToken_t* ira_lexer_token = ira_lexer_parse(content, content_size, &lexer_token_count);
         if (!ira_lexer_token) {
-            log_msg(LP_ERROR, "lexer returned NULL");
+            log_msg(LP_ERROR, "IRA: Lexer returned NULL");
             return 1;
         }
-
         long ira_parser_root_count = 0;
         IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &ira_parser_root_count);
-
+        if (!ira_parser_token) {
+            log_msg(LP_ERROR, "IRA: Parser returned NULL");
+            return 1;
+        }
         char* ir = ira_compile(ira_parser_token, ira_parser_root_count, 0xffffffff);
         if (!ir) {
-            log_msg(LP_ERROR, "ira compiler returned NULL");
+            log_msg(LP_ERROR, "IRA: Compiler returned NULL");
             return 1;
         }
         data_export(filename, ir, strlen(ir));
@@ -122,28 +128,26 @@ int main(int argc, char* argv[]) {
     #ifdef COMPILE_IR
         content = read_file(filename, &content_size);
         if (!content) {
-            log_msg(LP_ERROR, "read_file failed");
+            log_msg(LP_ERROR, "IR: read_file failed");
             return 1;
         }
         IRLexerToken_t* lexer_token = ir_lexer_parse(content, content_size, &lexer_token_count);
         if (!lexer_token) {
-            log_msg(LP_ERROR, "lexer returned NULL");
+            log_msg(LP_ERROR, "IR: Lexer returned NULL");
             return 1;
         }
-
         long parser_root_count = 0;
         IRParserToken_t** parser_token = ir_parser_parse(lexer_token, lexer_token_count, &parser_root_count);
-
-        char* asm = ir_compile(parser_token, parser_root_count, 0xffffffff);
-        if (!asm) {
-            log_msg(LP_ERROR, "ir compiler returned NULL");
+        if (!lexer_token) {
+            log_msg(LP_ERROR, "IR: Parser returned NULL");
             return 1;
         }
-
-        //sprintf(filename, "%s.asm", filename);
-        
+        char* asm = ir_compile(parser_token, parser_root_count, 0xffffffff);
+        if (!asm) {
+            log_msg(LP_ERROR, "IR: Compiler returned NULL");
+            return 1;
+        }
         filename = append_filename(filename, ".asm");
-        
         data_export(filename, asm, strlen(asm));
     #endif
 
@@ -151,7 +155,7 @@ int main(int argc, char* argv[]) {
     #ifdef CANONICALIZE
         char* canon_asm = canonicalizer_compile_from_file(filename);
         if (!canon_asm) {
-            log_msg(LP_ERROR, "canonicalizer returned NULL");
+            log_msg(LP_ERROR, "Canonicalizer: Returned NULL");
             return 1;
         }
         filename = append_filename(filename, ".can");
@@ -162,7 +166,7 @@ int main(int argc, char* argv[]) {
     #ifdef MACRO_EXPAND
         char* expanded_asm = macro_code_expand_from_file(filename);
         if (!expanded_asm) {
-            log_msg(LP_ERROR, "macro expander returned NULL");
+            log_msg(LP_ERROR, "Macro expander: Returned NULL");
             return 1;
         }
         filename = append_filename(filename, ".exp");
@@ -173,11 +177,10 @@ int main(int argc, char* argv[]) {
     #ifdef OPTIMIZE
         char* optimized_asm = optimizer_compile_from_file(filename);
         if (!optimized_asm) {
-            log_msg(LP_ERROR, "optimizer returned NULL");
+            log_msg(LP_ERROR, "Optimizer: Returned NULL");
             return 1;
         }
         filename = append_filename(filename, ".opt");
-
         data_export(filename, optimized_asm, strlen(optimized_asm));
     #endif
 
@@ -189,7 +192,7 @@ int main(int argc, char* argv[]) {
     uint8_t* bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count);
     
     if (!bin) {
-        log_msg(LP_ERROR, "Compiler returned NULL");
+        log_msg(LP_ERROR, "Assembler: Returned NULL");
         return 0;
     }
 
@@ -202,7 +205,7 @@ int main(int argc, char* argv[]) {
     }
 
     disassembler_decompile_to_file(system->ram->data, "disassemble.asm", binary_size, segment, segment_count, 
-        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (DO_ADD_RAW_BYTES)));
+        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
     free(segment);    
 
     // Execution step

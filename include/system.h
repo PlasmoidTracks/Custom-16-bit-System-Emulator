@@ -60,7 +60,7 @@ extern void hook_action_halt(System_t* system);
 
 
 
-extern System_t* system_create(uint32_t ram_capacity, int cache_active, uint16_t cache_capacity, int ticker_active, float ticker_frequency);
+extern System_t* system_create(int cache_active, uint16_t cache_capacity, int ticker_active, float ticker_frequency);
 
 extern void system_clock(System_t* system);
 

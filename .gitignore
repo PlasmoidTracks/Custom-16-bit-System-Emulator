@@ -1,0 +1,17 @@
+# Ignore build artifacts
+main
+
+# Ignore common temp files
+*.log
+*.tmp
+*.swp
+
+# Ignore editor/IDE folders
+.vscode/
+.idea/
+.cache/
+
+# Ignore custom folders
+Compiler pipeline/
+custom-asm/
+obj/

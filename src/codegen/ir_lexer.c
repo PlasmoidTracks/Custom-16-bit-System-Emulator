@@ -72,7 +72,7 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     "~",             // IR_LEX_BITWISE_NOT
     "^",             // IR_LEX_BITWISE_XOR
     "!",             // IR_LEX_BANG
-    "%%",            // IR_LEX_PERCENT
+    "%",             // IR_LEX_PERCENT
 
     // Literals.
     NULL,            // IR_LEX_IDENTIFIER
@@ -89,7 +89,7 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
 };
 
 
-const int lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
+const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     0,  // 0 — unused
 
     // Keywords.
@@ -169,14 +169,14 @@ const int lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
 
 
 
-IRLexerToken_t* lexer_add_token(IRLexerToken_t* lexer_token_list, long* token_count, IRLexerToken_t token) {
+IRLexerToken_t* ir_lexer_add_token(IRLexerToken_t* lexer_token_list, long* token_count, IRLexerToken_t token) {
     lexer_token_list = realloc(lexer_token_list, sizeof(IRLexerToken_t) * ((*token_count) + 1));
     lexer_token_list[*token_count] = token;
     (*token_count) ++;
     return lexer_token_list;
 }
 
-int lexer_compare_keyword(char* source, long index, const char* keyword, long source_length) {
+int ir_lexer_compare_keyword(char* source, long index, const char* keyword, long source_length) {
     int strl = strlen(keyword);
     char control[strl + 1];
     strncpy(control, &source[index], strl);
@@ -215,7 +215,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
         }
 
         // check for comments
-        if (lexer_compare_keyword(source, index, "//", source_length)) {
+        if (ir_lexer_compare_keyword(source, index, "//", source_length)) {
             long ws_index = index;
             while (source[++ws_index] != '\n' && index < source_length);
             if (ws_index != index) {
@@ -232,7 +232,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     .column = column, 
                     .raw = word, 
                 };
-                lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+                lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
                 column += ws_index - index;
                 index = ws_index;
                 found_token = 1;
@@ -241,9 +241,9 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
         }
 
         // check for comments
-        if (lexer_compare_keyword(source, index, "/*", source_length)) {
+        if (ir_lexer_compare_keyword(source, index, "/*", source_length)) {
             long ws_index = index;
-            while (!lexer_compare_keyword(source, ++ws_index, "*/", source_length) && index + 1 < source_length);
+            while (!ir_lexer_compare_keyword(source, ++ws_index, "*/", source_length) && index + 1 < source_length);
             if (ws_index != index) {
                 //char word[ws_index - index + 1];
                 char* word = calloc(ws_index - index + 3, sizeof(char));
@@ -258,7 +258,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     .column = column, 
                     .raw = word, 
                 };
-                lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+                lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
                 column += ws_index - index + 2;
                 index = ws_index + 2;
                 found_token = 1;
@@ -284,7 +284,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     .column = column, 
                     .raw = word, 
                 };
-                lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+                lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
                 column += ws_index - index + 1;
                 index = ws_index;
                 found_token = 1;
@@ -310,7 +310,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     .column = column, 
                     .raw = word, 
                 };
-                lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+                lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
                 column += ws_index - index + 1;
                 index = ws_index;
                 found_token = 1;
@@ -341,7 +341,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     .column = column, 
                     .raw = word, 
                 };
-                lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+                lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
                 column += ws_index - index;
                 index = ws_index;
                 found_token = 1;
@@ -353,8 +353,8 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
 
         // secondly, go through all the tokens and compare with those that have a static form, like most keywords
         for (int i = 0; i < IR_LEX_TOKEN_COUNT; i++) {
-            if (!lexer_token_has_fixed_form[i]) {continue;} // not in fixed form, so we skip
-            if (!lexer_compare_keyword(source, index, ir_lexer_token_literal[i], source_length)) {continue;} // string comparison failed
+            if (!ir_lexer_token_has_fixed_form[i]) {continue;} // not in fixed form, so we skip
+            if (!ir_lexer_compare_keyword(source, index, ir_lexer_token_literal[i], source_length)) {continue;} // string comparison failed
             if (contains(source[index + strlen(ir_lexer_token_literal[i])], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")) {
                 // keyword cannot be continuing with another alphanumerical
                 // Unless the last character of the matching token was not an alphanumeric itself: 
@@ -371,7 +371,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 .column = column, 
                 .raw = strdup(ir_lexer_token_literal[i]), 
             };
-            lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+            lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
             index += strlen(ir_lexer_token_literal[i]);
             column += strlen(ir_lexer_token_literal[i]);
             found_token = 1;
@@ -402,7 +402,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 .column = column, 
                 .raw = word, 
             };
-            lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+            lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
             column += ws_index - index;
             index = ws_index;
             found_token = 1;
@@ -429,14 +429,14 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 .column = column, 
                 .raw = word, 
             };
-            lexer_token_list = lexer_add_token(lexer_token_list, token_count, token);
+            lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
             column += ws_index - index;
             index = ws_index;
             found_token = 1;
             continue;
         }}
 
-        log_msg(LP_ERROR, "NO MATCH FOUND!");
+        log_msg(LP_ERROR, "IR Lexer: NO MATCH FOUND!");
         log_msg(LP_INFO, "The following text contains the error: \n=====================\n%s\n=====================", &source[index]);
         log_msg(LP_INFO, "More context: \n=====================\n%s\n=====================", &source[index - 16]);
         exit(1);

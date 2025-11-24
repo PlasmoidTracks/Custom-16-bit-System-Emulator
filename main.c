@@ -52,11 +52,11 @@
 #define HW_WATCH
 #undef HW_WATCH
 
-
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
-        log_msg(LP_ERROR, "Usage: ./main [filename.ir]");
+        log_msg(LP_ERROR, "Not enough arguments given");
+        log_msg(LP_INFO, "Usage: ./main [filename.ir]");
         return 0;
     }
 
@@ -64,7 +64,6 @@ int main(int argc, char* argv[]) {
     
     // Hardware step
     System_t* system = system_create(
-        1<<16, 
         1, 
         64, 
         1, 

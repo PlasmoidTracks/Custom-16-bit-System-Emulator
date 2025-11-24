@@ -11,7 +11,6 @@ void hook_action_halt(System_t* system) {
 }
 
 System_t* system_create(
-    uint32_t ram_capacity, 
     int cache_active, uint16_t cache_capacity, 
     int ticker_active, float ticker_frequency
 ) {
@@ -21,7 +20,7 @@ System_t* system_create(
     system->bus = bus;
     CPU_t* cpu = cpu_create();
     system->cpu = cpu;
-    RAM_t* ram = ram_create(ram_capacity);
+    RAM_t* ram = ram_create(1 << 16);
     system->ram = ram;
 
     if (cache_active) {

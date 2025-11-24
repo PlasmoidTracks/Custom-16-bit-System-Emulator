@@ -35,6 +35,7 @@ add copmiler options:
 allow negative number assignments "ident = -1;"
 interrupt vector function definitions? (done with irqbegin / irqend)
 
+Add bf16?
 
 
 Deoptimizer Idea: 

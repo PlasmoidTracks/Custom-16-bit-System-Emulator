@@ -3,8 +3,9 @@ static var time;
 .main
     scopebegin;
     
+    // same as *(0xef00) = irq_handler;
     var address;
-    address = 0xef02;
+    address = 0xef02;           // 0xef00 with offset of 2 to index second interrupt vector, which is the ticker interrupt
     var funcptr;
     funcptr = .irq_handler;
     deref address = funcptr;

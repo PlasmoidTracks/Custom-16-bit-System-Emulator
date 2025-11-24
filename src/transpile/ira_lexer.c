@@ -65,7 +65,7 @@ const char* ira_lexer_token_literal[IRA_LEX_TOKEN_COUNT] = {
     "~",             // IRA_LEX_BITWISE_NOT
     "^",             // IRA_LEX_BITWISE_XOR
     "!",             // IRA_LEX_BANG
-    "%%",            // IRA_LEX_PERCENT
+    "%",            // IRA_LEX_PERCENT
 
     // Literals.
     NULL,            // IRA_LEX_IDENTIFIER

@@ -1,0 +1,6 @@
+This section would be step (1) in the compiler pipeline. 
+This would replace all preprocessor directives and return valid C code. 
+
+(pp) :: (P)re(P)rocessor
+
+Functions would lose their return types and instead pass all their arguments and return values as pointers to the function

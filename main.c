@@ -24,12 +24,16 @@
 #include "codegen/ir_parser.h"
 #include "codegen/ir_compiler.h"
 
+#include "transpile/ccan/ccan_lexer.h"
+#include "transpile/ccan/ccan_parser.h"
 #include "transpile/ira_lexer.h"
 #include "transpile/ira_parser.h"
 #include "transpile/ira_compiler.h"
 
 
 
+#define CCAN
+//#undef CCAN
 
 #define COMPILE_IRA
 #undef COMPILE_IRA
@@ -84,6 +88,29 @@ int main(int argc, char* argv[]) {
         );
     #endif
 
+    long content_size;
+    long lexer_token_count = 0;
+    long parser_root_count = 0;
+    char* content;
+
+    #ifdef CCAN
+        {
+            long filesize;
+            char* content = read_file(argv[1], &filesize);
+            CCANLexerToken_t* lexer = ccan_lexer_parse(content, filesize, &lexer_token_count);
+
+            log_msg(LP_INFO, "token count: %d", lexer_token_count);
+            for (int i = 0; i < lexer_token_count; i++) {
+                log_msg(LP_INFO, "%d :: %s", i, lexer[i].raw);
+            }
+            
+            CCANParserToken_t** parser = ccan_parser_parse(lexer, lexer_token_count, &parser_root_count);
+
+            return 0;
+        }
+    #endif
+
+
 
     char** words = split(argv[1], ".", "");
     char* filename = malloc(128);
@@ -91,9 +118,6 @@ int main(int argc, char* argv[]) {
 
     // Compiling step
     // from ira to ir
-    long content_size;
-    long lexer_token_count = 0;
-    char* content;
 
     #ifdef COMPILE_IRA
         content = read_file(argv[1], &content_size);
@@ -106,13 +130,12 @@ int main(int argc, char* argv[]) {
             log_msg(LP_ERROR, "IRA: Lexer returned NULL");
             return 1;
         }
-        long ira_parser_root_count = 0;
-        IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &ira_parser_root_count);
+        IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &parser_root_count);
         if (!ira_parser_token) {
             log_msg(LP_ERROR, "IRA: Parser returned NULL");
             return 1;
         }
-        char* ir = ira_compile(ira_parser_token, ira_parser_root_count, 0xffffffff);
+        char* ir = ira_compile(ira_parser_token, parser_root_count, 0xffffffff);
         if (!ir) {
             log_msg(LP_ERROR, "IRA: Compiler returned NULL");
             return 1;
@@ -135,7 +158,6 @@ int main(int argc, char* argv[]) {
             log_msg(LP_ERROR, "IR: Lexer returned NULL");
             return 1;
         }
-        long parser_root_count = 0;
         IRParserToken_t** parser_token = ir_parser_parse(lexer_token, lexer_token_count, &parser_root_count);
         if (!lexer_token) {
             log_msg(LP_ERROR, "IR: Parser returned NULL");

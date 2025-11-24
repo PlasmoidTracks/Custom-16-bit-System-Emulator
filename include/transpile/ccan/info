@@ -1,0 +1,83 @@
+This section would be step (2) in the compiler pipeline after the preprocessor step. 
+This would transform valid C code into a canonicalized form of still valid C code. 
+
+(ccan) :: (C) (CAN)onicalizer
+
+Main function would turn into a void return function?
+Functions would lose their return types and instead pass all their arguments and return values as pointers to the function
+Structs would dissolve into their components
+Composed expressions would break into seperate steps with intermediate variable declarations
+Typedefs would be resolved
+Pointers would be turned to void* and accessed via direct memory offsets and cast dereferences
+Temporary variables will be inserted for explicit evaluations
+
+
+
+
+
+
+
+Example: 
+
+
+typedef int TYPE;
+
+struct Tmp_t {
+    int x;
+    float y;
+};
+
+struct Tmp_t foo(struct Tmp_t* tmp, struct Tmp_t tmp2, TYPE x) {
+    struct Tmp_t new;
+    new.x = x;
+    new.y = (float) x;
+    *tmp = tmp2;
+    float y = (3.0 + (float) x) * 2.0;
+    tmp->y = y;
+    return new;
+}
+
+void main() {
+    struct Tmp_t xyz;
+    struct Tmp_t tmp = foo(&xyz, xyz, 10);
+}
+
+
+would turn into: 
+
+
+void foo(void* foo_return, void* tmp, int tmp2_x, float tmp2_y, int x) {
+    // struct Tmp_t new;
+    int new_x;
+    float new_y;
+    // new.x = x;
+    new_x = x;
+    // new.y = (float) x;
+    new_y = (float) x;
+    // *tmp = tmp2;
+    *(tmp + 0) = new_x;
+    *(tmp + 2) = new_y;
+    // float y = (3.0 + (float) x) * 2.0;
+    float y;
+    y = 3.0;
+    float tmp_cast = (float) x;
+    y = y + tmp_cast;
+    y = y * 2.0;
+    // tmp->y = y;
+    *(tmp + 2) = y;
+    // return new;
+    *(foo_return + 0) = new_x;
+    *(foo_return + 2) = new_y;
+}
+
+void main() {
+    // struct Tmp_t xyz;
+    float xyz_y;        // struct members are resolved in reverse order to keep offsets correctly in stack. This does NOT apply to static struct resolves, where memory would be in correct order by default!
+    int xyz_x;
+    // struct Tmp_t tmp = foo(&xyz, xyz, 10);
+    float tmp_y;
+    int tmp_x;
+    foo(&xyz_x, xyz_x, xyz_y, 10);    // passing pointer of the first member of the struct as memory will lay in order in memory
+}
+
+

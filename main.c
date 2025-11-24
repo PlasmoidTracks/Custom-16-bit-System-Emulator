@@ -24,15 +24,9 @@
 #include "codegen/ir_parser.h"
 #include "codegen/ir_compiler.h"
 
-#include "transpile/ira_lexer.h"
-#include "transpile/ira_parser.h"
-#include "transpile/ira_compiler.h"
 
 
 
-
-#define COMPILE_IRA
-#undef COMPILE_IRA
 
 #define COMPILE_IR
 //#undef COMPILE_IR
@@ -95,33 +89,7 @@ int main(int argc, char* argv[]) {
     long lexer_token_count = 0;
     char* content;
 
-    #ifdef COMPILE_IRA
-        content = read_file(argv[1], &content_size);
-        if (!content) {
-            log_msg(LP_ERROR, "IRA: read_file failed");
-            return 1;
-        }
-        IRALexerToken_t* ira_lexer_token = ira_lexer_parse(content, content_size, &lexer_token_count);
-        if (!ira_lexer_token) {
-            log_msg(LP_ERROR, "IRA: Lexer returned NULL");
-            return 1;
-        }
-        long ira_parser_root_count = 0;
-        IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &ira_parser_root_count);
-        if (!ira_parser_token) {
-            log_msg(LP_ERROR, "IRA: Parser returned NULL");
-            return 1;
-        }
-        char* ir = ira_compile(ira_parser_token, ira_parser_root_count, 0xffffffff);
-        if (!ir) {
-            log_msg(LP_ERROR, "IRA: Compiler returned NULL");
-            return 1;
-        }
-        data_export(filename, ir, strlen(ir));
-    #else
-        sprintf(filename, "%s", argv[1]);
-    #endif
-
+    sprintf(filename, "%s", argv[1]);
 
     // from ir to asm
     #ifdef COMPILE_IR

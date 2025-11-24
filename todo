@@ -6,10 +6,8 @@ r3 is the frame pointer, in case the functions uses arguments and the sp is used
 
 
 
-TODO GENERAL!!!:
-MMIO        - interrupts that print to terminal
+New instructions
 ADC / SBC   - necessary for 32-bit value emulation ???
-Check wether 32-bit value emulation is possible
 
 
 
@@ -35,7 +33,11 @@ add copmiler options:
 allow negative number assignments "ident = -1;"
 interrupt vector function definitions? (done with irqbegin / irqend)
 
-Add bf16?
+Add bf16 support?
+
+
+Add vizualizer for CPU and ram
+Add MMIO to RAM (terminal / file)
 
 
 Deoptimizer Idea: 

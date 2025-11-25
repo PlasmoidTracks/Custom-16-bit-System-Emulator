@@ -5,7 +5,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "nop", "mov", "push", "pop", "pushsr", "popsr", "lea",
 
     // Jumps and Calls
-    "jmp", "jz", "jnz", "jl", "jnl", "jul", "jnul", "jfl", "jnfl", "jso", "jnso", "jao", "jnao", "call", "ret",
+    "jmp", "jz", "jnz", "jl", "jnl", "jul", "jnul", "jfl", "jnfl", "jbl", "jnbl", "jso", "jnso", "jao", "jnao", "call", "ret",
 
     // Arithmetic Integer Operations
     "add", "sub", "mul", "div", "neg", "abs", "inc", "dec", 
@@ -26,11 +26,11 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "cmp", "tst",
 
     // Status Bit Manipulation
-    "clz", "sez", "cll", "sel", "clul", "seul", "clfl", "sefl", "clso", "seso", "clao", "seao",
+    "clz", "sez", "cll", "sel", "clul", "seul", "clfl", "sefl", "clbl", "sebl", "clso", "seso", "clao", "seao",
     "clsrc", "sesrc", "clswc", "seswc", "clmi", "semi", 
 
     // Conditional Operations
-    "cmovz", "cmovnz", "cmovl", "cmovnl", "cmovul", "cmovnul", "cmovfl", "cmovnfl", 
+    "cmovz", "cmovnz", "cmovl", "cmovnl", "cmovul", "cmovnul", "cmovfl", "cmovnfl", "cmovbl", "cmovnbl", 
 
     // Cache Operations
     "inv", "ftc",
@@ -47,7 +47,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Data Manipulation
     0, 2, 1, 1, 0, 0, 2, 
     // Jumps and Calls
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
     // Arithmetic Integer Operations
     2, 2, 2, 2, 1, 1, 1, 1, 
     // Arithmetic Float Operations
@@ -61,10 +61,10 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Tests
     2, 1, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 
     // Conditional Operations
-    2, 2, 2, 2, 2, 2, 2, 2, 
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
     // Cache Operations
     0, 1, 
     // Self Identification and HW-Info Operations
@@ -78,7 +78,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Data Manipulation
     0, 0, 0, 1, 0, 0, 0, 
     // Jumps and Calls
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 1, 1, 1, 1, 
     // Arithmetic Float Operations
@@ -92,10 +92,10 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Tests
     0, 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
@@ -110,7 +110,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Data Manipulation
     0, 0, 0, 0, 0, 0, 0, 
     // Jumps and Calls
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Float Operations
@@ -125,9 +125,9 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     0, 0, 
     // Status Bit Manipulation
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 
-    // Conditional Operations
     0, 0, 0, 0, 0, 0, 0, 0, 
+    // Conditional Operations
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations

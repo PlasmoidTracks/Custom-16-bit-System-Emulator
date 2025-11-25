@@ -25,6 +25,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     JNUL,       // jnul dest        :: if UL == 0, dest -> pc
     JFL,        // jfl dest         :: if FL == 1, dest -> pc
     JNFL,       // jnfl dest        :: if FL == 0, dest -> pc
+    JBL,        // jfl dest         :: if BL == 1, dest -> pc
+    JNBL,       // jnfl dest        :: if BL == 0, dest -> pc
     JSO,        // jso dest         :: if SO == 1, dest -> pc
     JNSO,       // jnso dest        :: if SO == 0, dest -> pc
     JAO,        // jao dest         :: if AO == 1, dest -> pc
@@ -84,6 +86,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     SEUL,       // set UL bit
     CLFL,       // clear FL bit
     SEFL,       // set FL bit
+    CLBL,       // clear BL bit
+    SEBL,       // set BL bit
     CLSO,       // clear SO bit
     SESO,       // set SO bit
     CLAO,       // clear AO bit
@@ -104,6 +108,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CMOVNUL,    // cmovXX dest, src    :: if UL=0 {src -> dest}
     CMOVFL,     // cmovXX dest, src    :: if FL=1 {src -> dest}
     CMOVNFL,    // cmovXX dest, src    :: if FL=0 {src -> dest}
+    CMOVBL,     // cmovXX dest, src    :: if BL=1 {src -> dest}
+    CMOVNBL,    // cmovXX dest, src    :: if BL=0 {src -> dest}
 
     // Cache Operations
     INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid

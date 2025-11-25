@@ -38,26 +38,34 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     // Multi-character tokens.
     "i-",             // IR_LEX_INTEGER_MINUS
     "f-",             // IR_LEX_FLOAT_MINUS
+    "b-",             // IR_LEX_BFLOAT_MINUS
     "i+",             // IR_LEX_INTEGER_PLUS
     "f+",             // IR_LEX_FLOAT_PLUS
+    "b+",             // IR_LEX_BFLOAT_PLUS
     "i/",             // IR_LEX_INTEGER_SLASH
     "f/",             // IR_LEX_FLOAT_SLASH
+    "b/",             // IR_LEX_BFLOAT_SLASH
     "i*",             // IR_LEX_INTEGER_STAR
     "f*",             // IR_LEX_FLOAT_STAR
+    "b*",             // IR_LEX_BFLOAT_STAR
     "!=",            // IR_LEX_BANG_EQUAL
     "==",            // IR_LEX_EQUAL_EQUAL
     "u>=",           // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     "i>=",           // IR_LEX_INTEGER_GREATER_EQUAL
     "f>=",           // IR_LEX_FLOAT_GREATER_EQUAL
+    "b>=",           // IR_LEX_BFLOAT_GREATER_EQUAL
     "u<=",           // IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL
     "i<=",           // IR_LEX_INTEGER_LESS_EQUAL
     "f<=",           // IR_LEX_FLOAT_LESS_EQUAL
+    "b<=",           // IR_LEX_BFLOAT_LESS_EQUAL
     "u>",            // IR_LEX_UNSIGNED_INTEGER_GREATER
     "i>",            // IR_LEX_INTEGER_GREATER
     "f>",            // IR_LEX_FLOAT_GREATER
+    "b>",            // IR_LEX_BFLOAT_GREATER
     "u<",            // IR_LEX_UNSIGNED_INTEGER_LESS
     "i<",            // IR_LEX_INTEGER_LESS
     "f<",            // IR_LEX_FLOAT_LESS
+    "b<",            // IR_LEX_BFLOAT_LESS
     "<<",            // IR_LEX_SHIFT_LEFT
     ">>",            // IR_LEX_SHIFT_RIGHT
 

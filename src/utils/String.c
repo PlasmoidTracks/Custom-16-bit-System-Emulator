@@ -1,6 +1,8 @@
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "Log.h"
 #include "utils/ExtendedTypes.h"
@@ -18,6 +20,27 @@ int contains(char character, char* matches) {
         index ++;
     }
     return 0;
+}
+
+void format_float_to_scientific_notation(char* buffer, float value) {
+    if (value == 0.0) {
+        sprintf(buffer, "0.0");
+        return;
+    }
+    int power = 0;
+    while (fabsf(value) > 10.0) {
+        power ++;
+        value /= 10.0;
+    }
+    while (fabsf(value) < 1.0) {
+        power --;
+        value *= 10.0;
+    }
+    if (power == 0) {
+        sprintf(buffer, "%1.10f", value);
+        return;
+    }
+    sprintf(buffer, "%1.5f*10^%d", value, power);
 }
 
 // TODO: Add "ignore_string_literals" as an optional parameter

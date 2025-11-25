@@ -7,6 +7,8 @@ extern int contains(char character, char* matches);
 
 extern char** split(const char* string, char* separators, char* preserved_separators);
 
+extern void format_float_to_scientific_notation(char* buffer, float value);
+
 extern int string_is_numeral(char text[]);
 
 extern int string_is_hex_numeral(char text[]);

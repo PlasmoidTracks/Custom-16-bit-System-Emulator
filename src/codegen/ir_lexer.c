@@ -223,7 +223,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
 
     long index = 0;
     while (index < source_length) {
-        ////log_msg(LP_DEBUG, "%d / %d", index, source_length);
+        //log_msg(LP_DEBUG, "%d / %d", index, source_length);
         int found_token = 0;
 
         // wkip whitespaces
@@ -248,7 +248,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 1, sizeof(char));
                 strncpy(word, &source[index], ws_index - index);
                 word[ws_index - index] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_COMMENT, 
                     .length = ws_index - index, 
@@ -274,7 +274,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 3, sizeof(char));
                 strncpy(word, &source[index], ws_index - index + 2);
                 word[ws_index - index + 2] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_COMMENT, 
                     .length = ws_index - index + 2, 
@@ -300,7 +300,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 1, sizeof(char));
                 strncpy(word, &source[index], ws_index - index);
                 word[ws_index - index] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_STRING], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_STRING], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_STRING, 
                     .length = ws_index - index + 1, 
@@ -326,7 +326,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 1, sizeof(char));
                 strncpy(word, &source[index], ws_index - index);
                 word[ws_index - index] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_CHAR_LITERAL], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_CHAR_LITERAL], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_CHAR_LITERAL, 
                     .length = ws_index - index + 1, 
@@ -357,7 +357,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             strncpy(word, &source[index], ws_index - index);
             word[ws_index - index] = '\0';
             if (string_is_immediate(word) || string_is_float(word)) {
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_NUMBER], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_NUMBER], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_NUMBER, 
                     .length = ws_index - index, 
@@ -387,7 +387,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     continue;
                 }
             }
-            //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[i], ir_lexer_token_literal[i]);
+            //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[i], ir_lexer_token_literal[i]);
             IRLexerToken_t token = {
                 .type = i, 
                 .length = strlen(ir_lexer_token_literal[i]), 
@@ -418,7 +418,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             char* word = calloc(ws_index - index + 1, sizeof(char));
             strncpy(word, &source[index], ws_index - index);
             word[ws_index - index] = '\0';
-            //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_LABEL], word);
+            //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_LABEL], word);
             IRLexerToken_t token = {
                 .type = IR_LEX_LABEL, 
                 .length = ws_index - index, 
@@ -445,7 +445,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             char* word = calloc(ws_index - index + 1, sizeof(char));
             strncpy(word, &source[index], ws_index - index);
             word[ws_index - index] = '\0';
-            //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_IDENTIFIER], word);
+            //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_IDENTIFIER], word);
             IRLexerToken_t token = {
                 .type = IR_LEX_IDENTIFIER, 
                 .length = ws_index - index, 

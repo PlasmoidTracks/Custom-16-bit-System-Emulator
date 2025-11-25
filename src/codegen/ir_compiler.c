@@ -22,7 +22,7 @@ int data_segment_address = 0x4000;
 int identifier_offset[IR_MAX_DEPTH] = {0};
 
 int ir_identifier_get_stack_offset(const char* ident_name) {
-    //log_msg(LP_DEBUG, "IR: Looking for ident \"%s\"", ident_name);
+    //log_msg(LP_DEBUG, "IR Compiler: Looking for ident \"%s\"", ident_name);
     for (int scope = 0; scope <= ir_identifier_scope_depth; scope++) {
         for (int i = 0; i < ir_identifier_index[scope]; i++) {
             if (strcmp(ir_identifier[scope][i].name, ident_name) == 0) {
@@ -31,12 +31,12 @@ int ir_identifier_get_stack_offset(const char* ident_name) {
             }
         }
     }
-    log_msg(LP_ERROR, "IR: Unkonwn ir_identifier \"%s\"", ident_name);
+    log_msg(LP_ERROR, "IR Compiler: Unkonwn ir_identifier \"%s\"", ident_name);
     return 0;
 }
 
 IRIdentifier_t* ir_get_identifier_from_name(const char* ident_name) {
-    //log_msg(LP_DEBUG, "IR: Looking for ident \"%s\"", ident_name);
+    //log_msg(LP_DEBUG, "IR Compiler: Looking for ident \"%s\"", ident_name);
     for (int scope = 0; scope <= ir_identifier_scope_depth; scope++) {
         for (int i = 0; i < ir_identifier_index[scope]; i++) {
             if (strcmp(ir_identifier[scope][i].name, ident_name) == 0) {
@@ -45,7 +45,7 @@ IRIdentifier_t* ir_get_identifier_from_name(const char* ident_name) {
             }
         }
     }
-    //log_msg(LP_ERROR, "IR: Unkonwn ir_identifier \"%s\"", ident_name);
+    //log_msg(LP_ERROR, "IR Compiler: Unkonwn ir_identifier \"%s\"", ident_name);
     return NULL;
 }
 
@@ -72,7 +72,7 @@ IRTypeModifier_t vardec_get_type_modifier(IRParserToken_t* parser_token) {
                 break;
             
             default:
-                log_msg(LP_ERROR, "IR: Unknown type modifier \"%s\"", ir_token_name[tt]);
+                log_msg(LP_ERROR, "IR Compiler: Unknown type modifier \"%s\"", ir_token_name[tt]);
                 break;
         }
     } else {
@@ -112,7 +112,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
             case IR_LEX_IDENTIFIER: {
                 IRIdentifier_t* ident = ir_get_identifier_from_name(token.raw);
                 if (!ident) {
-                    log_msg(LP_ERROR, "IR: Unknown ir_identifier \"%s\"", token.raw);
+                    log_msg(LP_ERROR, "IR Compiler: Unknown ir_identifier \"%s\"", token.raw);
                     break;
                 }
                 if (!(ident->type_modifier & IR_TM_STATIC)) {
@@ -478,7 +478,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 code_output = append_to_output(code_output, &code_output_len, "; variable declaration\n");
                 // Add ir_identifier to current frame list
                 if (ir_identifier_index[ir_identifier_scope_depth] >= IR_MAX_IDENT) {
-                    log_msg(LP_ERROR, "IR: Too many identifiers, max is %d", IR_MAX_IDENT);
+                    log_msg(LP_ERROR, "IR Compiler: Too many identifiers, max is %d", IR_MAX_IDENT);
                     return NULL;
                 }
 
@@ -488,16 +488,16 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 IRTypeModifier_t type_mod = vardec_get_type_modifier(parser_token[parser_token_index]->child[0]);
                 //log_msg(LP_NOTICE, "type modifier: %.2o", type_mod);
                 if (ident && !(type_mod & IR_TM_ANON)) {
-                    log_msg(LP_ERROR, "IR: Redeclaration of already existing variable \"%s\"", ident_name);
+                    log_msg(LP_ERROR, "IR Compiler: Redeclaration of already existing variable \"%s\"", ident_name);
                     return NULL;
                 }
 
                 if (type_mod & IR_TM_ANON) {
                     if (type_mod & IR_TM_STATIC) {
-                        log_msg(LP_ERROR, "IR: Static variables cannot be anonymous");
+                        log_msg(LP_ERROR, "IR Compiler: Static variables cannot be anonymous");
                         return NULL;
                     } else {
-                        //log_msg(LP_DEBUG, "IR: Added anonymous ir_identifier");
+                        //log_msg(LP_DEBUG, "IR Compiler: Added anonymous ir_identifier");
                         identifier_offset[ir_identifier_scope_depth] += 1;
                         code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                     }
@@ -510,7 +510,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = static_identifier_count;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].is_stack_variable = 0;
-                        //log_msg(LP_DEBUG, "IR: Added static ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
+                        //log_msg(LP_DEBUG, "IR Compiler: Added static ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         static_identifier_count ++;
                     } else {
@@ -521,7 +521,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = ir_identifier_index[ir_identifier_scope_depth];
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].is_stack_variable = 1;
-                        //log_msg(LP_DEBUG, "IR: Added ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
+                        //log_msg(LP_DEBUG, "IR Compiler: Added ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         identifier_offset[ir_identifier_scope_depth] += 1;
 
@@ -537,7 +537,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 // TODO: First solve expression, then save it in r1, the find ir_identifier, set r0 to the ident and mov indirectly?
                 IRIdentifier_t* ident = ir_get_identifier_from_name(parser_token[parser_token_index]->child[0]->token.raw);
                 if (!ident) {
-                    log_msg(LP_ERROR, "IR: Unknown ir_identifier \"%s\"", parser_token[parser_token_index]->child[0]->token.raw);
+                    log_msg(LP_ERROR, "IR Compiler: Unknown ir_identifier \"%s\"", parser_token[parser_token_index]->child[0]->token.raw);
                     parser_token_index ++;
                     break;
                 }
@@ -574,7 +574,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 code_output = append_to_output(code_output, &code_output_len, "; deref variable assignment\n");
                 IRIdentifier_t* ident = ir_get_identifier_from_name(parser_token[parser_token_index]->child[1]->token.raw);
                 if (!ident) {
-                    log_msg(LP_ERROR, "IR: Unknown ir_identifier \"%s\"", parser_token[parser_token_index]->child[1]->token.raw);
+                    log_msg(LP_ERROR, "IR Compiler: Unknown ir_identifier \"%s\"", parser_token[parser_token_index]->child[1]->token.raw);
                     parser_token_index ++;
                     break;
                 }
@@ -610,7 +610,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 code_output = append_to_output(code_output, &code_output_len, "; variable function pointer assignment\n");
                 IRIdentifier_t* ident = ir_get_identifier_from_name(parser_token[parser_token_index]->child[0]->token.raw);
                 if (!ident) {
-                    log_msg(LP_ERROR, "IR: Unknown ir_identifier \"%s\"", parser_token[parser_token_index]->child[0]->token.raw);
+                    log_msg(LP_ERROR, "IR Compiler: Unknown ir_identifier \"%s\"", parser_token[parser_token_index]->child[0]->token.raw);
                     parser_token_index ++;
                     break;
                 }
@@ -644,7 +644,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 if (!(ident->type_modifier & IR_TM_STATIC)) {
                     
                     // set the variable of the string to the pointer (one next in stack), because strings are always pointers, especially in data segment
-                    log_msg(LP_ERROR, "IR: String allocation of \"%s\" is not permitted in stack as of now", ident->name);
+                    log_msg(LP_ERROR, "IR Compiler: String allocation of \"%s\" is not permitted in stack as of now", ident->name);
                     parser_token_index ++;
                     break;
 
@@ -696,7 +696,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                     break;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     if (ident->initialized) {
-                        log_msg(LP_ERROR, "IR: Already initialized const variable \"%s\" cannot be reassigned", parser_token[parser_token_index]->child[0]->token.raw);
+                        log_msg(LP_ERROR, "IR Compiler: Already initialized const variable \"%s\" cannot be reassigned", parser_token[parser_token_index]->child[0]->token.raw);
                         parser_token_index ++;
                         break;
                     }
@@ -910,8 +910,8 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                             }
                         }
                         if (!is_valid_instruction) {
-                            log_msg(LP_ERROR, "IR: Symbolic address in inline-assembly either doesn't exist, or is out of scope");
-                            log_msg(LP_INFO, "IR: Symbolic operand in question from this inline-assembly line: %s", asm);
+                            log_msg(LP_ERROR, "IR Compiler: Symbolic address in inline-assembly either doesn't exist, or is out of scope");
+                            log_msg(LP_INFO, "IR Compiler: Symbolic operand in question from this inline-assembly line: %s", asm);
                             return NULL;
                         }
                     }
@@ -926,7 +926,7 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
                 char tmp[256];
                 sprintf(tmp, "; UNKNOWN TOKEN: %s\n", ir_token_name[token->token.type]);
                 code_output = append_to_output(code_output, &code_output_len, tmp);
-                log_msg(LP_ERROR, "IR: Unknown token: %s - \"%s\"", ir_token_name[token->token.type], token->token.raw);
+                log_msg(LP_ERROR, "IR Compiler: Unknown token: %s - \"%s\"", ir_token_name[token->token.type], token->token.raw);
                 parser_token_index++;
                 break;
             }

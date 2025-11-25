@@ -31,6 +31,7 @@ interrupt vector function definitions? (done with irqbegin / irqend)
 
 Add vizualizer for CPU and ram
 Add MMIO to RAM (terminal / file)
+Add 32-bit instructions that combine r0/r1 and r2/r3?
 
 
 Deoptimizer Idea: 

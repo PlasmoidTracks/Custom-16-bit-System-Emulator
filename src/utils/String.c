@@ -176,6 +176,7 @@ int string_is_asm_immediate(char text[]) {
     if (string_is_numeral(&text[0])) return 1;
     if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
     if (text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
     if (text[0] == '0') {
         if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
         if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
@@ -207,6 +208,9 @@ uint16_t parse_immediate(const char text[]) {
     }
     if (text[0] == 'f') {
         return f16_from_float(strtof(&text[1], NULL));
+    }
+    if (text[0] == 'b' && text[1] == 'f') {
+        return bf16_from_float(strtof(&text[2], NULL));
     }
     if (text[0] == '0') {
         if (text[1] == 'x') {

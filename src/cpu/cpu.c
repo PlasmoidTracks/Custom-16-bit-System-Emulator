@@ -1141,14 +1141,67 @@ void cpu_clock(CPU_t* cpu) {
                         break;
 
 
+                    case ADDBF:
+                        cpu->intermediate.result = bf16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case SUBBF:
+                        cpu->intermediate.result = bf16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case MULBF:
+                        cpu->intermediate.result = bf16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case DIVBF:
+                        cpu->intermediate.result = bf16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+
                     case CIF:
                         cpu->intermediate.result = f16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
                         break;
 
+                    case CIB:
+                        cpu->intermediate.result = bf16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
                     case CFI:
                         cpu->intermediate.result = (int16_t) float_from_f16(cpu->intermediate.data_address_reduced);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case CFB:
+                        cpu->intermediate.result = bf16_from_float(float_from_f16(cpu->intermediate.data_address_reduced));
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case CBI:
+                        cpu->intermediate.result = (int16_t) float_from_bf16(cpu->intermediate.data_address_reduced);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case CBF:
+                        cpu->intermediate.result = f16_from_float(float_from_bf16(cpu->intermediate.data_address_reduced));
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
                         break;

@@ -13,8 +13,11 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     // Arithmetic Float Operations
     "addf", "subf", "mulf", "divf",
 
+    // Arithmetic BFloat Operations
+    "addbf", "subbf", "mulbf", "divbf",
+
     // Type Conversion Operations
-    "cif", "cfi", "cbw", 
+    "cif", "cib", "cfi", "cfb", "cbi", "cbi", "cbw", 
 
     // Bitwise Logic
     "bws", "and", "or", "xor", "not",
@@ -49,8 +52,10 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     2, 2, 2, 2, 1, 1, 1, 1, 
     // Arithmetic Float Operations
     2, 2, 2, 2, 
+    // Arithmetic BFloat Operations
+    2, 2, 2, 2, 
     // Type Conversion Operations
-    1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 
     // Bitwise Logic
     2, 2, 2, 2, 1, 
     // Tests
@@ -78,8 +83,10 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     0, 0, 0, 0, 1, 1, 1, 1, 
     // Arithmetic Float Operations
     0, 0, 0, 0, 
+    // Arithmetic BFloat Operations
+    0, 0, 0, 0, 
     // Type Conversion Operations
-    1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 
     // Bitwise Logic
     0, 0, 0, 0, 1, 
     // Tests
@@ -108,8 +115,10 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Float Operations
     0, 0, 0, 0, 
+    // Arithmetic BFloat Operations
+    0, 0, 0, 0, 
     // Type Conversion Operations
-    0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 
     // Bitwise Logic
     0, 0, 0, 0, 0, 
     // Tests
@@ -126,7 +135,4 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Other
     0, 0
 };
-
-
-
 

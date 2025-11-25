@@ -65,8 +65,8 @@ static char* cpu_ascii_to_string(uint16_t value) {
 
 void cpu_print_register(char* name, uint16_t value) {
     char* ascii = cpu_ascii_to_string(value);
-    printf(" \033[1;32m%s\033[0m  X: 0x%04X  S: %5d  F: %14.8f  C: '%s'\n",
-        name, value, (int16_t) value, float_from_f16((float16_t) value), ascii);
+    printf(" \033[1;32m%s\033[0m  X: 0x%04X  S: %5d  F16: %14.8f  BF16: %14.12f  C: '%s'\n",
+        name, value, (int16_t) value, float_from_f16((float16_t) value), float_from_bf16((bfloat16_t) value), ascii);
     free(ascii);
 }
 

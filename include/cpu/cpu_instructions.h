@@ -49,9 +49,19 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     MULF,       // mulf dest, src   :: dest = dest * src (float16)
     DIVF,       // divf dest, src   :: dest = dest / src (float16)
 
+    // Arithmetic Float Operations
+    ADDBF,       // addf dest, src   :: dest = dest + src (bfloat16)
+    SUBBF,       // subf dest, src   :: dest = dest - src (bfloat16)
+    MULBF,       // mulf dest, src   :: dest = dest * src (bfloat16)
+    DIVBF,       // divf dest, src   :: dest = dest / src (bfloat16)
+
     // Type Conversion Operations
     CIF,        // itf dest         :: [c]onvert [i]nteger dest -> [f]loat16 -> dest
+    CIB,        // itf dest         :: [c]onvert [i]nteger dest -> [b]float16 -> dest
     CFI,        // fti dest         :: [c]onvert [f]loat16 dest -> [i]nteger -> dest
+    CFB,        // fti dest         :: [c]onvert [f]loat16 dest -> [b]float16 -> dest
+    CBF,        // itf dest         :: [c]onvert [b]float16 dest -> [f]loat16 -> dest
+    CBI,        // itf dest         :: [c]onvert [b]float16 dest -> [i]nteger -> dest
     CBW,        // cbw dest         :: [c]onvert [b]yte to [w]ord by sign extension (0x??80 -> 0xff80)
 
     // Bitwise Logic

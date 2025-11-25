@@ -190,6 +190,7 @@ int string_is_immediate(char text[]) {
     if (string_is_float(text)) return 1;
     //if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
     if (text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
     if (text[0] == '0') {
         if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
         if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;

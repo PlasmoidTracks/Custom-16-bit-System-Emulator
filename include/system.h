@@ -7,6 +7,8 @@
 #include "ticker.h"
 #include "ticker.h"
 
+extern int VERBOSE;
+
 typedef enum {
     SCD_CPU, 
     SCD_RAM, 

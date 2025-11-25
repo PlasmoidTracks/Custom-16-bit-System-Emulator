@@ -13,6 +13,8 @@ These values can be used as operands anywhere immediates are accepted:
 - Binary:   0b10101010      mov r0, 0b11100
 - Float16:  f1.25           mov r0, f1.25
   - float16 also includes negative values, like f-1.25
+- BFloat16: bf1.25          mov r0, bf1.25
+  - bfloat16 also includes negative values, like bf-1.25
 
 Syntax
 ------

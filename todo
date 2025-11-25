@@ -45,7 +45,7 @@ Add timing to know which compile steps takes how long
 Other TODO:
 Dirty cachelines
 GUI
-snapshots (export import of cpu state (also ram, bus, etc))
+snapshots (export import of system state)
 
 
 rules: 

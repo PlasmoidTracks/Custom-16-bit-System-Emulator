@@ -6,11 +6,6 @@ r3 is the frame pointer, in case the functions uses arguments and the sp is used
 
 
 
-New instructions
-ADC / SBC   - necessary for 32-bit value emulation ???
-
-
-
 BUGS:
 commented strings count as strings : // "string"
 
@@ -32,8 +27,6 @@ add copmiler options:
 - verbose                   show the compiler steps like "variable assignment" etc. 
 allow negative number assignments "ident = -1;"
 interrupt vector function definitions? (done with irqbegin / irqend)
-
-Add bf16 support?
 
 
 Add vizualizer for CPU and ram

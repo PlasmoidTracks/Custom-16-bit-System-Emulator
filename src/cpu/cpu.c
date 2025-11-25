@@ -1071,6 +1071,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     case ADD:
                         cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced + (int16_t) cpu->intermediate.data_address_extended;
+                        cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced + (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
                         cpu_update_status_register(cpu, cpu->intermediate.result);
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
@@ -1078,6 +1079,23 @@ void cpu_clock(CPU_t* cpu) {
 
                     case SUB:
                         cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced - (int16_t) cpu->intermediate.data_address_extended;
+                        cpu->regs.sr.AO = ((int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended) < 0;
+                        cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case ADC:
+                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced + (int16_t) cpu->intermediate.data_address_extended + cpu->regs.sr.AO;
+                        cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced + (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
+                        cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case SBC:
+                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced - (int16_t) cpu->intermediate.data_address_extended - cpu->regs.sr.AO;
+                        cpu->regs.sr.AO = ((int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended) < 0;
                         cpu_update_status_register(cpu, cpu->intermediate.result);
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
@@ -1085,6 +1103,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     case MUL:
                         cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced * (int16_t) cpu->intermediate.data_address_extended;
+                        cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced * (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
                         cpu_update_status_register(cpu, cpu->intermediate.result);
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
@@ -1118,6 +1137,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     case INC:
                         cpu->intermediate.result = cpu->intermediate.data_address_reduced + 1;
+                        cpu->regs.sr.AO = cpu->intermediate.result == 0;
                         cpu_update_status_register(cpu, cpu->intermediate.result);
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
@@ -1125,6 +1145,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     case DEC:
                         cpu->intermediate.result = cpu->intermediate.data_address_reduced - 1;
+                        cpu->regs.sr.AO = cpu->intermediate.result == 0xffff;
                         cpu_update_status_register(cpu, cpu->intermediate.result);
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;

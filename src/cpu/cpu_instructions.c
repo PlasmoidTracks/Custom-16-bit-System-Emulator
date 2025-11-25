@@ -8,7 +8,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "jmp", "jz", "jnz", "jl", "jnl", "jul", "jnul", "jfl", "jnfl", "jbl", "jnbl", "jso", "jnso", "jao", "jnao", "call", "ret",
 
     // Arithmetic Integer Operations
-    "add", "sub", "mul", "div", "neg", "abs", "inc", "dec", 
+    "add", "adc", "sub", "sbc", "mul", "div", "neg", "abs", "inc", "dec", 
 
     // Arithmetic Float Operations
     "addf", "subf", "mulf", "divf",
@@ -49,7 +49,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Jumps and Calls
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
     // Arithmetic Integer Operations
-    2, 2, 2, 2, 1, 1, 1, 1, 
+    2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 
     // Arithmetic Float Operations
     2, 2, 2, 2, 
     // Arithmetic BFloat Operations
@@ -80,7 +80,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Jumps and Calls
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Integer Operations
-    0, 0, 0, 0, 1, 1, 1, 1, 
+    0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
     // Arithmetic Float Operations
     0, 0, 0, 0, 
     // Arithmetic BFloat Operations
@@ -112,7 +112,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Jumps and Calls
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Float Operations
     0, 0, 0, 0, 
     // Arithmetic BFloat Operations

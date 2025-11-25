@@ -37,7 +37,9 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
 
     // Arithmetic Integer Operations
     ADD,        // add dest, src    :: dest = dest + src (integer)
+    ADC,        // adc dest, src    :: dest = dest + src (integer) + AO
     SUB,        // sub dest, src    :: dest = dest - src (integer)
+    SBC,        // sbc dest, src    :: dest = dest - src (integer) - AO
     MUL,        // mul dest, src    :: dest = dest * src (integer)
     DIV,        // div dest, src    :: dest = dest / src (integer)
     NEG,        // neg dest         :: dest = dest ~ 0x8000

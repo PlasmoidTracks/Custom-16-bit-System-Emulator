@@ -10,7 +10,8 @@ Composed expressions would break into seperate steps with intermediate variable 
 Typedefs would be resolved
 Pointers would be turned to void* and accessed via direct memory offsets and cast dereferences
 Temporary variables will be inserted for explicit evaluations
-
+compound if clauses are expanded to nested if clauses
+Reduce if - else if - else clauses into strict compounding if clauses
 
 
 

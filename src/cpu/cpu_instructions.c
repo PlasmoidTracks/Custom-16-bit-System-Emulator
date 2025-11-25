@@ -17,7 +17,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "addbf", "subbf", "mulbf", "divbf",
 
     // Type Conversion Operations
-    "cif", "cib", "cfi", "cfb", "cbi", "cbi", "cbw", 
+    "cif", "cib", "cfi", "cfb", "cbf", "cbi", "cbw", 
 
     // Bitwise Logic
     "bws", "and", "or", "xor", "not",

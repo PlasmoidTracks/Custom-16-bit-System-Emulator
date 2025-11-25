@@ -190,10 +190,34 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "cif r1\n");
                 break;
 
+            case IR_LEX_CIB:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cib\n");
+                *output = append_to_output(*output, length, "cib r1\n");
+                break;
+
             case IR_LEX_CFI:
                 parser_evaluate_expression(output, length, token1);
                 *output = append_to_output(*output, length, "; unary operation -> cfi\n");
                 *output = append_to_output(*output, length, "cfi r1\n");
+                break;
+
+            case IR_LEX_CFB:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cfb\n");
+                *output = append_to_output(*output, length, "cfb r1\n");
+                break;
+
+            case IR_LEX_CBI:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cbi\n");
+                *output = append_to_output(*output, length, "cbi r1\n");
+                break;
+
+            case IR_LEX_CBF:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cbf\n");
+                *output = append_to_output(*output, length, "cbf r1\n");
                 break;
 
             case IR_LEX_CBW:

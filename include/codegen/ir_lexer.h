@@ -22,7 +22,11 @@ typedef enum {
     IR_LEX_SCOPEBEGIN,             // scopebegin
     IR_LEX_SCOPEEND,               // scopeend
     IR_LEX_CFI,                    // cfi
+    IR_LEX_CFB,                    // cfb
     IR_LEX_CIF,                    // cif
+    IR_LEX_CIB,                    // cib
+    IR_LEX_CBF,                    // cbf
+    IR_LEX_CBI,                    // cbi
     IR_LEX_CBW,                    // cbw
     IR_LEX_ADDRESS,                // .address
     IR_LEX_IRQBEGIN,               // irqbegin

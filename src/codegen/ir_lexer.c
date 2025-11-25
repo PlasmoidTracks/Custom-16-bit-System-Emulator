@@ -28,7 +28,11 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     "scopebegin",    // IR_LEX_SCOPEBEGIN
     "scopeend",      // IR_LEX_SCOPEEND
     "cfi",           // IR_LEX_CFI
+    "cfb",           // IR_LEX_CFB
     "cif",           // IR_LEX_CIF
+    "cib",           // IR_LEX_CIB
+    "cbf",           // IR_LEX_CBF
+    "cbi",           // IR_LEX_CBI
     "cbw",           // IR_LEX_CBW
     ".address",      // IR_LEX_ADDRESS
     "irqbegin",      // IR_LEX_IRQBEGIN
@@ -116,7 +120,12 @@ const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     1,  // IR_LEX_SCOPEBEGIN
     1,  // IR_LEX_SCOPEEND
     1,  // IR_LEX_CFI
-    1,  // IR_LEX_ITF
+    1,  // IR_LEX_CFB
+    1,  // IR_LEX_CIF
+    1,  // IR_LEX_CIB
+    1,  // IR_LEX_CBI
+    1,  // IR_LEX_CBF
+    1,  // IR_LEX_CBW
     1,  // IR_LEX_ADDRESS
     1,  // IR_LEX_IRQBEGIN
     1,  // IR_LEX_IRQEND
@@ -167,7 +176,7 @@ const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     1,  // IR_LEX_BITWISE_NOT
     1,  // IR_LEX_BITWISE_XOR
     1,  // IR_LEX_BANG
-    1,  // IR_LEX_PERCENTindex3
+    1,  // IR_LEX_PERCENT
 
     // Literals.
     0,  // IR_LEX_IDENTIFIER

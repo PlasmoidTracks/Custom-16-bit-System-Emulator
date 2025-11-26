@@ -195,48 +195,55 @@ int string_is_float(const char text[]) {
 }
 
 int string_is_asm_immediate(const char text[]) {
+    int length = strlen(text);
+    if (length < 1) {return 0;}
     if (string_is_numeral(&text[0])) return 1;
-    if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
-    if (text[0] == 'f' && string_is_float(&text[1])) return 1;
-    if (text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
+    if (length > 1 && text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
+    if (length > 1 && text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (length > 2 && text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
     if (text[0] == '0') {
-        if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
-        if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
     }
-    if (text[0] == '\'' && text[2] == '\'') return 1;
+    if (length > 2 && text[0] == '\'' && text[2] == '\'') return 1;
     return 0;
 }
 
 int string_is_immediate(const char text[]) {
+    int length = strlen(text);
+    if (length < 1) {return 0;}
     //log_msg(LP_CRITICAL, "TEST %s", text);
     if (string_is_numeral(text)) return 1;
     if (string_is_float(text)) return 1;
     //if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
-    if (text[0] == 'f' && string_is_float(&text[1])) return 1;
-    if (text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
+    if (length > 1 && text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (length > 2 && text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
     if (text[0] == '0') {
-        if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
-        if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
     }
     return 0;
 }
 
 int string_is_string(const char text[]) {
+    if (strlen(text) < 1) {return 0;}
     if (text[0] == '\"' && text[strlen(text) - 1] == '\"') return 1;
     return 0;
 }
 
 uint16_t parse_immediate(const char text[]) {
+    int length = strlen(text);
+    if (length < 1) {return 0;}
     if (text[0] == '$') {
         return strtol(&text[1], NULL, 16);
     }
     if (text[0] == 'f') {
         return f16_from_float(strtof(&text[1], NULL));
     }
-    if (text[0] == 'b' && text[1] == 'f') {
+    if (length > 1 && text[0] == 'b' && text[1] == 'f') {
         return bf16_from_float(strtof(&text[2], NULL));
     }
-    if (text[0] == '0') {
+    if (length > 1 && text[0] == '0') {
         if (text[1] == 'x') {
             return strtol(&text[2], NULL, 16);
         } 
@@ -247,7 +254,7 @@ uint16_t parse_immediate(const char text[]) {
             return strtol(&text[2], NULL, 2);
         }
     }
-    if (text[0] == '\'' && text[2] == '\'') {
+    if (length > 2 && text[0] == '\'' && text[2] == '\'') {
         return (uint16_t) text[1];
     }
     return strtol(&text[0], NULL, 10);;

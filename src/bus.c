@@ -129,7 +129,7 @@ void bus_clock(BUS_t* bus) {
                             //log_msg(LP_DEBUG, "BUS %d: RAM device is Idle, need to wait", bus->clock);
                         }
                     } else {
-                        //log_msg(LP_DEBUG, "BUS %d: Write request forwarding to MMIO at address $%.4X", bus->clock, device->address);
+                        //log_msg(LP_DEBUG, "BUS %d: Write request forwarding to MMIO at address $%.4X with data ", bus->clock, device->address);
                         // Since address is between 0xF000 and 0xFFFF, we are now addressing MMIO
                         // Here we differentiate the devices we want to address
                         // 0xF000 is unused

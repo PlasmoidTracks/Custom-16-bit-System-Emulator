@@ -18,8 +18,8 @@ void terminal_clock(Terminal_t* terminal) {
     // check device for commands
     if (terminal->device.processed == 1) {
         //log_msg(LP_INFO, "Terminal %d: Waiting for confirmation, nothing to do", terminal->clock);
-        //ram->clock ++;
-        //return;
+        terminal->clock ++;
+        return;
     }
     //log_msg(LP_INFO, "Terminal %d: state %d", terminal->clock, terminal->device.device_state);
     if (terminal->device.device_state == DS_FETCH) {

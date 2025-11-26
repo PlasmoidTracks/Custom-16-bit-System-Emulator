@@ -20,7 +20,7 @@ typedef struct Ticker_t {
 
 extern Ticker_t* ticker_create(float frequency);
 
-extern void ticker_clock(Ticker_t* clock);
+extern void ticker_clock(Ticker_t* ticker);
 
 
 #endif

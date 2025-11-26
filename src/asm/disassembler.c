@@ -460,14 +460,16 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         // this very instruction could be from an overlap, say reading from 0x00fe over to 0x0102, 
         // and if the segment is at 0x0100, then this instruction is garbage
         int realign = 0;
-        for (int i = 0; i < segment_count; i++) {
-            if (previous_binary_index < segment[i] && binary_index > segment[i]) {
-                //log_msg(LP_WARNING, "Disassembler: Detected segment overlap. realigning from 0x%.4x to 0x%.4x", binary_index, segment[i]);
-                //log_msg(LP_WARNING, "Disassembler: This could mean that the previous instructions were wrongfully decompiled");
-                disassembly.is_data[assembly_index] = 1;
-                binary_index = segment[i];
-                realign = 1;
-                break;
+        if (segment) {
+            for (int i = 0; i < segment_count; i++) {
+                if (previous_binary_index < segment[i] && binary_index > segment[i]) {
+                    //log_msg(LP_WARNING, "Disassembler: Detected segment overlap. realigning from 0x%.4x to 0x%.4x", binary_index, segment[i]);
+                    //log_msg(LP_WARNING, "Disassembler: This could mean that the previous instructions were wrongfully decompiled");
+                    disassembly.is_data[assembly_index] = 1;
+                    binary_index = segment[i];
+                    realign = 1;
+                    break;
+                }
             }
         }
         if (realign) continue;

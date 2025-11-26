@@ -203,6 +203,7 @@ int string_is_asm_immediate(const char text[]) {
         if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
         if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
     }
+    if (text[0] == '\'' && text[2] == '\'') return 1;
     return 0;
 }
 
@@ -245,6 +246,9 @@ uint16_t parse_immediate(const char text[]) {
         if (text[1] == 'b') {
             return strtol(&text[2], NULL, 2);
         }
+    }
+    if (text[0] == '\'' && text[2] == '\'') {
+        return (uint16_t) text[1];
     }
     return strtol(&text[0], NULL, 10);;
 }

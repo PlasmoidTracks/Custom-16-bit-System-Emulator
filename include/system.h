@@ -4,6 +4,7 @@
 #include "bus.h"
 #include "cpu/cpu.h"
 #include "ram.h"
+#include "terminal.h"
 #include "ticker.h"
 #include "ticker.h"
 
@@ -14,6 +15,7 @@ typedef enum {
     SCD_RAM, 
     SCD_BUS, 
     SCD_TICKER, 
+    SCD_TERMINAL, 
 } SystemClockDevice_t;
 
 typedef enum {
@@ -38,6 +40,7 @@ typedef struct System_t {
     CPU_t* cpu;
     RAM_t* ram;
     Ticker_t* ticker;
+    Terminal_t* terminal;
     int clock_order_size;
     SystemClockDevice_t* clock_order;
     Hook_t* hook;

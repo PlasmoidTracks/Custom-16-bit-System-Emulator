@@ -5,6 +5,7 @@
 #include "cpu/cpu.h"
 #include "ticker.h"
 #include "system.h"
+#include "terminal.h"
 
 int VERBOSE = 0;
 
@@ -24,6 +25,8 @@ System_t* system_create(
     system->cpu = cpu;
     RAM_t* ram = ram_create(1 << 16);
     system->ram = ram;
+    Terminal_t* terminal = terminal_create();
+    system->terminal = terminal;
 
     if (cache_active) {
         Cache_t* cache = cache_create(cache_capacity);
@@ -32,6 +35,7 @@ System_t* system_create(
 
     bus_add_device(bus, &cpu->device);
     bus_add_device(bus, &ram->device);
+    bus_add_device(bus, &terminal->device);
 
     if (ticker_active) {
         Ticker_t* ticker = ticker_create(ticker_frequency);
@@ -46,6 +50,7 @@ System_t* system_create(
     system->clock_order[system->clock_order_size++] = SCD_CPU;
     system->clock_order[system->clock_order_size++] = SCD_BUS;
     system->clock_order[system->clock_order_size++] = SCD_RAM;
+    system->clock_order[system->clock_order_size++] = SCD_TERMINAL;
     if (ticker_active) {
         system->clock_order[system->clock_order_size++] = SCD_BUS;
         system->clock_order[system->clock_order_size++] = SCD_TICKER;
@@ -78,7 +83,11 @@ void system_clock(System_t *system) {
             case SCD_TICKER:
                 ticker_clock(system->ticker);
                 break;
+            case SCD_TERMINAL:
+                terminal_clock(system->terminal);
+                break;
             default:
+                log_msg(LP_ERROR, "System: Unknown SCD clock");
                 break;
         }
     }

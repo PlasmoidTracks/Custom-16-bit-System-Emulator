@@ -26,8 +26,6 @@
 
 
 
-
-
 #define COMPILE_IR
 //#undef COMPILE_IR
 
@@ -39,6 +37,9 @@
 
 #define OPTIMIZE
 //#undef OPTIMIZE
+
+#define DISASSEMBLE
+//#undef DISASSEMBLE
 
 #define BINARY_DUMP
 //#undef BINARY_DUMP
@@ -171,9 +172,12 @@ int main(int argc, char* argv[]) {
         ram_write(system->ram, i, bin[i]);
     }
 
-    disassembler_decompile_to_file(system->ram->data, "disassemble.asm", binary_size, segment, segment_count, 
-        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
-    free(segment);    
+    #ifdef DISASSEMBLE
+        disassembler_decompile_to_file(system->ram->data, "disassemble.asm", binary_size, segment, segment_count, 
+            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
+    #endif
+    
+    free(segment);
 
     // Execution step
     //uint16_t min_sp = cpu->regs.sp;

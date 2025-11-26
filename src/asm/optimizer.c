@@ -483,7 +483,7 @@ char* optimizer_compile(char* content) {
                                 value += value2;
                                 break;
                             case SUB:
-                                set_AO = (uint32_t) value - (uint32_t) value2 < 0;
+                                set_AO = (int32_t) value - (int32_t) value2 < -(0x8000);
                                 value -= value2;
                                 break;
                             case MUL:
@@ -681,7 +681,7 @@ char* optimizer_compile(char* content) {
                         index ++;
                     }
                     sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[SUB]);
-                    sprintf(instruction[i].expression[2].tokens[0].raw, "%d", sub);
+                    sprintf(instruction[i].expression[2].tokens[0].raw, "$%.4X", (uint16_t) ((int16_t) sub));
                     instruction[i].instruction = SUB;
                 }
             }

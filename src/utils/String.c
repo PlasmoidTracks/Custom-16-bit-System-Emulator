@@ -4,13 +4,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "Log.h"
 #include "utils/ExtendedTypes.h"
 
 #include "utils/String.h"
 
 
-int contains(char character, char* matches) {
+int contains(const char character, const char* const matches) {
     if (!matches) {return 1;}
     int index = 0;
     while (matches[index] != '\0') {
@@ -22,7 +21,7 @@ int contains(char character, char* matches) {
     return 0;
 }
 
-void format_float_to_scientific_notation(char* buffer, float value) {
+void format_float_to_scientific_notation(char* const buffer, float value) {
     if (value == 0.0) {
         sprintf(buffer, "0.0");
         return;
@@ -44,7 +43,7 @@ void format_float_to_scientific_notation(char* buffer, float value) {
 }
 
 // TODO: Add "ignore_string_literals" as an optional parameter
-char** split(const char* string, char* separators, char* preserved_separators) {
+char** split(const char* string, const char* const separators, const char* const preserved_separators) {
     int capacity = 10;
     char** splits = calloc(capacity, sizeof(char*));
     int count = 0;
@@ -140,7 +139,7 @@ char** split(const char* string, char* separators, char* preserved_separators) {
     return splits;
 }
 
-int string_is_numeral(char text[]) {
+int string_is_numeral(const char text[]) {
     int index = 0;
     if (text[0] == '-') {
         index ++;
@@ -157,7 +156,7 @@ int string_is_numeral(char text[]) {
     return 1;
 }
 
-int string_is_hex_numeral(char text[]) {
+int string_is_hex_numeral(const char text[]) {
     int index = 0;
     if (text[0] == '-') {index ++;}
     while (text[index]) {
@@ -173,7 +172,7 @@ int string_is_hex_numeral(char text[]) {
     return 1;
 }
 
-int string_is_float(char text[]) {
+int string_is_float(const char text[]) {
     int index = 0;
     int point_count = 0;
     int has_number = 0;
@@ -195,7 +194,7 @@ int string_is_float(char text[]) {
     return has_number;
 }
 
-int string_is_asm_immediate(char text[]) {
+int string_is_asm_immediate(const char text[]) {
     if (string_is_numeral(&text[0])) return 1;
     if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
     if (text[0] == 'f' && string_is_float(&text[1])) return 1;
@@ -207,7 +206,7 @@ int string_is_asm_immediate(char text[]) {
     return 0;
 }
 
-int string_is_immediate(char text[]) {
+int string_is_immediate(const char text[]) {
     //log_msg(LP_CRITICAL, "TEST %s", text);
     if (string_is_numeral(text)) return 1;
     if (string_is_float(text)) return 1;
@@ -221,7 +220,7 @@ int string_is_immediate(char text[]) {
     return 0;
 }
 
-int string_is_string(char text[]) {
+int string_is_string(const char text[]) {
     if (text[0] == '\"' && text[strlen(text) - 1] == '\"') return 1;
     return 0;
 }
@@ -250,7 +249,7 @@ uint16_t parse_immediate(const char text[]) {
     return strtol(&text[0], NULL, 10);;
 }
 
-char* append_to_output_ext(char* output, long* length, const char* text, int text_len) {
+char* append_to_output_ext(char* output, long* const length, const char* const text, int text_len) {
     if (text_len <= 0) text_len = strlen(text);
     
     long current_len = *length;
@@ -264,7 +263,7 @@ char* append_to_output_ext(char* output, long* length, const char* text, int tex
     return output;
 }
 
-char* append_filename_ext(char* filename, const char* text, int text_len) {
+char* append_filename_ext(char* filename, const char* const text, int text_len) {
     if (text_len <= 0) text_len = strlen(text);
     
     long current_len = strlen(filename);

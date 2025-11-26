@@ -51,11 +51,11 @@ extern void hook_action_halt(System_t* system);
 #define hook_action_pass NULL
 
 #define HOOK_TARGET_CPU_R0 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_R1 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_R2 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_R3 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_SP ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_PC ((void*) &system->cpu->regs.r0)
+#define HOOK_TARGET_CPU_R1 ((void*) &system->cpu->regs.r1)
+#define HOOK_TARGET_CPU_R2 ((void*) &system->cpu->regs.r2)
+#define HOOK_TARGET_CPU_R3 ((void*) &system->cpu->regs.r3)
+#define HOOK_TARGET_CPU_SP ((void*) &system->cpu->regs.sp)
+#define HOOK_TARGET_CPU_PC ((void*) &system->cpu->regs.pc)
 #define HOOK_TARGET_CPU_INSTRUCTION ((void*) &system->cpu->instruction)
 #define HOOK_TARGET_CPU_CLOCK ((void*) &system->cpu->clock)
 #define HOOK_TARGET_RAM(address) ((void*) &system->ram->data[address])

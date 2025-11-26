@@ -2,7 +2,7 @@
 #define _CPU_H_
 
 #include <stdint.h>
-#include "asm/assembler.h"
+#include "cpu/cpu_instructions.h"
 #include "device.h"
 #include "ram.h"
 #include "cache.h"
@@ -69,7 +69,10 @@ typedef enum CpuState_t{
     CS_HALT,                    // halts all execution indefinitely
 
     CS_EXCEPTION, 
+    CS_COUNT, 
 } CpuState_t;
+
+extern const char* cpu_state_name[CS_COUNT];
 
 typedef struct CpuIntermediate_t {
     uint8_t instruction;

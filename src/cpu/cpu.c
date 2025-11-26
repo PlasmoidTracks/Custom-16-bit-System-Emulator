@@ -19,6 +19,40 @@
 
 static int halted = 0;
 
+
+const char* cpu_state_name[CS_COUNT] = {
+    "CS_FETCH_INSTRUCTION", 
+    "CS_FETCH_ADDRESSING_MODES", 
+    "CS_FETCH_ARGUMENT_BYTES", 
+    "CS_COMPUTE_ADDRESS",    // computes the absolute address from the addressing mode and arguments
+    "CS_FETCH_SOURCE",                // fetches data from the indirect source addressing
+    "CS_FETCH_SOURCE_HIGH", 
+    "CS_FETCH_DESTINATION",           // fetches data from the indirect destination addressing
+    "CS_FETCH_DESTINATION_HIGH", 
+    "CS_EXECUTE",                     // processes instruction and saves intermediate result for possible writeback
+    "CS_WRITEBACK_LOW",                   // writes result back to memory
+    "CS_WRITEBACK_HIGH",                   // writes result back to memory
+    "CS_PUSH_LOW",                    // push and pop are unique, thats why
+    "CS_PUSH_HIGH", 
+    "CS_POP_LOW", 
+    "CS_POP_HIGH", 
+    "CS_POPSR_LOW", 
+    "CS_POPSR_HIGH", 
+    "CS_RET_LOW", 
+    "CS_RET_HIGH", 
+
+    "CS_INTERRUPT_PUSH_PC_HIGH", 
+    "CS_INTERRUPT_PUSH_PC_LOW", 
+    "CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW", 
+    "CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH", 
+    "CS_INTERRUPT_JUMP", 
+
+    "CS_HALT",                    // halts all execution indefinitely
+
+    "CS_EXCEPTION", 
+};
+
+
 CPU_t* cpu_create(void) {
     CPU_t* cpu = malloc(sizeof(CPU_t));
     if (!cpu) return NULL;  // Always check for malloc failure

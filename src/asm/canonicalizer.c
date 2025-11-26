@@ -214,6 +214,45 @@ char* canonicalizer_compile(char* content) {
                         output = append_to_output(output, &output_len, "; UNKNOWN\n");
                         log_msg(LP_ERROR, "Canonicalizer: Unknown configuration for scaled indirect register with offset");
                     }
+                } else if (  (
+                    instr.admx == ADMX_IND16
+                    || instr.admx == ADMX_IMM16)
+                    && j == 2
+                ) {
+                    // $xxxx
+                    if (
+                        instr.expression[j].tokens[0].type == TT_IMMEDIATE
+                    ) {
+                        uint16_t imm = parse_immediate(instr.expression[j].tokens[0].raw);
+                        char tmp[16];
+                        sprintf(tmp, "$%.4X", imm);
+                        output = append_to_output(output, &output_len, tmp);
+                    } else if (
+                        instr.expression[j].tokens[0].type == TT_LABEL
+                    ) {
+                        output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
+                    }
+                    // [ $xxxx ]
+                    else if (instr.expression[j].token_count > 2 &&
+                        instr.expression[j].tokens[0].type == TT_BRACKET_OPEN &&
+                        instr.expression[j].tokens[1].type == TT_IMMEDIATE &&
+                        instr.expression[j].tokens[2].type == TT_BRACKET_CLOSE
+                    ) {
+                            output = append_to_output(output, &output_len, "[");
+                            uint16_t imm = parse_immediate(instr.expression[j].tokens[1].raw);
+                            char tmp[16];
+                            sprintf(tmp, "$%.4X", imm);
+                            output = append_to_output(output, &output_len, tmp);
+                            output = append_to_output(output, &output_len, "]");
+                    } else if (instr.expression[j].token_count > 2 &&
+                        instr.expression[j].tokens[0].type == TT_BRACKET_OPEN &&
+                        instr.expression[j].tokens[1].type == TT_LABEL &&
+                        instr.expression[j].tokens[2].type == TT_BRACKET_CLOSE
+                    ) {
+                            output = append_to_output(output, &output_len, "[");
+                            output = append_to_output(output, &output_len, instr.expression[j].tokens[1].raw);
+                            output = append_to_output(output, &output_len, "]");
+                    }
                 } else {
                     int tc = instr.expression[j].token_count;
                     for (int k = 0; k < tc; k++) {

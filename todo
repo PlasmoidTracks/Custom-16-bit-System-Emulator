@@ -48,6 +48,8 @@ GUI
 snapshots (export import of system state)
 
 
+Check if there is an issue with the AO flag, as it seems to be permanently set
+
 rules: 
 
 variables and binary operations can ONLY be done on the SAME type. 

@@ -27,8 +27,6 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     JNFL,       // jnfl dest        :: if FL == 0, dest -> pc
     JBL,        // jfl dest         :: if BL == 1, dest -> pc
     JNBL,       // jnfl dest        :: if BL == 0, dest -> pc
-    JSO,        // jso dest         :: if SO == 1, dest -> pc
-    JNSO,       // jnso dest        :: if SO == 0, dest -> pc
     JAO,        // jao dest         :: if AO == 1, dest -> pc
     JNAO,       // jnao dest        :: if AO == 0, dest -> pc
 
@@ -90,8 +88,6 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     SEFL,       // set FL bit
     CLBL,       // clear BL bit
     SEBL,       // set BL bit
-    CLSO,       // clear SO bit
-    SESO,       // set SO bit
     CLAO,       // clear AO bit
     SEAO,       // set AO bit
     CLSRC,      // clear SRC bit (enable cache read)

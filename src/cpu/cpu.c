@@ -1052,24 +1052,6 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    case JSO:
-                        if (cpu->regs.sr.SO) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNSO:
-                        if (!cpu->regs.sr.SO) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
                     case JAO:
                         if (cpu->regs.sr.AO) {
                             cpu->regs.pc = cpu->intermediate.data_address_extended;
@@ -1162,12 +1144,16 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_WRITEBACK_LOW;
                         break;
 
-                    case ABS:
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced & 0x7fff;
+                    case ABS: {
+                        cpu->intermediate.result = cpu->intermediate.data_address_reduced;
+                        if ((int16_t) cpu->intermediate.result < 0) {
+                            cpu->intermediate.result = ~cpu->intermediate.data_address_reduced + 1;
+                        }
                         cpu_update_status_register(cpu, cpu->intermediate.result);
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
                         break;
+                    }
 
                     case INC:
                         cpu->intermediate.result = cpu->intermediate.data_address_reduced + 1;
@@ -1421,20 +1407,6 @@ void cpu_clock(CPU_t* cpu) {
 
                     case SEBL:
                         cpu->regs.sr.BL = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLSO:
-                        cpu->regs.sr.SO = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SESO:
-                        cpu->regs.sr.SO = 1;
                         cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         goto CS_FETCH_INSTRUCTION;

@@ -800,8 +800,6 @@ char* optimizer_compile(char* content) {
                                         instruction[index].instruction == JNUL ||
                                         instruction[index].instruction == JFL || 
                                         instruction[index].instruction == JNFL ||
-                                        instruction[index].instruction == JSO || 
-                                        instruction[index].instruction == JNSO ||
                                         instruction[index].instruction == JAO || 
                                         instruction[index].instruction == JNAO ||
                                         instruction[index].instruction == CMOVZ || 
@@ -878,8 +876,6 @@ char* optimizer_compile(char* content) {
                                         instruction[index].instruction == JNUL ||
                                         instruction[index].instruction == JFL || 
                                         instruction[index].instruction == JNFL ||
-                                        instruction[index].instruction == JSO || 
-                                        instruction[index].instruction == JNSO ||
                                         instruction[index].instruction == JAO || 
                                         instruction[index].instruction == JNAO ||
                                         instruction[index].instruction == CMOVZ || 
@@ -995,8 +991,6 @@ char* optimizer_compile(char* content) {
                                     instruction[index].instruction == JNUL ||
                                     instruction[index].instruction == JFL || 
                                     instruction[index].instruction == JNFL ||
-                                    instruction[index].instruction == JSO || 
-                                    instruction[index].instruction == JNSO ||
                                     instruction[index].instruction == JAO || 
                                     instruction[index].instruction == JNAO ||
                                     instruction[index].instruction == CMOVZ || 

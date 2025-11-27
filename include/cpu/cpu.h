@@ -131,7 +131,6 @@ typedef struct CPU_t {
                     uint16_t UL : 1;                            // [U]nsigned [L]ess
                     uint16_t FL : 1;                            // [F]loat [L]ess
                     uint16_t BL : 1;                            // [B]float [L]ess
-                    uint16_t SO : 1;                            // [S]tack [O]verflow
                     uint16_t AO : 1;                            // [A]rithmetic [O]verflow
                     uint16_t SRC : 1;                           // [S]kip [R]eading [C]ache     (when set, skip looking through cache first)
                     uint16_t SWC : 1;                           // [S]kip [W]riting [C]ache     (when set, skip updating cache)

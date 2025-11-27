@@ -28,7 +28,11 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     "scopebegin",    // IR_LEX_SCOPEBEGIN
     "scopeend",      // IR_LEX_SCOPEEND
     "cfi",           // IR_LEX_CFI
+    "cfb",           // IR_LEX_CFB
     "cif",           // IR_LEX_CIF
+    "cib",           // IR_LEX_CIB
+    "cbf",           // IR_LEX_CBF
+    "cbi",           // IR_LEX_CBI
     "cbw",           // IR_LEX_CBW
     ".address",      // IR_LEX_ADDRESS
     "irqbegin",      // IR_LEX_IRQBEGIN
@@ -38,26 +42,34 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     // Multi-character tokens.
     "i-",             // IR_LEX_INTEGER_MINUS
     "f-",             // IR_LEX_FLOAT_MINUS
+    "b-",             // IR_LEX_BFLOAT_MINUS
     "i+",             // IR_LEX_INTEGER_PLUS
     "f+",             // IR_LEX_FLOAT_PLUS
+    "b+",             // IR_LEX_BFLOAT_PLUS
     "i/",             // IR_LEX_INTEGER_SLASH
     "f/",             // IR_LEX_FLOAT_SLASH
+    "b/",             // IR_LEX_BFLOAT_SLASH
     "i*",             // IR_LEX_INTEGER_STAR
     "f*",             // IR_LEX_FLOAT_STAR
+    "b*",             // IR_LEX_BFLOAT_STAR
     "!=",            // IR_LEX_BANG_EQUAL
     "==",            // IR_LEX_EQUAL_EQUAL
     "u>=",           // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     "i>=",           // IR_LEX_INTEGER_GREATER_EQUAL
     "f>=",           // IR_LEX_FLOAT_GREATER_EQUAL
+    "b>=",           // IR_LEX_BFLOAT_GREATER_EQUAL
     "u<=",           // IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL
     "i<=",           // IR_LEX_INTEGER_LESS_EQUAL
     "f<=",           // IR_LEX_FLOAT_LESS_EQUAL
+    "b<=",           // IR_LEX_BFLOAT_LESS_EQUAL
     "u>",            // IR_LEX_UNSIGNED_INTEGER_GREATER
     "i>",            // IR_LEX_INTEGER_GREATER
     "f>",            // IR_LEX_FLOAT_GREATER
+    "b>",            // IR_LEX_BFLOAT_GREATER
     "u<",            // IR_LEX_UNSIGNED_INTEGER_LESS
     "i<",            // IR_LEX_INTEGER_LESS
     "f<",            // IR_LEX_FLOAT_LESS
+    "b<",            // IR_LEX_BFLOAT_LESS
     "<<",            // IR_LEX_SHIFT_LEFT
     ">>",            // IR_LEX_SHIFT_RIGHT
 
@@ -108,7 +120,12 @@ const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     1,  // IR_LEX_SCOPEBEGIN
     1,  // IR_LEX_SCOPEEND
     1,  // IR_LEX_CFI
-    1,  // IR_LEX_ITF
+    1,  // IR_LEX_CFB
+    1,  // IR_LEX_CIF
+    1,  // IR_LEX_CIB
+    1,  // IR_LEX_CBI
+    1,  // IR_LEX_CBF
+    1,  // IR_LEX_CBW
     1,  // IR_LEX_ADDRESS
     1,  // IR_LEX_IRQBEGIN
     1,  // IR_LEX_IRQEND
@@ -117,26 +134,34 @@ const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     // Multi-character tokens.
     1,  // IR_LEX_INTEGER_MINUS
     1,  // IR_LEX_FLOAT_MINUS
+    1,  // IR_LEX_BFLOAT_MINUS
     1,  // IR_LEX_INTEGER_PLUS
     1,  // IR_LEX_FLOAT_PLUS
+    1,  // IR_LEX_BFLOAT_PLUS
     1,  // IR_LEX_INTEGER_SLASH
     1,  // IR_LEX_FLOAT_SLASH
+    1,  // IR_LEX_BFLOAT_SLASH
     1,  // IR_LEX_INTEGER_STAR
     1,  // IR_LEX_FLOAT_STAR
+    1,  // IR_LEX_BFLOAT_STAR
     1,  // IR_LEX_BANG_EQUAL
     1,  // IR_LEX_EQUAL_EQUAL
     1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     1,  // IR_LEX_INTEGER_GREATER_EQUAL
     1,  // IR_LEX_FLOAT_GREATER_EQUAL
+    1,  // IR_LEX_BFLOAT_GREATER_EQUAL
     1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     1,  // IR_LEX_INTEGER_LESS_EQUAL
     1,  // IR_LEX_FLOAT_LESS_EQUAL
+    1,  // IR_LEX_BFLOAT_LESS_EQUAL
     1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     1,  // IR_LEX_INTEGER_GREATER
     1,  // IR_LEX_FLOAT_GREATER
+    1,  // IR_LEX_BFLOAT_GREATER
     1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     1,  // IR_LEX_INTEGER_LESS
     1,  // IR_LEX_FLOAT_LESS
+    1,  // IR_LEX_BFLOAT_LESS
     1,  // IR_LEX_SHIFT_LEFT
     1,  // IR_LEX_SHIFT_RIGHT
 
@@ -151,7 +176,7 @@ const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     1,  // IR_LEX_BITWISE_NOT
     1,  // IR_LEX_BITWISE_XOR
     1,  // IR_LEX_BANG
-    1,  // IR_LEX_PERCENTindex3
+    1,  // IR_LEX_PERCENT
 
     // Literals.
     0,  // IR_LEX_IDENTIFIER
@@ -198,7 +223,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
 
     long index = 0;
     while (index < source_length) {
-        ////log_msg(LP_DEBUG, "%d / %d", index, source_length);
+        //log_msg(LP_DEBUG, "%d / %d", index, source_length);
         int found_token = 0;
 
         // wkip whitespaces
@@ -223,7 +248,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 1, sizeof(char));
                 strncpy(word, &source[index], ws_index - index);
                 word[ws_index - index] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_COMMENT, 
                     .length = ws_index - index, 
@@ -249,7 +274,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 3, sizeof(char));
                 strncpy(word, &source[index], ws_index - index + 2);
                 word[ws_index - index + 2] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_COMMENT], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_COMMENT, 
                     .length = ws_index - index + 2, 
@@ -275,7 +300,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 1, sizeof(char));
                 strncpy(word, &source[index], ws_index - index);
                 word[ws_index - index] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_STRING], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_STRING], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_STRING, 
                     .length = ws_index - index + 1, 
@@ -301,7 +326,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                 char* word = calloc(ws_index - index + 1, sizeof(char));
                 strncpy(word, &source[index], ws_index - index);
                 word[ws_index - index] = '\0';
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_CHAR_LITERAL], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_CHAR_LITERAL], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_CHAR_LITERAL, 
                     .length = ws_index - index + 1, 
@@ -332,7 +357,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             strncpy(word, &source[index], ws_index - index);
             word[ws_index - index] = '\0';
             if (string_is_immediate(word) || string_is_float(word)) {
-                //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_NUMBER], word);
+                //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_NUMBER], word);
                 IRLexerToken_t token = {
                     .type = IR_LEX_NUMBER, 
                     .length = ws_index - index, 
@@ -362,7 +387,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     continue;
                 }
             }
-            //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[i], ir_lexer_token_literal[i]);
+            //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[i], ir_lexer_token_literal[i]);
             IRLexerToken_t token = {
                 .type = i, 
                 .length = strlen(ir_lexer_token_literal[i]), 
@@ -393,7 +418,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             char* word = calloc(ws_index - index + 1, sizeof(char));
             strncpy(word, &source[index], ws_index - index);
             word[ws_index - index] = '\0';
-            //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_LABEL], word);
+            //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_LABEL], word);
             IRLexerToken_t token = {
                 .type = IR_LEX_LABEL, 
                 .length = ws_index - index, 
@@ -420,7 +445,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             char* word = calloc(ws_index - index + 1, sizeof(char));
             strncpy(word, &source[index], ws_index - index);
             word[ws_index - index] = '\0';
-            //log_msg(LP_SUCCESS, "LexerToken found: %s - \"%s\"", token_name[IR_LEX_IDENTIFIER], word);
+            //log_msg(LP_SUCCESS, "IR Lexer: LexerToken found: %s - \"%s\"", token_name[IR_LEX_IDENTIFIER], word);
             IRLexerToken_t token = {
                 .type = IR_LEX_IDENTIFIER, 
                 .length = ws_index - index, 

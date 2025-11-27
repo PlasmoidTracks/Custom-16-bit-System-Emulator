@@ -4,14 +4,18 @@
 #include "bus.h"
 #include "cpu/cpu.h"
 #include "ram.h"
+#include "terminal.h"
 #include "ticker.h"
 #include "ticker.h"
+
+extern int VERBOSE;
 
 typedef enum {
     SCD_CPU, 
     SCD_RAM, 
     SCD_BUS, 
     SCD_TICKER, 
+    SCD_TERMINAL, 
 } SystemClockDevice_t;
 
 typedef enum {
@@ -36,6 +40,7 @@ typedef struct System_t {
     CPU_t* cpu;
     RAM_t* ram;
     Ticker_t* ticker;
+    Terminal_t* terminal;
     int clock_order_size;
     SystemClockDevice_t* clock_order;
     Hook_t* hook;
@@ -49,11 +54,11 @@ extern void hook_action_halt(System_t* system);
 #define hook_action_pass NULL
 
 #define HOOK_TARGET_CPU_R0 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_R1 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_R2 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_R3 ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_SP ((void*) &system->cpu->regs.r0)
-#define HOOK_TARGET_CPU_PC ((void*) &system->cpu->regs.r0)
+#define HOOK_TARGET_CPU_R1 ((void*) &system->cpu->regs.r1)
+#define HOOK_TARGET_CPU_R2 ((void*) &system->cpu->regs.r2)
+#define HOOK_TARGET_CPU_R3 ((void*) &system->cpu->regs.r3)
+#define HOOK_TARGET_CPU_SP ((void*) &system->cpu->regs.sp)
+#define HOOK_TARGET_CPU_PC ((void*) &system->cpu->regs.pc)
 #define HOOK_TARGET_CPU_INSTRUCTION ((void*) &system->cpu->instruction)
 #define HOOK_TARGET_CPU_CLOCK ((void*) &system->cpu->clock)
 #define HOOK_TARGET_RAM(address) ((void*) &system->ram->data[address])

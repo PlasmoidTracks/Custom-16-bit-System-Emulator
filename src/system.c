@@ -5,6 +5,9 @@
 #include "cpu/cpu.h"
 #include "ticker.h"
 #include "system.h"
+#include "terminal.h"
+
+int VERBOSE = 0;
 
 void hook_action_halt(System_t* system) {
     system->cpu->state = CS_HALT;
@@ -22,6 +25,8 @@ System_t* system_create(
     system->cpu = cpu;
     RAM_t* ram = ram_create(1 << 16);
     system->ram = ram;
+    Terminal_t* terminal = terminal_create();
+    system->terminal = terminal;
 
     if (cache_active) {
         Cache_t* cache = cache_create(cache_capacity);
@@ -30,6 +35,7 @@ System_t* system_create(
 
     bus_add_device(bus, &cpu->device);
     bus_add_device(bus, &ram->device);
+    bus_add_device(bus, &terminal->device);
 
     if (ticker_active) {
         Ticker_t* ticker = ticker_create(ticker_frequency);
@@ -44,6 +50,7 @@ System_t* system_create(
     system->clock_order[system->clock_order_size++] = SCD_CPU;
     system->clock_order[system->clock_order_size++] = SCD_BUS;
     system->clock_order[system->clock_order_size++] = SCD_RAM;
+    system->clock_order[system->clock_order_size++] = SCD_TERMINAL;
     if (ticker_active) {
         system->clock_order[system->clock_order_size++] = SCD_BUS;
         system->clock_order[system->clock_order_size++] = SCD_TICKER;
@@ -76,7 +83,11 @@ void system_clock(System_t *system) {
             case SCD_TICKER:
                 ticker_clock(system->ticker);
                 break;
+            case SCD_TERMINAL:
+                terminal_clock(system->terminal);
+                break;
             default:
+                log_msg(LP_ERROR, "System: Unknown SCD clock");
                 break;
         }
     }
@@ -147,13 +158,15 @@ void system_clock_debug(System_t *system) {
                     }
                 }
                 if (change) {
-                    char value_before_str[256] = "0x";
-                    char value_after_str[256] = "0x";
-                    for (int j = system->hook[h].target_bytes - 1; j >= 0; j--) {
-                        sprintf(&value_before_str[(system->hook[h].target_bytes - j) * 2], "%.2X", system->memory_intermediate[index + j]);
-                        sprintf(&value_after_str[(system->hook[h].target_bytes - j) * 2], "%.2X", *((uint8_t*) system->hook[h].target + j));
+                    if (VERBOSE) {
+                        char value_before_str[256] = "0x";
+                        char value_after_str[256] = "0x";
+                        for (int j = system->hook[h].target_bytes - 1; j >= 0; j--) {
+                            sprintf(&value_before_str[(system->hook[h].target_bytes - j) * 2], "%.2X", system->memory_intermediate[index + j]);
+                            sprintf(&value_after_str[(system->hook[h].target_bytes - j) * 2], "%.2X", *((uint8_t*) system->hook[h].target + j));
+                        }
+                        log_msg(LP_NOTICE, "System: Hook %d (HC_CHANGE) triggered. Value changed from %s to %s", h, value_before_str, value_after_str);
                     }
-                    log_msg(LP_NOTICE, "System: Hook %d (HC_CHANGE) triggered. Value changed from %s to %s", h, value_before_str, value_after_str);
                     if (system->hook[h].action) {
                         system->hook[h].action(system);
                     }

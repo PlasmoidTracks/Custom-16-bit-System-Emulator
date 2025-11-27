@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "ExtendedTypes.h"
+#include "String.h"
 
 #include "cpu/cpu.h"
 #include "cpu/cpu_instructions.h"
@@ -65,8 +66,12 @@ static char* cpu_ascii_to_string(uint16_t value) {
 
 void cpu_print_register(char* name, uint16_t value) {
     char* ascii = cpu_ascii_to_string(value);
-    printf(" \033[1;32m%s\033[0m  X: 0x%04X  S: %5d  F: %14.8f  C: '%s'\n",
-        name, value, (int16_t) value, float_from_f16((float16_t) value), ascii);
+    char buf1[128];
+    char buf2[128];
+    format_float_to_scientific_notation(buf1, float_from_f16((float16_t) value));
+    format_float_to_scientific_notation(buf2, float_from_bf16((bfloat16_t) value));
+    printf(" \033[1;32m%s\033[0m  X: 0x%04X | S: %6d | F16: %-15s | BF16: %-15s | C: '%s'\n",
+        name, value, (int16_t) value, buf1, buf2, ascii);
     free(ascii);
 }
 
@@ -92,13 +97,9 @@ void cpu_print_state(CPU_t* cpu) {
 
     // Individual Flags
     printf(" \033[1;32mZ/E\033[0m [%d]  \033[1;32mN/L\033[0m [%d]  \033[1;32mUL\033[0m  [%d]  \033[1;32mFL\033[0m  [%d]\n"
-           " \033[1;32mSO\033[0m  [%d]  \033[1;32mAO\033[0m  [%d]  \033[1;32mSRC\033[0m [%d]  \033[1;32mSWC\033[0m [%d]\n"
-           " \033[1;32mMI\033[0m  [%d]\n",
+           " \033[1;32mAO\033[0m  [%d]  \033[1;32mSRC\033[0m [%d]  \033[1;32mSWC\033[0m [%d]  \033[1;32mMI\033[0m  [%d]\n",
         cpu->regs.sr.Z, cpu->regs.sr.L, cpu->regs.sr.UL, cpu->regs.sr.FL, 
-        cpu->regs.sr.SO, cpu->regs.sr.AO, cpu->regs.sr.SRC, cpu->regs.sr.SWC, 
-        cpu->regs.sr.MI);
-
-    printf(" \033[1;32mCS\033[0m  %d\n", cpu->state);
+        cpu->regs.sr.AO, cpu->regs.sr.SRC, cpu->regs.sr.SWC, cpu->regs.sr.MI);
     
     // Cache
     if (!cpu->cache) {
@@ -110,9 +111,10 @@ void cpu_print_state(CPU_t* cpu) {
 
     // Other
     printf("\n\033[1;33m Other\033[0m\n");
-    printf(" \033[1;32mclock\033[0m    %09ld\n", cpu->clock);
-    printf(" \033[1;32minstr\033[0m    %09ld\n", cpu->instruction);
+    printf(" \033[1;32mclock\033[0m    %-12ld\n", cpu->clock);
+    printf(" \033[1;32minstr\033[0m    %-12ld\n", cpu->instruction);
     printf(" \033[1;32mcpi\033[0m      %2.3f\n", (double) cpu->clock / (double) cpu->instruction);
+    printf(" \033[1;32mstate\033[0m    %d [%s]\n", cpu->state, cpu_state_name[cpu->state]);
     if (cpu->last_instruction < INSTRUCTION_COUNT) {
         printf(" \033[1;32mLast Instruction\033[0m %s (%d)\n", cpu_instruction_string[cpu->last_instruction], (int) cpu->last_instruction);
     } else {
@@ -136,9 +138,9 @@ void cpu_print_state_compact(CPU_t* cpu) {
 void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
     if (!cpu || count <= 0) return;
 
-    printf("\n\033[1;36m=================== CPU STACK ===================\033[0m\n");
-    printf(" \033[1;33m Addr   |  Hex   |  Int   |   Float    | Regs \033[0m\n");
-    printf("---------------------------------------------------\n");
+    printf("\n\033[1;36m=============================== CPU STACK ===============================\033[0m\n");
+    printf(" \033[1;33m   Addr   |  Hex   |  Int   |     Float16     |    BFloat16     | Regs \033[0m\n");
+    printf("-------------------------------------------------------------------------\n");
 
     uint16_t base = cpu->memory_layout.segment_stack;
 
@@ -148,32 +150,37 @@ void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
         char* ascii = cpu_ascii_to_string(value);
 
         int16_t signed_val = (int16_t)value;
-        float float_val = float_from_f16((float16_t)value);
 
         // Collect register names that match this address
         char reg_label[32] = "";
-        if (address == cpu->regs.r0) strcat(reg_label, "r0/");
-        if (address == cpu->regs.r1) strcat(reg_label, "r1/");
-        if (address == cpu->regs.r2) strcat(reg_label, "r2/");
-        if (address == cpu->regs.r3) strcat(reg_label, "r3/");
-        if (address == cpu->regs.sp) strcat(reg_label, "sp/");
+        if (address - 1 == cpu->regs.r0) strcat(reg_label, "r0/");
+        if (address - 1 == cpu->regs.r1) strcat(reg_label, "r1/");
+        if (address - 1 == cpu->regs.r2) strcat(reg_label, "r2/");
+        if (address - 1 == cpu->regs.r3) strcat(reg_label, "r3/");
+        if (address - 1 == cpu->regs.sp) strcat(reg_label, "sp/");
 
         // Trim trailing slash if any
         size_t len = strlen(reg_label);
         if (len > 0) reg_label[len - 1] = '\0';
 
+        char buf1[128];
+        char buf2[128];
+        format_float_to_scientific_notation(buf1, float_from_f16((float16_t) value));
+        format_float_to_scientific_notation(buf2, float_from_bf16((bfloat16_t) value));
+
         if (len > 0) {
-            printf("  \033[1;32m0x%04X/%.1X | 0x%04X | %6d | %10.6f | <-- %s \033[0m\n",
-                address - 1, address & 0x000f, value, signed_val, float_val, reg_label);
+            printf("  \033[1;32m0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s | <-- %s \033[0m",
+                address - 1, address & 0x000f, value, signed_val, buf1, buf2, reg_label);
         } else {
-            printf("  0x%04X/%.1X | 0x%04X | %6d | %10.6f |\n",
-                address - 1, address & 0x000f, value, signed_val, float_val);
+            printf("  0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s |",
+                address - 1, address & 0x000f, value, signed_val, buf1, buf2);
         }
+        if (i < count - 1) {printf("\n");}
 
         free(ascii);
     }
 
-    printf("\033[1;36m===============================================\033[0m\n\n");
+    printf("\n\033[1;36m=========================================================================\033[0m\n");
 }
 
 void cpu_print_stack_compact(CPU_t* cpu, RAM_t* ram, int count) {

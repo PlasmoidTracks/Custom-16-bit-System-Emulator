@@ -59,9 +59,9 @@ const char* expression_type_string[] = {
 
 
 
-char** assembler_split_to_separate_lines(char text[]) {
+char** assembler_split_to_separate_lines(const char text[]) {
     char** lines = split(text, "\n", "");
-    free(text);
+    free((void*) text);
     return lines;
 }
 

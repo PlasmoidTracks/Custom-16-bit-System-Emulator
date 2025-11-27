@@ -9,6 +9,7 @@ typedef enum {
     DT_CPU,             // Central Processing Unit
     DT_RAM,             // Random Access Memory
     DT_CLOCK, 
+    DT_TERMINAL, 
     DT_STORAGE,         // Storage, like hard drives
     DT_DISPLAY,         // Visual display
     DT_KEYBOARD         // User input device

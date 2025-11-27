@@ -116,6 +116,16 @@ void remove_instruction(Instruction_t* instruction, int* instruction_count, int 
     (*instruction_count)--;
 }
 
+void insert_instruction(Instruction_t* instruction, Instruction_t new_instruction, int* instruction_count, int index) {
+    instruction = realloc(instruction, sizeof(Instruction_t) * (*instruction_count + 1));
+    if (index < 0 || index >= *instruction_count) return;
+    for (int i = *instruction_count; i > index; i--) {
+        instruction[i] = instruction[i - 1];
+    }
+    instruction[index] = new_instruction;
+    (*instruction_count)++;
+}
+
 char* optimizer_compile(char* content) {
     char* output = NULL;         // final assembly string
     long output_len = 0;         // current length of code output
@@ -457,7 +467,7 @@ char* optimizer_compile(char* content) {
             // =>
             // [precompute] z :: x OP y
             // mov rN, z
-            // (removed)
+            // (removed) or "SEAO"
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && is_arithmetic_operation(instruction[i + 1].instruction)) {
                     if (instruction[i].admr == instruction[i + 1].admr && instruction[i].admx == ADMX_IMM16 && instruction[i + 1].admx == ADMX_IMM16) {
@@ -465,18 +475,23 @@ char* optimizer_compile(char* content) {
                         
                         int16_t value = (int16_t) parse_immediate(instruction[i].expression[2].tokens[0].raw);
                         int16_t value2 = (int16_t) parse_immediate(instruction[i + 1].expression[2].tokens[0].raw);
+                        int set_AO = 0;
 
                         switch(instruction[i + 1].instruction) {
                             case ADD:
+                                set_AO = (uint32_t) ((uint16_t) value) + (uint32_t) ((uint16_t) value2) > 0xffff;
                                 value += value2;
                                 break;
                             case SUB:
+                                set_AO = (int32_t) value - (int32_t) value2 < -(0x8000);
                                 value -= value2;
                                 break;
                             case MUL:
+                                set_AO = (uint32_t) ((uint16_t) value) * (uint32_t) ((uint16_t) value2) > 0xffff;
                                 value *= value2;
                                 break;
                             case DIV:
+                                set_AO = value2 == 0;
                                 value /= value2;
                                 break;
                             case ADDF:
@@ -506,8 +521,33 @@ char* optimizer_compile(char* content) {
                         }
 
                         sprintf(instruction[i].expression[2].tokens[0].raw, "%d", value);
-
+                        
+                        Instruction_t new_instruction = {
+                            .instruction = SEAO, 
+                            .address = instruction[i].address, 
+                            .admr = ADMR_NONE, 
+                            .admx = ADMX_NONE, 
+                            .argument_bytes = 0, 
+                            .expression_count = 1, 
+                            .is_address = 0, 
+                            .is_raw_data = 0, 
+                            .expression = {
+                                (Expression_t) {
+                                    .token_count = 1, 
+                                    .type = EXPR_INSTRUCTION, 
+                                    .tokens = {
+                                        (Token_t) {
+                                            .type = TT_INSTRUCTION, 
+                                            .raw = "seao"
+                                        }
+                                    }
+                                }
+                            }
+                        };
                         remove_instruction(instruction, &instruction_count, i + 1);
+                        if (set_AO) {
+                            insert_instruction(instruction, new_instruction, &instruction_count, i + 1);
+                        }
                         changes_applied = 1;
                     }
                 }
@@ -641,7 +681,7 @@ char* optimizer_compile(char* content) {
                         index ++;
                     }
                     sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[SUB]);
-                    sprintf(instruction[i].expression[2].tokens[0].raw, "%d", sub);
+                    sprintf(instruction[i].expression[2].tokens[0].raw, "$%.4X", (uint16_t) ((int16_t) sub));
                     instruction[i].instruction = SUB;
                 }
             }
@@ -760,8 +800,6 @@ char* optimizer_compile(char* content) {
                                         instruction[index].instruction == JNUL ||
                                         instruction[index].instruction == JFL || 
                                         instruction[index].instruction == JNFL ||
-                                        instruction[index].instruction == JSO || 
-                                        instruction[index].instruction == JNSO ||
                                         instruction[index].instruction == JAO || 
                                         instruction[index].instruction == JNAO ||
                                         instruction[index].instruction == CMOVZ || 
@@ -838,8 +876,6 @@ char* optimizer_compile(char* content) {
                                         instruction[index].instruction == JNUL ||
                                         instruction[index].instruction == JFL || 
                                         instruction[index].instruction == JNFL ||
-                                        instruction[index].instruction == JSO || 
-                                        instruction[index].instruction == JNSO ||
                                         instruction[index].instruction == JAO || 
                                         instruction[index].instruction == JNAO ||
                                         instruction[index].instruction == CMOVZ || 
@@ -955,8 +991,6 @@ char* optimizer_compile(char* content) {
                                     instruction[index].instruction == JNUL ||
                                     instruction[index].instruction == JFL || 
                                     instruction[index].instruction == JNFL ||
-                                    instruction[index].instruction == JSO || 
-                                    instruction[index].instruction == JNSO ||
                                     instruction[index].instruction == JAO || 
                                     instruction[index].instruction == JNAO ||
                                     instruction[index].instruction == CMOVZ || 

@@ -35,9 +35,6 @@
 #define CCAN
 //#undef CCAN
 
-#define COMPILE_IRA
-#undef COMPILE_IRA
-
 #define COMPILE_IR
 //#undef COMPILE_IR
 
@@ -49,6 +46,9 @@
 
 #define OPTIMIZE
 //#undef OPTIMIZE
+
+#define DISASSEMBLE
+//#undef DISASSEMBLE
 
 #define BINARY_DUMP
 //#undef BINARY_DUMP
@@ -119,32 +119,7 @@ int main(int argc, char* argv[]) {
     // Compiling step
     // from ira to ir
 
-    #ifdef COMPILE_IRA
-        content = read_file(argv[1], &content_size);
-        if (!content) {
-            log_msg(LP_ERROR, "IRA: read_file failed");
-            return 1;
-        }
-        IRALexerToken_t* ira_lexer_token = ira_lexer_parse(content, content_size, &lexer_token_count);
-        if (!ira_lexer_token) {
-            log_msg(LP_ERROR, "IRA: Lexer returned NULL");
-            return 1;
-        }
-        IRAParserToken_t** ira_parser_token = ira_parser_parse(ira_lexer_token, lexer_token_count, &parser_root_count);
-        if (!ira_parser_token) {
-            log_msg(LP_ERROR, "IRA: Parser returned NULL");
-            return 1;
-        }
-        char* ir = ira_compile(ira_parser_token, parser_root_count, 0xffffffff);
-        if (!ir) {
-            log_msg(LP_ERROR, "IRA: Compiler returned NULL");
-            return 1;
-        }
-        data_export(filename, ir, strlen(ir));
-    #else
-        sprintf(filename, "%s", argv[1]);
-    #endif
-
+    sprintf(filename, "%s", argv[1]);
 
     // from ir to asm
     #ifdef COMPILE_IR
@@ -225,9 +200,12 @@ int main(int argc, char* argv[]) {
         ram_write(system->ram, i, bin[i]);
     }
 
-    disassembler_decompile_to_file(system->ram->data, "disassemble.asm", binary_size, segment, segment_count, 
-        (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
-    free(segment);    
+    #ifdef DISASSEMBLE
+        disassembler_decompile_to_file(system->ram->data, "disassemble.asm", binary_size, segment, segment_count, 
+            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
+    #endif
+    
+    free(segment);
 
     // Execution step
     //uint16_t min_sp = cpu->regs.sp;

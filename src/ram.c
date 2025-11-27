@@ -43,9 +43,9 @@ void ram_write(RAM_t* ram, uint16_t address, uint8_t data) {
 void ram_clock(RAM_t* ram) {
     // check device for commands
     if (ram->device.processed == 1) {
-        ////log_msg(LP_INFO, "RAM %d: Waiting for confirmation, nothing to do", ram->clock);
-        //ram->clock ++;
-        //return;
+        //log_msg(LP_INFO, "RAM %d: Waiting for confirmation, nothing to do", ram->clock);
+        ram->clock ++;
+        return;
     }
     //log_msg(LP_INFO, "RAM %d: state %d", ram->clock, ram->device.device_state);
     if (ram->device.device_state == DS_FETCH) {

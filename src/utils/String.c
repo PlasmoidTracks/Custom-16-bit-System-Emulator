@@ -1,14 +1,15 @@
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
-#include "Log.h"
 #include "utils/ExtendedTypes.h"
 
 #include "utils/String.h"
 
 
-int contains(char character, char* matches) {
+int contains(const char character, const char* const matches) {
     if (!matches) {return 1;}
     int index = 0;
     while (matches[index] != '\0') {
@@ -20,8 +21,29 @@ int contains(char character, char* matches) {
     return 0;
 }
 
+void format_float_to_scientific_notation(char* const buffer, float value) {
+    if (value == 0.0) {
+        sprintf(buffer, "0.0");
+        return;
+    }
+    int power = 0;
+    while (fabsf(value) > 10.0) {
+        power ++;
+        value /= 10.0;
+    }
+    while (fabsf(value) < 1.0) {
+        power --;
+        value *= 10.0;
+    }
+    if (power == 0) {
+        sprintf(buffer, "%1.10f", value);
+        return;
+    }
+    sprintf(buffer, "%1.5f*10^%d", value, power);
+}
+
 // TODO: Add "ignore_string_literals" as an optional parameter
-char** split(const char* string, char* separators, char* preserved_separators) {
+char** split(const char* string, const char* const separators, const char* const preserved_separators) {
     int capacity = 10;
     char** splits = calloc(capacity, sizeof(char*));
     int count = 0;
@@ -117,7 +139,7 @@ char** split(const char* string, char* separators, char* preserved_separators) {
     return splits;
 }
 
-int string_is_numeral(char text[]) {
+int string_is_numeral(const char text[]) {
     int index = 0;
     if (text[0] == '-') {
         index ++;
@@ -134,7 +156,7 @@ int string_is_numeral(char text[]) {
     return 1;
 }
 
-int string_is_hex_numeral(char text[]) {
+int string_is_hex_numeral(const char text[]) {
     int index = 0;
     if (text[0] == '-') {index ++;}
     while (text[index]) {
@@ -150,7 +172,7 @@ int string_is_hex_numeral(char text[]) {
     return 1;
 }
 
-int string_is_float(char text[]) {
+int string_is_float(const char text[]) {
     int index = 0;
     int point_count = 0;
     int has_number = 0;
@@ -172,43 +194,56 @@ int string_is_float(char text[]) {
     return has_number;
 }
 
-int string_is_asm_immediate(char text[]) {
+int string_is_asm_immediate(const char text[]) {
+    int length = strlen(text);
+    if (length < 1) {return 0;}
     if (string_is_numeral(&text[0])) return 1;
-    if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
-    if (text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (length > 1 && text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
+    if (length > 1 && text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (length > 2 && text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
     if (text[0] == '0') {
-        if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
-        if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
     }
+    if (length > 2 && text[0] == '\'' && text[2] == '\'') return 1;
     return 0;
 }
 
-int string_is_immediate(char text[]) {
+int string_is_immediate(const char text[]) {
+    int length = strlen(text);
+    if (length < 1) {return 0;}
     //log_msg(LP_CRITICAL, "TEST %s", text);
     if (string_is_numeral(text)) return 1;
     if (string_is_float(text)) return 1;
     //if (text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
-    if (text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (length > 1 && text[0] == 'f' && string_is_float(&text[1])) return 1;
+    if (length > 2 && text[0] == 'b' && text[1] == 'f' && string_is_float(&text[2])) return 1;
     if (text[0] == '0') {
-        if ((text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
-        if ((text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
+        if (length > 2 && (text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
     }
     return 0;
 }
 
-int string_is_string(char text[]) {
+int string_is_string(const char text[]) {
+    if (strlen(text) < 1) {return 0;}
     if (text[0] == '\"' && text[strlen(text) - 1] == '\"') return 1;
     return 0;
 }
 
 uint16_t parse_immediate(const char text[]) {
+    int length = strlen(text);
+    if (length < 1) {return 0;}
     if (text[0] == '$') {
         return strtol(&text[1], NULL, 16);
     }
     if (text[0] == 'f') {
         return f16_from_float(strtof(&text[1], NULL));
     }
-    if (text[0] == '0') {
+    if (length > 1 && text[0] == 'b' && text[1] == 'f') {
+        return bf16_from_float(strtof(&text[2], NULL));
+    }
+    if (length > 1 && text[0] == '0') {
         if (text[1] == 'x') {
             return strtol(&text[2], NULL, 16);
         } 
@@ -219,10 +254,13 @@ uint16_t parse_immediate(const char text[]) {
             return strtol(&text[2], NULL, 2);
         }
     }
+    if (length > 2 && text[0] == '\'' && text[2] == '\'') {
+        return (uint16_t) text[1];
+    }
     return strtol(&text[0], NULL, 10);;
 }
 
-char* append_to_output_ext(char* output, long* length, const char* text, int text_len) {
+char* append_to_output_ext(char* output, long* const length, const char* const text, int text_len) {
     if (text_len <= 0) text_len = strlen(text);
     
     long current_len = *length;
@@ -236,7 +274,7 @@ char* append_to_output_ext(char* output, long* length, const char* text, int tex
     return output;
 }
 
-char* append_filename_ext(char* filename, const char* text, int text_len) {
+char* append_filename_ext(char* filename, const char* const text, int text_len) {
     if (text_len <= 0) text_len = strlen(text);
     
     long current_len = strlen(filename);

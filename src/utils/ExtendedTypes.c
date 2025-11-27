@@ -5,10 +5,13 @@
 
 
 float16_t f16_ZERO = (uint16_t) 0x0000;
+bfloat16_t bf16_ZERO = (uint16_t) 0x0000;
 
 float16_t f16_ONE = (uint16_t) 0x3c00;
+bfloat16_t bf16_ONE = (uint16_t) 0x3f80;
 
 float16_t f16_TWO = (uint16_t) 0x4000;
+bfloat16_t bf16_TWO = (uint16_t) 0x4000;
 
 
 
@@ -285,3 +288,183 @@ float16_t f16_abs(float16_t f16) {
     return f16 & 0x7FFF;
 }
 
+
+
+
+
+// *************************************************
+// bfloat16_t
+
+// Converts float to bfloat16
+bfloat16_t bf16_from_float(float f32) {
+    uint32_t f32_bits = *((uint32_t*)(&f32));
+
+    // Extract the sign, exponent, and mantissa
+    uint32_t sign32 = (f32_bits >> 31) & 0x1;
+    uint32_t exponent32 = (f32_bits >> 23) & 0xFF;
+    uint32_t mantissa32 = (f32_bits >> 16) & 0x7F;  // bf16 has 7 mantissa bits
+
+    // Round the mantissa according to the cutoff bit (the 8th bit of mantissa in float32)
+    mantissa32 += (f32_bits >> 15) & 1;
+
+    // Pack into bfloat16: sign (1) | exponent (8) | mantissa (7)
+    return (sign32 << 15) | (exponent32 << 7) | mantissa32;
+}
+
+// Converts bfloat16 to float
+float float_from_bf16(bfloat16_t bf16) {
+    // Extract the sign, exponent, and mantissa
+    uint32_t sign16 = (bf16 >> 15) & 0x1;
+    uint32_t exponent16 = (bf16 >> 7) & 0xFF;
+    uint32_t mantissa16 = bf16 & 0x7F;
+
+    // Convert to float32 format: sign (1) | exponent (8) | mantissa (23)
+    uint32_t f32_bits = (sign16 << 31) | (exponent16 << 23) | (mantissa16 << 16);
+
+    return *((float*)(&f32_bits));
+}
+
+// Unpacks a bfloat16 into sign, exponent, and mantissa
+static void bf16_unpack(bfloat16_t bf16, int *sign, int *exp, uint32_t *mant) {
+    *sign = (bf16 >> 15) & 1;
+    *exp = (bf16 >> 7) & 0xFF;
+    *mant = bf16 & 0x7F;
+    if (*exp != 0) {
+        *mant |= (1 << 7);  // Implicit leading one for normalized values
+    }
+}
+
+// Packs sign, exponent, and mantissa into a bfloat16
+static bfloat16_t bf16_pack(int sign, int exp, uint32_t mant) {
+    if (exp <= 0) {  // Handle subnormals or zero
+        mant >>= 1 - exp;  // Right shift mantissa to fit into subnormal range
+        exp = 0;
+    } else if (exp >= 255) {  // Handle overflow to infinity
+        mant = 0;
+        exp = 255;
+    } else {
+        // Normalize mantissa
+        while (mant >= (1 << 8)) {
+            mant >>= 1;
+            exp++;
+        }
+        while (mant && mant < (1 << 7)) {
+            mant <<= 1;
+            exp--;
+        }
+    }
+    return ((sign & 1) << 15) | ((exp & 0xFF) << 7) | (mant & 0x7F);
+}
+
+// Adjusts exponents by shifting mantissas
+static int adjust_exponent_bf16(uint32_t *mant1, int exp1, uint32_t *mant2, int exp2) {
+    if (exp1 > exp2) {
+        *mant2 >>= (exp1 - exp2);
+        return 0;  // Indicates the first operand has the greater exponent
+    } else if (exp2 > exp1) {
+        *mant1 >>= (exp2 - exp1);
+        return 1;  // Indicates the second operand has the greater exponent
+    }
+    return -1;  // Indicates exponents are equal
+}
+
+// Adds two bfloat16 values
+bfloat16_t bf16_add(bfloat16_t bf16_a, bfloat16_t bf16_b) {
+    int sign1, sign2, exp1, exp2;
+    uint32_t mant1, mant2;
+
+    bf16_unpack(bf16_a, &sign1, &exp1, &mant1);
+    bf16_unpack(bf16_b, &sign2, &exp2, &mant2);
+
+    // Align mantissas
+    if (adjust_exponent_bf16(&mant1, exp1, &mant2, exp2)) {
+        exp1 = exp2;
+    } else {
+        exp2 = exp1;
+    }
+
+    // Perform addition or subtraction based on sign
+    uint32_t result_mant;
+    int result_sign;
+    if (sign1 == sign2) {
+        result_mant = mant1 + mant2;
+        result_sign = sign1;
+    } else {
+        if (mant1 > mant2) {
+            result_mant = mant1 - mant2;
+            result_sign = sign1;
+        } else {
+            result_mant = mant2 - mant1;
+            result_sign = sign2;
+        }
+    }
+
+    // Normalize result
+    return bf16_pack(result_sign, exp1, result_mant);
+}
+
+// Subtracts two bfloat16 values
+bfloat16_t bf16_sub(bfloat16_t bf16_a, bfloat16_t bf16_b) {
+    return bf16_add(bf16_a, bf16_neg(bf16_b));
+}
+
+// Multiplies two bfloat16 values
+bfloat16_t bf16_mult(bfloat16_t bf16_a, bfloat16_t bf16_b) {
+    int sign1, sign2, exp1, exp2;
+    uint32_t mant1, mant2;
+
+    bf16_unpack(bf16_a, &sign1, &exp1, &mant1);
+    bf16_unpack(bf16_b, &sign2, &exp2, &mant2);
+
+    // Calculate the sign of the result
+    int result_sign = sign1 ^ sign2;
+
+    // Multiply the mantissas
+    uint64_t result_mant = (uint64_t)mant1 * (uint64_t)mant2;
+
+    // Adjust exponent
+    int result_exp = exp1 + exp2 - 127;
+    if (result_mant >= (1ULL << 15)) {
+        result_mant >>= 8;
+        result_exp++;
+    } else {
+        result_mant >>= 7;
+    }
+
+    return bf16_pack(result_sign, result_exp, (uint32_t)result_mant);
+}
+
+// Divides two bfloat16 values
+bfloat16_t bf16_div(bfloat16_t bf16_a, bfloat16_t bf16_b) {
+    int sign1, sign2, exp1, exp2;
+    uint32_t mant1, mant2;
+
+    bf16_unpack(bf16_a, &sign1, &exp1, &mant1);
+    bf16_unpack(bf16_b, &sign2, &exp2, &mant2);
+
+    if (mant2 == 0) {  // Handle division by zero
+        return bf16_pack(sign1 ^ sign2, 255, 0);  // Return infinity with appropriate sign
+    }
+
+    // Normalize the divisor to improve division accuracy
+    int shift = 0;
+    while (mant2 < (1 << 7)) {
+        mant2 <<= 1;
+        shift++;
+    }
+
+    uint64_t dividend = (uint64_t)mant1 << (7 + shift);  // Increase precision for the division
+    uint32_t result_mant = (uint32_t)(dividend / mant2);  // Perform the division
+
+    int result_exp = exp1 - exp2 - shift + 127;
+
+    return bf16_pack(sign1 ^ sign2, result_exp, result_mant);
+}
+
+bfloat16_t bf16_neg(bfloat16_t bf16) {
+    return bf16 ^= 0x8000;
+}
+
+bfloat16_t bf16_abs(bfloat16_t bf16) {
+    return bf16 &= 0x7fff;
+}

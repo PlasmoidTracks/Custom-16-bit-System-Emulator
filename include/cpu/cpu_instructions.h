@@ -25,8 +25,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     JNUL,       // jnul dest        :: if UL == 0, dest -> pc
     JFL,        // jfl dest         :: if FL == 1, dest -> pc
     JNFL,       // jnfl dest        :: if FL == 0, dest -> pc
-    JSO,        // jso dest         :: if SO == 1, dest -> pc
-    JNSO,       // jnso dest        :: if SO == 0, dest -> pc
+    JBL,        // jfl dest         :: if BL == 1, dest -> pc
+    JNBL,       // jnfl dest        :: if BL == 0, dest -> pc
     JAO,        // jao dest         :: if AO == 1, dest -> pc
     JNAO,       // jnao dest        :: if AO == 0, dest -> pc
 
@@ -35,7 +35,9 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
 
     // Arithmetic Integer Operations
     ADD,        // add dest, src    :: dest = dest + src (integer)
+    ADC,        // adc dest, src    :: dest = dest + src (integer) + AO
     SUB,        // sub dest, src    :: dest = dest - src (integer)
+    SBC,        // sbc dest, src    :: dest = dest - src (integer) - AO
     MUL,        // mul dest, src    :: dest = dest * src (integer)
     DIV,        // div dest, src    :: dest = dest / src (integer)
     NEG,        // neg dest         :: dest = dest ~ 0x8000
@@ -49,9 +51,19 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     MULF,       // mulf dest, src   :: dest = dest * src (float16)
     DIVF,       // divf dest, src   :: dest = dest / src (float16)
 
+    // Arithmetic Float Operations
+    ADDBF,       // addf dest, src   :: dest = dest + src (bfloat16)
+    SUBBF,       // subf dest, src   :: dest = dest - src (bfloat16)
+    MULBF,       // mulf dest, src   :: dest = dest * src (bfloat16)
+    DIVBF,       // divf dest, src   :: dest = dest / src (bfloat16)
+
     // Type Conversion Operations
     CIF,        // itf dest         :: [c]onvert [i]nteger dest -> [f]loat16 -> dest
+    CIB,        // itf dest         :: [c]onvert [i]nteger dest -> [b]float16 -> dest
     CFI,        // fti dest         :: [c]onvert [f]loat16 dest -> [i]nteger -> dest
+    CFB,        // fti dest         :: [c]onvert [f]loat16 dest -> [b]float16 -> dest
+    CBF,        // itf dest         :: [c]onvert [b]float16 dest -> [f]loat16 -> dest
+    CBI,        // itf dest         :: [c]onvert [b]float16 dest -> [i]nteger -> dest
     CBW,        // cbw dest         :: [c]onvert [b]yte to [w]ord by sign extension (0x??80 -> 0xff80)
 
     // Bitwise Logic
@@ -74,8 +86,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     SEUL,       // set UL bit
     CLFL,       // clear FL bit
     SEFL,       // set FL bit
-    CLSO,       // clear SO bit
-    SESO,       // set SO bit
+    CLBL,       // clear BL bit
+    SEBL,       // set BL bit
     CLAO,       // clear AO bit
     SEAO,       // set AO bit
     CLSRC,      // clear SRC bit (enable cache read)
@@ -94,6 +106,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CMOVNUL,    // cmovXX dest, src    :: if UL=0 {src -> dest}
     CMOVFL,     // cmovXX dest, src    :: if FL=1 {src -> dest}
     CMOVNFL,    // cmovXX dest, src    :: if FL=0 {src -> dest}
+    CMOVBL,     // cmovXX dest, src    :: if BL=1 {src -> dest}
+    CMOVNBL,    // cmovXX dest, src    :: if BL=0 {src -> dest}
 
     // Cache Operations
     INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid

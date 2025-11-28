@@ -26,9 +26,6 @@
 
 #include "transpile/ccan/ccan_lexer.h"
 #include "transpile/ccan/ccan_parser.h"
-#include "transpile/ira_lexer.h"
-#include "transpile/ira_parser.h"
-#include "transpile/ira_compiler.h"
 
 
 

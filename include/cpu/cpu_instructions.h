@@ -58,12 +58,12 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     DIVBF,       // divf dest, src   :: dest = dest / src (bfloat16)
 
     // Type Conversion Operations
-    CIF,        // itf dest         :: [c]onvert [i]nteger dest -> [f]loat16 -> dest
-    CIB,        // itf dest         :: [c]onvert [i]nteger dest -> [b]float16 -> dest
-    CFI,        // fti dest         :: [c]onvert [f]loat16 dest -> [i]nteger -> dest
-    CFB,        // fti dest         :: [c]onvert [f]loat16 dest -> [b]float16 -> dest
-    CBF,        // itf dest         :: [c]onvert [b]float16 dest -> [f]loat16 -> dest
-    CBI,        // itf dest         :: [c]onvert [b]float16 dest -> [i]nteger -> dest
+    CIF,        // cif dest         :: [c]onvert [i]nteger dest -> [f]loat16 -> dest
+    CIB,        // cib dest         :: [c]onvert [i]nteger dest -> [b]float16 -> dest
+    CFI,        // cfi dest         :: [c]onvert [f]loat16 dest -> [i]nteger -> dest
+    CFB,        // cfb dest         :: [c]onvert [f]loat16 dest -> [b]float16 -> dest
+    CBF,        // cbf dest         :: [c]onvert [b]float16 dest -> [f]loat16 -> dest
+    CBI,        // cbi dest         :: [c]onvert [b]float16 dest -> [i]nteger -> dest
     CBW,        // cbw dest         :: [c]onvert [b]yte to [w]ord by sign extension (0x??80 -> 0xff80)
 
     // Bitwise Logic

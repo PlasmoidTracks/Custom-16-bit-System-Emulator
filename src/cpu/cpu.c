@@ -77,6 +77,44 @@ CPU_t* cpu_create(void) {
 
     cpu->state = CS_FETCH_INSTRUCTION;
 
+    cpu->feature_flag = 0;
+    #ifdef DCFF_BASE
+        cpu->feature_flag |= CFF_BASE;
+    #endif
+    #ifdef DCFF_INT_ARITH
+        cpu->feature_flag |= CFF_INT_ARITH;
+    #endif
+    #ifdef DCFF_INT_ARITH_EXT
+        cpu->feature_flag |= CFF_INT_ARITH_EXT;
+    #endif
+    #ifdef DCFF_INT_CARRY_EXT
+        cpu->feature_flag |= CFF_INT_CARRY_EXT;
+    #endif
+    #ifdef DCFF_LOGIC_EXT
+        cpu->feature_flag |= CFF_LOGIC_EXT;
+    #endif
+    #ifdef DCFF_CMOV_EXT
+        cpu->feature_flag |= CFF_CMOV_EXT;
+    #endif
+    #ifdef DCFF_BYTE_EXT
+        cpu->feature_flag |= CFF_BYTE_EXT;
+    #endif
+    #ifdef DCFF_FLOAT16
+        cpu->feature_flag |= CFF_FLOAT16;
+    #endif
+    #ifdef DCFF_BFLOAT16
+        cpu->feature_flag |= CFF_BFLOAT16;
+    #endif
+    #ifdef DCFF_FLOAT_CONVERT
+        cpu->feature_flag |= CFF_FLOAT_CONVERT;
+    #endif
+    #ifdef DCFF_CACHE_EXT
+        cpu->feature_flag |= CFF_CACHE_EXT;
+    #endif
+    #ifdef DCFF_HW_INFO
+        cpu->feature_flag |= CFF_HW_INFO;
+    #endif
+
     return cpu;
 }
 
@@ -918,739 +956,749 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    case MOV:
-                        cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
+                    #ifdef DCFF_BASE
+                        case MOV:
+                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
 
-                    case PUSH:
-                        cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                        cpu->state = CS_PUSH_HIGH;
-                        goto CS_PUSH_HIGH;
-                        break;
+                        case PUSH:
+                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                            cpu->state = CS_PUSH_HIGH;
+                            goto CS_PUSH_HIGH;
+                            break;
 
-                    case POP:
-                        cpu->intermediate.argument_address_reduced = cpu->regs.sp;
-                        cpu->state = CS_POP_LOW;
-                        goto CS_POP_LOW;
-                        break;
+                        case POP:
+                            cpu->intermediate.argument_address_reduced = cpu->regs.sp;
+                            cpu->state = CS_POP_LOW;
+                            goto CS_POP_LOW;
+                            break;
 
-                    case PUSHSR:
-                        cpu->intermediate.result = cpu->regs.sr.value;
-                        cpu->state = CS_PUSH_HIGH;
-                        goto CS_PUSH_HIGH;
-                        break;
+                        case PUSHSR:
+                            cpu->intermediate.result = cpu->regs.sr.value;
+                            cpu->state = CS_PUSH_HIGH;
+                            goto CS_PUSH_HIGH;
+                            break;
 
-                    case POPSR:
-                        cpu->intermediate.argument_address_reduced = cpu->regs.sp;
-                        cpu->state = CS_POPSR_LOW;
-                        goto CS_POPSR_LOW;
-                        break;
+                        case POPSR:
+                            cpu->intermediate.argument_address_reduced = cpu->regs.sp;
+                            cpu->state = CS_POPSR_LOW;
+                            goto CS_POPSR_LOW;
+                            break;
 
-                    case LEA:
-                        cpu->intermediate.result = cpu->intermediate.argument_address_extended;
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-                    
-                    
-                    case JMP:
-                        cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JZ:
-                        if (cpu->regs.sr.Z) {
+                        case LEA:
+                            cpu->intermediate.result = cpu->intermediate.argument_address_extended;
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        
+                        
+                        case JMP:
                             cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNZ:
-                        if (!cpu->regs.sr.Z) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JL:
-                        if (cpu->regs.sr.L) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNL:
-                        if (!cpu->regs.sr.L) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JUL:
-                        if (cpu->regs.sr.UL) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNUL:
-                        if (!cpu->regs.sr.UL) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JFL:
-                        if (cpu->regs.sr.FL) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNFL:
-                        if (!cpu->regs.sr.FL) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JBL:
-                        if (cpu->regs.sr.BL) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNBL:
-                        if (!cpu->regs.sr.BL) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JAO:
-                        if (cpu->regs.sr.AO) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case JNAO:
-                        if (!cpu->regs.sr.AO) {
-                            cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JZ:
+                            if (cpu->regs.sr.Z) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNZ:
+                            if (!cpu->regs.sr.Z) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
                 
-                    case CALL:
-                        cpu->intermediate.result = cpu->regs.pc;
-                        cpu->regs.pc = cpu->intermediate.data_address_extended;
-                        cpu->state = CS_PUSH_HIGH;
-                        goto CS_PUSH_HIGH;
-                        break;
+                        case CALL:
+                            cpu->intermediate.result = cpu->regs.pc;
+                            cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            cpu->state = CS_PUSH_HIGH;
+                            goto CS_PUSH_HIGH;
+                            break;
+                        
+                        case RET:
+                            cpu->intermediate.argument_address_reduced = cpu->regs.sp;
+                            cpu->state = CS_POP_LOW; // the part with writing to pc is taken care of in CS_POP_HIGH
+                            goto CS_POP_LOW;
+                            break;
+
+                        case CMP:
+                            {
+                                uint16_t a = cpu->intermediate.data_address_reduced;
+                                uint16_t b = cpu->intermediate.data_address_extended;
+                                cpu->regs.sr.Z = (a == b);
+                                cpu->regs.sr.L = ((int16_t) a < (int16_t) b);
+                                cpu->regs.sr.UL = (a < b);
+                                cpu->regs.sr.FL = (float_from_f16(a) < float_from_f16(b));
+                                cpu->regs.sr.BL = (float_from_bf16(a) < float_from_bf16(b));
+                                cpu->instruction ++;
+                                cpu->state = CS_FETCH_INSTRUCTION;
+                                goto CS_FETCH_INSTRUCTION;
+                            }
+                            break;
+                        
+                        case TST:
+                            {
+                                uint16_t value = cpu->intermediate.data_address_extended;
+                                cpu->regs.sr.Z = (value == 0);
+                                cpu->regs.sr.L = ((value & 0x8000) != 0);
+                                cpu->instruction ++;
+                                cpu->state = CS_FETCH_INSTRUCTION;
+                                goto CS_FETCH_INSTRUCTION;
+                            }
+                            break;
                     
-                    case RET:
-                        cpu->intermediate.argument_address_reduced = cpu->regs.sp;
-                        cpu->state = CS_POP_LOW; // the part with writing to pc is taken care of in CS_POP_HIGH
-                        goto CS_POP_LOW;
-                        break;
-
-
-                    case ADD:
-                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced + (int16_t) cpu->intermediate.data_address_extended;
-                        cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced + (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case SUB:
-                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced - (int16_t) cpu->intermediate.data_address_extended;
-                        cpu->regs.sr.AO = ((int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended) < 0;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case ADC:
-                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced + (int16_t) cpu->intermediate.data_address_extended + cpu->regs.sr.AO;
-                        cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced + (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case SBC:
-                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced - (int16_t) cpu->intermediate.data_address_extended - cpu->regs.sr.AO;
-                        cpu->regs.sr.AO = ((int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended) < 0;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case MUL:
-                        cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced * (int16_t) cpu->intermediate.data_address_extended;
-                        cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced * (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case DIV:
-                        if ((int16_t) cpu->intermediate.data_address_extended == 0) {
-                            cpu->intermediate.result = 0;
-                            cpu->regs.sr.AO = 1;
-                        } else {
-                            cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced / (int16_t) cpu->intermediate.data_address_extended;
-                        }
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case NEG:
-                        cpu->intermediate.result = ~cpu->intermediate.data_address_reduced + 1;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case ABS: {
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced;
-                        if ((int16_t) cpu->intermediate.result < 0) {
-                            cpu->intermediate.result = ~cpu->intermediate.data_address_reduced + 1;
-                        }
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-                    }
-
-                    case INC:
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced + 1;
-                        cpu->regs.sr.AO = cpu->intermediate.result == 0;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case DEC:
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced - 1;
-                        cpu->regs.sr.AO = cpu->intermediate.result == 0xffff;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-
-                    case ADDF:
-                        cpu->intermediate.result = f16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case SUBF:
-                        cpu->intermediate.result = f16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case MULF:
-                        cpu->intermediate.result = f16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case DIVF:
-                        cpu->intermediate.result = f16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-
-                    case ADDBF:
-                        cpu->intermediate.result = bf16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case SUBBF:
-                        cpu->intermediate.result = bf16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case MULBF:
-                        cpu->intermediate.result = bf16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case DIVBF:
-                        cpu->intermediate.result = bf16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-
-                    case CIF:
-                        cpu->intermediate.result = f16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case CIB:
-                        cpu->intermediate.result = bf16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case CFI:
-                        cpu->intermediate.result = (int16_t) float_from_f16(cpu->intermediate.data_address_reduced);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case CFB:
-                        cpu->intermediate.result = bf16_from_float(float_from_f16(cpu->intermediate.data_address_reduced));
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case CBI:
-                        cpu->intermediate.result = (int16_t) float_from_bf16(cpu->intermediate.data_address_reduced);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case CBF:
-                        cpu->intermediate.result = f16_from_float(float_from_bf16(cpu->intermediate.data_address_reduced));
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    case CBW:
-                        cpu->intermediate.result = (int16_t) ((int8_t) cpu->intermediate.data_address_reduced);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-
-                    case BWS:
-                        {
-                            int16_t shift = (int16_t) cpu->intermediate.data_address_extended;
-                            if (shift > 0)
-                                cpu->intermediate.result = cpu->intermediate.data_address_reduced >> shift;
-                            else 
-                                cpu->intermediate.result = cpu->intermediate.data_address_reduced << (-shift);
+                        case AND:
+                            cpu->intermediate.result = cpu->intermediate.data_address_reduced & cpu->intermediate.data_address_extended;
                             cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
-                        }
-                        break;
-                    
-                    case AND:
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced & cpu->intermediate.data_address_extended;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-                    
-                    case OR:
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced | cpu->intermediate.data_address_extended;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-                    
-                    case XOR:
-                        cpu->intermediate.result = cpu->intermediate.data_address_reduced ^ cpu->intermediate.data_address_extended;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-                    
-                    case NOT:
-                        cpu->intermediate.result = ~cpu->intermediate.data_address_reduced;
-                        cpu_update_status_register(cpu, cpu->intermediate.result);
-                        cpu->state = CS_WRITEBACK_LOW;
-                        goto CS_WRITEBACK_LOW;
-                        break;
-
-                    
-                    case CMP:
-                        {
-                            uint16_t a = cpu->intermediate.data_address_reduced;
-                            uint16_t b = cpu->intermediate.data_address_extended;
-                            cpu->regs.sr.Z = (a == b);
-                            cpu->regs.sr.L = ((int16_t) a < (int16_t) b);
-                            cpu->regs.sr.UL = (a < b);
-                            cpu->regs.sr.FL = (float_from_f16(a) < float_from_f16(b));
-                            cpu->regs.sr.BL = (float_from_bf16(a) < float_from_bf16(b));
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                        }
-                        break;
-                    
-                    case TST:
-                        {
-                            uint16_t value = cpu->intermediate.data_address_extended;
-                            cpu->regs.sr.Z = (value == 0);
-                            cpu->regs.sr.L = ((value & 0x8000) != 0);
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                        }
-                        break;
-
-
-                    case CLZ:
-                        cpu->regs.sr.Z = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEZ:
-                        cpu->regs.sr.Z = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLL:
-                        cpu->regs.sr.L = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEL:
-                        cpu->regs.sr.L = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLUL:
-                        cpu->regs.sr.UL = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEUL:
-                        cpu->regs.sr.UL = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLFL:
-                        cpu->regs.sr.FL = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEFL:
-                        cpu->regs.sr.FL = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLBL:
-                        cpu->regs.sr.BL = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEBL:
-                        cpu->regs.sr.BL = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLAO:
-                        cpu->regs.sr.AO = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEAO:
-                        cpu->regs.sr.AO = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLSRC:
-                        cpu->regs.sr.SRC = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SESRC:
-                        cpu->regs.sr.SRC = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLSWC:
-                        cpu->regs.sr.SWC = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SESWC:
-                        cpu->regs.sr.SWC = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CLMI:
-                        cpu->regs.sr.MI = 0;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case SEMI:
-                        cpu->regs.sr.MI = 1;
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    // Conditional Operations
-
-                    case CMOVZ:
-                        if (cpu->regs.sr.Z) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
                             break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVNZ:
-                        if (!cpu->regs.sr.Z) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVL:
-                        if (cpu->regs.sr.L) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVNL:
-                        if (!cpu->regs.sr.L) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVUL:
-                        if (cpu->regs.sr.UL) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVNUL:
-                        if (!cpu->regs.sr.UL) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVFL:
-                        if (cpu->regs.sr.FL) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVNFL:
-                        if (!cpu->regs.sr.FL) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVBL:
-                        if (cpu->regs.sr.BL) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-
-                    case CMOVNBL:
-                        if (!cpu->regs.sr.BL) {
-                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
-                            break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-
-                    case INV:
-                        //log_msg(LP_ERROR, "CPU %d: undefined instruction INV");
-                        //cpu->state = CS_EXCEPTION;
-                        cache_invalidate(cpu->cache);
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case FTC: {
-                        //log_msg(LP_ERROR, "CPU %d: undefined instruction FTC");
-                        // doesnt even improve performance on optimal scenraios
-                        uint8_t data;
-                        int success = cpu_read_memory(cpu, cpu->intermediate.data_address_extended, &data);
-                        if (success) {
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                        }
-                        break;
-                    }
-
-                    
-                    case HWCLOCK:
-                        cpu->regs.r0 = cpu->clock & ((uint64_t) 0xffff << 0);
-                        cpu->regs.r1 = cpu->clock & ((uint64_t) 0xffff << 16);
-                        cpu->regs.r2 = cpu->clock & ((uint64_t) 0xffff << 32);
-                        cpu->regs.r3 = cpu->clock & ((uint64_t) 0xffff << 48);
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-                    case HWINSTR:
-                        cpu->regs.r0 = cpu->instruction & ((uint64_t) 0xffff << 0);
-                        cpu->regs.r1 = cpu->instruction & ((uint64_t) 0xffff << 16);
-                        cpu->regs.r2 = cpu->instruction & ((uint64_t) 0xffff << 32);
-                        cpu->regs.r3 = cpu->instruction & ((uint64_t) 0xffff << 48);
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
-                        break;
-                    
-
-                    case INT:
-                        //log_msg(LP_ERROR, "CPU %d: undefined instruction INT");
-                        //printf("%c", cpu->intermediate.data_address_extended & 0xffff);
-                        //cpu->instruction ++;
-                        //cpu->state = CS_FETCH_INSTRUCTION;
-                        cpu->instruction ++;
-                        cpu->state = CS_INTERRUPT_PUSH_PC_HIGH;
-                        goto CS_INTERRUPT_PUSH_PC_HIGH;
-                        //cpu->intermediate.irq_id = ;
-                        break;
-
-                    case HLT:
-                        cpu->instruction ++;
-                        cpu->state = CS_HALT;
-                        break;
                         
+                        case OR:
+                            cpu->intermediate.result = cpu->intermediate.data_address_reduced | cpu->intermediate.data_address_extended;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        
+                        case XOR:
+                            cpu->intermediate.result = cpu->intermediate.data_address_reduced ^ cpu->intermediate.data_address_extended;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        
+                        case NOT:
+                            cpu->intermediate.result = ~cpu->intermediate.data_address_reduced;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case BWS:
+                            {
+                                int16_t shift = (int16_t) cpu->intermediate.data_address_extended;
+                                if (shift > 0)
+                                    cpu->intermediate.result = cpu->intermediate.data_address_reduced >> shift;
+                                else 
+                                    cpu->intermediate.result = cpu->intermediate.data_address_reduced << (-shift);
+                                cpu_update_status_register(cpu, cpu->intermediate.result);
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                            }
+                            break;
+
+                        case INT:
+                            //log_msg(LP_ERROR, "CPU %d: undefined instruction INT");
+                            //printf("%c", cpu->intermediate.data_address_extended & 0xffff);
+                            //cpu->instruction ++;
+                            //cpu->state = CS_FETCH_INSTRUCTION;
+                            cpu->instruction ++;
+                            cpu->state = CS_INTERRUPT_PUSH_PC_HIGH;
+                            goto CS_INTERRUPT_PUSH_PC_HIGH;
+                            //cpu->intermediate.irq_id = ;
+                            break;
+    
+                        case HLT:
+                            cpu->instruction ++;
+                            cpu->state = CS_HALT;
+                            break;
+                    #endif // DCFF_BASE
+
+                    #ifdef DCFF_INT_ARITH
+                        case ADD:
+                            cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced + (int16_t) cpu->intermediate.data_address_extended;
+                            cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced + (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case SUB:
+                            cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced - (int16_t) cpu->intermediate.data_address_extended;
+                            cpu->regs.sr.AO = ((int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended) < 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case NEG:
+                            cpu->intermediate.result = ~cpu->intermediate.data_address_reduced + 1;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+    
+                        case ABS: {
+                            cpu->intermediate.result = cpu->intermediate.data_address_reduced;
+                            if ((int16_t) cpu->intermediate.result < 0) {
+                                cpu->intermediate.result = ~cpu->intermediate.data_address_reduced + 1;
+                            }
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+    
+                        case INC:
+                            cpu->intermediate.result = cpu->intermediate.data_address_reduced + 1;
+                            cpu->regs.sr.AO = cpu->intermediate.result == 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+    
+                        case DEC:
+                            cpu->intermediate.result = cpu->intermediate.data_address_reduced - 1;
+                            cpu->regs.sr.AO = cpu->intermediate.result == 0xffff;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_INT_ARITH
+
+                    #ifdef DCFF_INT_ARITH_EXT
+                        case MUL:
+                            cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced * (int16_t) cpu->intermediate.data_address_extended;
+                            cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced * (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case DIV:
+                            if ((int16_t) cpu->intermediate.data_address_extended == 0) {
+                                cpu->intermediate.result = 0;
+                                cpu->regs.sr.AO = 1;
+                            } else {
+                                cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced / (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_INT_ARITH_EXT
+
+                    #ifdef DCFF_INT_CARRY_EXT
+                        case ADC:
+                            cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced + (int16_t) cpu->intermediate.data_address_extended + cpu->regs.sr.AO;
+                            cpu->regs.sr.AO = ((uint32_t) cpu->intermediate.data_address_reduced + (uint32_t) cpu->intermediate.data_address_extended) > 0xffff;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case SBC:
+                            cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced - (int16_t) cpu->intermediate.data_address_extended - cpu->regs.sr.AO;
+                            cpu->regs.sr.AO = ((int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended) < 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_INT_CARRY_EXT
+
+                    #ifdef DCFF_LOGIC_EXT
+                        case JL:
+                            if (cpu->regs.sr.L) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNL:
+                            if (!cpu->regs.sr.L) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JUL:
+                            if (cpu->regs.sr.UL) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNUL:
+                            if (!cpu->regs.sr.UL) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JFL:
+                            if (cpu->regs.sr.FL) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNFL:
+                            if (!cpu->regs.sr.FL) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JBL:
+                            if (cpu->regs.sr.BL) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNBL:
+                            if (!cpu->regs.sr.BL) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JAO:
+                            if (cpu->regs.sr.AO) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNAO:
+                            if (!cpu->regs.sr.AO) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CLZ:
+                            cpu->regs.sr.Z = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEZ:
+                            cpu->regs.sr.Z = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLL:
+                            cpu->regs.sr.L = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEL:
+                            cpu->regs.sr.L = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLUL:
+                            cpu->regs.sr.UL = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEUL:
+                            cpu->regs.sr.UL = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLFL:
+                            cpu->regs.sr.FL = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEFL:
+                            cpu->regs.sr.FL = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLBL:
+                            cpu->regs.sr.BL = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEBL:
+                            cpu->regs.sr.BL = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLAO:
+                            cpu->regs.sr.AO = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEAO:
+                            cpu->regs.sr.AO = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLSRC:
+                            cpu->regs.sr.SRC = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SESRC:
+                            cpu->regs.sr.SRC = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLSWC:
+                            cpu->regs.sr.SWC = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SESWC:
+                            cpu->regs.sr.SWC = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case CLMI:
+                            cpu->regs.sr.MI = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEMI:
+                            cpu->regs.sr.MI = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                    #endif // CFF_LOGIC_EXT
+
+                    #ifdef DCFF_CMOV_EXT
+                        case CMOVZ:
+                            if (cpu->regs.sr.Z) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNZ:
+                            if (!cpu->regs.sr.Z) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVL:
+                            if (cpu->regs.sr.L) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNL:
+                            if (!cpu->regs.sr.L) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVUL:
+                            if (cpu->regs.sr.UL) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNUL:
+                            if (!cpu->regs.sr.UL) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVFL:
+                            if (cpu->regs.sr.FL) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNFL:
+                            if (!cpu->regs.sr.FL) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVBL:
+                            if (cpu->regs.sr.BL) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNBL:
+                            if (!cpu->regs.sr.BL) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                    #endif // DCFF_CMOV_EXT
+
+                    #ifdef DCFF_BYTE_EXT
+                        case CBW:
+                            cpu->intermediate.result = (int16_t) ((int8_t) cpu->intermediate.data_address_reduced);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_BYTE_EXT
+
+                    #ifdef DCFF_FLOAT16
+                        case ADDF:
+                            cpu->intermediate.result = f16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case SUBF:
+                            cpu->intermediate.result = f16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case MULF:
+                            cpu->intermediate.result = f16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case DIVF:
+                            cpu->intermediate.result = f16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_FLOAT16
+
+                    #ifdef DCFF_BFLOAT16
+                        case ADDBF:
+                            cpu->intermediate.result = bf16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case SUBBF:
+                            cpu->intermediate.result = bf16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case MULBF:
+                            cpu->intermediate.result = bf16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case DIVBF:
+                            cpu->intermediate.result = bf16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_BFLOAT16
+
+                    #ifdef DCFF_FLOAT_CONVERT
+                        case CIF:
+                            cpu->intermediate.result = f16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CIB:
+                            cpu->intermediate.result = bf16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CFI:
+                            cpu->intermediate.result = (int16_t) float_from_f16(cpu->intermediate.data_address_reduced);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CFB:
+                            cpu->intermediate.result = bf16_from_float(float_from_f16(cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CBI:
+                            cpu->intermediate.result = (int16_t) float_from_bf16(cpu->intermediate.data_address_reduced);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CBF:
+                            cpu->intermediate.result = f16_from_float(float_from_bf16(cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif // DCFF_FLOAT_CONVERT
+
+                    #ifdef DCFF_CACHE_EXT
+                        case INV:
+                            //log_msg(LP_ERROR, "CPU %d: undefined instruction INV");
+                            //cpu->state = CS_EXCEPTION;
+                            cache_invalidate(cpu->cache);
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case FTC: {
+                            //log_msg(LP_ERROR, "CPU %d: undefined instruction FTC");
+                            // doesnt even improve performance on optimal scenraios
+                            uint8_t data;
+                            int success = cpu_read_memory(cpu, cpu->intermediate.data_address_extended, &data);
+                            if (success) {
+                                cpu->instruction ++;
+                                cpu->state = CS_FETCH_INSTRUCTION;
+                                goto CS_FETCH_INSTRUCTION;
+                            }
+                            break;
+                        }
+                    #endif // DCFF_CACHE_EXT
+
+                    #ifdef DCFF_HW_INFO
+                        case HWCLOCK:
+                            cpu->regs.r0 = cpu->clock & ((uint64_t) 0xffff << 0);
+                            cpu->regs.r1 = cpu->clock & ((uint64_t) 0xffff << 16);
+                            cpu->regs.r2 = cpu->clock & ((uint64_t) 0xffff << 32);
+                            cpu->regs.r3 = cpu->clock & ((uint64_t) 0xffff << 48);
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case HWINSTR:
+                            cpu->regs.r0 = cpu->instruction & ((uint64_t) 0xffff << 0);
+                            cpu->regs.r1 = cpu->instruction & ((uint64_t) 0xffff << 16);
+                            cpu->regs.r2 = cpu->instruction & ((uint64_t) 0xffff << 32);
+                            cpu->regs.r3 = cpu->instruction & ((uint64_t) 0xffff << 48);
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                    #endif // DCFF_HW_INFO
 
                     default:
                         //log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d]", cpu->intermediate.instruction);

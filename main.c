@@ -30,7 +30,7 @@
 
 
 #define CCAN
-//#undef CCAN
+#undef CCAN
 
 #define COMPILE_IR
 //#undef COMPILE_IR

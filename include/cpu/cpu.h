@@ -37,8 +37,37 @@ pop  :: [sp] -> dest; sp++          works ONLY with admr argument
 */
 
 
+#define DCFF_BASE            // NOP, MOV, PUSH/POP, PUSHSR/POPSR, LEA, JMP/JZ/JNZ, CALL/RET, CMP/TST, AND/OR/XOR/NOT, BWS, INT, HLT
+//#define DCFF_INT_ARITH       // ADD, SUB, NEG, ABS, INC, DEC
+#define DCFF_INT_ARITH_EXT   // MUL, DIV
+#define DCFF_INT_CARRY_EXT   // ADC, SBC
+#define DCFF_LOGIC_EXT       // JL/JNL, all flags, CL*/SE* ops
+#define DCFF_CMOV_EXT        // CMOVZ…CMOVNBL
+#define DCFF_BYTE_EXT        // CBW
+#define DCFF_FLOAT16         // ADDF, SUBF, MULF, DIVF
+#define DCFF_BFLOAT16        // ADDBF, SUBBF, MULBF, DIVBF
+#define DCFF_FLOAT_CONVERT   // CIF, CIB, CFI, CFB, CBF, CBI
+#define DCFF_CACHE_EXT       // INV, FTC
+#define DCFF_HW_INFO         // HWCLOCK, HWINSTR
 
-typedef enum CpuState_t{
+
+typedef enum CpuFeatureFlag_t {
+    CFF_BASE            = 0x0001,   // MOV, PUSH/POP, PUSHSR/POPSR, LEA, JMP/JZ/JNZ, CALL/RET, CMP/TST, AND/OR/XOR/NOT, BWS, INT, HLT
+    CFF_INT_ARITH       = 0x0002,   // ADD, SUB, NEG, ABS, INC, DEC
+    CFF_INT_ARITH_EXT   = 0x0004,   // MUL, DIV
+    CFF_INT_CARRY_EXT   = 0x0008,   // ADC, SBC
+    CFF_LOGIC_EXT       = 0x0010,   // JL/JNL, all flags, CL*/SE* ops
+    CFF_CMOV_EXT        = 0x0020,   // CMOVZ…CMOVNBL
+    CFF_BYTE_EXT        = 0x0040,   // CBW
+    CFF_FLOAT16         = 0x0080,   // ADDF, SUBF, MULF, DIVF
+    CFF_BFLOAT16        = 0x0100,   // ADDBF, SUBBF, MULBF, DIVBF
+    CFF_FLOAT_CONVERT   = 0x0200,   // CIF, CIB, CFI, CFB, CBF, CBI
+    CFF_CACHE_EXT       = 0x0400,   // INV, FTC
+    CFF_HW_INFO         = 0x0800,   // HWCLOCK, HWINSTR
+} CpuFeatureFlag_t;
+
+
+typedef enum CpuState_t {
     CS_FETCH_INSTRUCTION,                       // fetching the next instruction [reapeat until read successful]
     // the one above is also where we check for interrupts
     CS_FETCH_ADDRESSING_MODES,       // decode the instruction to get the argument count of the instruction
@@ -116,6 +145,8 @@ typedef struct CPU_t {
     uint64_t clock;             // keeps track of the number of cycles
     uint64_t instruction;       // keeps track of the number of executed instructions
     CPU_INSTRUCTION_MNEMONIC_t last_instruction; // the last executed/pending instruction of the cpu
+
+    uint16_t feature_flag;
 
     Cache_t* cache;
     CpuMemoryLayout_t memory_layout;

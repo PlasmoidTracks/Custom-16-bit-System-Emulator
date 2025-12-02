@@ -196,27 +196,111 @@ CCANGrammarRule_t ccan_parser_ruleset[256] = {
     },
     {
         .context = {
-            (CCANParserTokenType_t) CCAN_LEX_INT,
+            (CCANParserTokenType_t) CCAN_LEX_SIGNED,
             CCAN_PAR_RULE_END
         },
-        .output = CCAN_PAR_DATATYPE,
+        .output = CCAN_PAR_TYPE_MODIFIER,
         .context_rule = {CCAN_CR_REPLACE},
         .invert_match = {0},
         .context_length = 1,
         .priority = 100, 
-        .description = "int -> datatype",
+        .description = "signed -> typemod",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_UNSIGNED,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_TYPE_MODIFIER,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "unsigned -> inbuildtype",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_VOID,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_INBUILD_DATATYPE,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "void -> inbuildtype",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_INT,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_INBUILD_DATATYPE,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "int -> inbuildtype",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_SHORT,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_INBUILD_DATATYPE,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "short -> inbuildtype",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_CHAR,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_INBUILD_DATATYPE,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "char -> inbuildtype",
     },
     {
         .context = {
             (CCANParserTokenType_t) CCAN_LEX_FLOAT,
             CCAN_PAR_RULE_END
         },
+        .output = CCAN_PAR_INBUILD_DATATYPE,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "float -> inbuildtype",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_DOUBLE,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_INBUILD_DATATYPE,
+        .context_rule = {CCAN_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "double -> inbuildtype",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_PAR_INBUILD_DATATYPE,
+            CCAN_PAR_RULE_END
+        },
         .output = CCAN_PAR_DATATYPE,
         .context_rule = {CCAN_CR_REPLACE},
         .invert_match = {0},
         .context_length = 1,
         .priority = 100, 
-        .description = "int -> datatype",
+        .description = "inbuildtype -> datatype",
     },
     {
         .context = {
@@ -729,6 +813,34 @@ CCANGrammarRule_t ccan_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1, 
         .description = "; -> statement",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_LEX_LEFT_PARENTHESES,
+            (CCANParserTokenType_t) CCAN_PAR_DATATYPE,
+            (CCANParserTokenType_t) CCAN_LEX_RIGHT_PARENTHESES,
+            (CCANParserTokenType_t) CCAN_PAR_EXPRESSION,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_TYPE_CAST,
+        .context_rule = {CCAN_CR_REPLACE, CCAN_CR_DISCARD, CCAN_CR_DISCARD, CCAN_CR_KEEP},
+        .invert_match = {0, 0, 0, 0},
+        .context_length = 4,
+        .priority = 100, 
+        .description = "( datatype ) expr -> typecast expr",
+    },
+    {
+        .context = {
+            (CCANParserTokenType_t) CCAN_PAR_TYPE_CAST,
+            (CCANParserTokenType_t) CCAN_PAR_EXPRESSION,
+            CCAN_PAR_RULE_END
+        },
+        .output = CCAN_PAR_EXPRESSION,
+        .context_rule = {CCAN_CR_REPLACE, CCAN_CR_DISCARD},
+        .invert_match = {0, 0},
+        .context_length = 2,
+        .priority = 100, 
+        .description = "typecast expr -> expr",
     },
 
     // End sentinel

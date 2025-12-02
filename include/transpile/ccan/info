@@ -19,7 +19,7 @@ Reduce if - else if - else clauses into strict compounding if clauses
 
 
 Example: 
-
+/*
 
 typedef int TYPE;
 
@@ -81,4 +81,5 @@ void main() {
     foo(&xyz_x, xyz_x, xyz_y, 10);    // passing pointer of the first member of the struct as memory will lay in order in memory
 }
 
+*/
 

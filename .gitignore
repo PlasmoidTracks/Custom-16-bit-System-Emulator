@@ -1,10 +1,22 @@
 # Ignore build artifacts
 main
 
+# Ignore other common files
+todo
+compile_commands.json
+
 # Ignore common temp files
 *.log
 *.tmp
 *.swp
+
+# Ignore other temp files
+*.asm
+*.ir
+*.bin
+*.can
+*.exp
+*.opt
 
 # Ignore editor/IDE folders
 .vscode/

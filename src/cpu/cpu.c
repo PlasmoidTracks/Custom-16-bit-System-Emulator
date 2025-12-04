@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cache.h"
-
 #include "utils/Log.h"
 #include "utils/ExtendedTypes.h"
 
+#include "cache.h"
 #include "device.h"
+
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu.h"

@@ -1,12 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "utils/Log.h"
-
 #include "codegen/ir_lexer.h"
 #include "codegen/ir_parser.h"
 #include "codegen/ir_parser_ruleset.h"
-#include "codegen/ir_parser_warning_ruleset.h"
 #include "codegen/ir_token_name_table.h"
 
 void ir_recursion(IRParserToken_t* parser_token, int depth) {

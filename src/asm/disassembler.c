@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "ExtendedTypes.h"
+#include "utils/ExtendedTypes.h"
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"

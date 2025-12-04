@@ -1,7 +1,7 @@
 #ifndef _STRING_H_
 #define _STRING_H_
 
-#include "ExtendedTypes.h"
+#include <stdint.h>
 
 extern int contains(const char character, const char* const matches);
 

@@ -2,6 +2,7 @@
 #define _CPU_H_
 
 #include <stdint.h>
+
 #include "cpu/cpu_instructions.h"
 #include "device.h"
 #include "ram.h"

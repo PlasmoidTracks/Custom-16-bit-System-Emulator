@@ -1,9 +1,9 @@
 #ifndef _DISASSEMBLER_H_
 #define _DISASSEMBLER_H_
 
-#include "cpu/cpu_addressing_modes.h"
-
 #include <stdint.h>
+
+#include "cpu/cpu_addressing_modes.h"
 
 typedef enum {
     DO_ADD_JUMP_LABEL = 0001,               // this option adds .jump_label to every jump instruction                   (default: 1)

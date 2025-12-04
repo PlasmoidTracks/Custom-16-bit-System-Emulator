@@ -6,13 +6,11 @@
 #include "IO.h"
 #include "Log.h"
 
-#include "String.h"
-#include "bus.h"
-#include "cpu/cpu.h"
-#include "cpu/cpu_utils.h"
-#include "include/utils/Log.h"
-#include "ram.h"
+#include "utils/String.h"
+#include "utils/Log.h"
+
 #include "system.h"
+#include "cpu/cpu_utils.h"
 
 #include "asm/assembler.h"
 #include "asm/disassembler.h"
@@ -25,24 +23,28 @@
 #include "codegen/ir_compiler.h"
 
 
+#define RUN_BINARY_DIRECTLY
+#undef RUN_BINARY_DIRECTLY
 
-#define COMPILE_IR
-//#undef COMPILE_IR
+#ifndef RUN_BINARY_DIRECTLY
+    #define COMPILE_IR
+    //#undef COMPILE_IR
 
-#define CANONICALIZE
-//#undef CANONICALIZE
+    #define CANONICALIZE
+    //#undef CANONICALIZE
 
-#define MACRO_EXPAND
-//#undef MACRO_EXPAND
+    #define MACRO_EXPAND
+    //#undef MACRO_EXPAND
 
-#define OPTIMIZE
-//#undef OPTIMIZE
+    #define OPTIMIZE
+    //#undef OPTIMIZE
+
+    #define BINARY_DUMP
+    //#undef BINARY_DUMP
+#endif
 
 #define DISASSEMBLE
 //#undef DISASSEMBLE
-
-#define BINARY_DUMP
-//#undef BINARY_DUMP
 
 #define HW_WATCH
 #undef HW_WATCH
@@ -86,9 +88,11 @@ int main(int argc, char* argv[]) {
 
     // Compiling step
     // from ira to ir
-    long content_size;
-    long lexer_token_count = 0;
-    char* content;
+    #ifndef RUN_BINARY_DIRECTLY
+        long content_size;
+        long lexer_token_count = 0;
+        char* content;
+    #endif
 
     sprintf(filename, "%s", argv[1]);
 
@@ -153,16 +157,20 @@ int main(int argc, char* argv[]) {
     #endif
 
 
-    // from asm to bytecode
     long binary_size = 0;
     uint16_t* segment = NULL;
     int segment_count = 0;
-    uint8_t* bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count);
-    
-    if (!bin) {
-        log_msg(LP_ERROR, "Assembler: Returned NULL");
-        return 0;
-    }
+    // from asm to bytecode
+    #ifndef RUN_BINARY_DIRECTLY
+        uint8_t* bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count);
+        
+        if (!bin) {
+            log_msg(LP_ERROR, "Assembler: Returned NULL");
+            return 0;
+        }
+    #else
+        uint8_t* bin = (uint8_t*) read_file(filename, &binary_size);
+    #endif
 
     #ifdef BINARY_DUMP
         data_export("dump.bin", bin, binary_size);
@@ -177,7 +185,9 @@ int main(int argc, char* argv[]) {
             (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
     #endif
     
-    free(segment);
+    #ifndef RUN_BINARY_DIRECTLY
+        free(segment);
+    #endif
 
     // Execution step
     //uint16_t min_sp = cpu->regs.sp;

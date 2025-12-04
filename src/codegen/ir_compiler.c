@@ -4,10 +4,10 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "Log.h"
+#include "utils/Log.h"
+#include "utils/String.h"
 
 #include "asm/assembler.h"
-#include "utils/String.h"
 
 #include "codegen/ir_parser.h"
 #include "codegen/ir_token_name_table.h"

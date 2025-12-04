@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "ExtendedTypes.h"
-#include "String.h"
+#include "utils/ExtendedTypes.h"
+#include "utils/String.h"
 
 #include "cpu/cpu.h"
 #include "cpu/cpu_instructions.h"

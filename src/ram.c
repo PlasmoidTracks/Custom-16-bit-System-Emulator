@@ -1,7 +1,5 @@
 #include <stdlib.h>
 
-#include "utils/Log.h"
-
 #include "device.h"
 #include "ram.h"
 

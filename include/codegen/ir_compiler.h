@@ -5,6 +5,7 @@
 #define IR_MAX_DEPTH 16     // at most 16 calls deep
 
 #include <stdint.h>
+
 #include "codegen/ir_parser.h"
 
 typedef enum {

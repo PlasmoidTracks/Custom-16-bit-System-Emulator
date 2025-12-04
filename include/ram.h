@@ -2,6 +2,7 @@
 #define _RAM_H_
 
 #include <stdint.h>
+
 #include "device.h"
 
 typedef struct RAM_t {

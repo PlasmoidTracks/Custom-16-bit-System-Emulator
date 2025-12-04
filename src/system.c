@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "Log.h"
+
+#include "utils/Log.h"
+
 #include "bus.h"
 #include "cpu/cpu.h"
 #include "ticker.h"

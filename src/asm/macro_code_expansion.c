@@ -7,7 +7,7 @@
 #include "utils/IO.h"
 #include "utils/String.h"
 
-#include "cpu/cpu.h"
+#include "cpu/cpu_features.h"
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu_instructions.h"
 
@@ -15,94 +15,6 @@
 
 #include "asm/macro_code_expansion.h"
 
-
-static int is_same_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
-    int result = 0;
-    result |= (admr == ADMR_R0 && admx == ADMX_R0);
-    result |= (admr == ADMR_R1 && admx == ADMX_R1);
-    result |= (admr == ADMR_R2 && admx == ADMX_R2);
-    result |= (admr == ADMR_R3 && admx == ADMX_R3);
-    result |= (admr == ADMR_SP && admx == ADMX_SP);
-    result |= (admr == ADMR_IND_R0 && admx == ADMX_IND_R0);
-    return result;
-}
-
-static int is_same_indirect_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
-    int result = 0;
-    result |= (admr == ADMR_R0 && admx == ADMX_IND_R0);
-    result |= (admr == ADMR_R1 && admx == ADMX_IND_R1);
-    result |= (admr == ADMR_R2 && admx == ADMX_IND_R2);
-    result |= (admr == ADMR_R3 && admx == ADMX_IND_R3);
-    result |= (admr == ADMR_SP && admx == ADMX_IND_SP);
-    return result;
-}
-
-static int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
-    int result = 0;
-    result |= admx == ADMX_R0;
-    result |= admx == ADMX_R1;
-    result |= admx == ADMX_R2;
-    result |= admx == ADMX_R3;
-    result |= admx == ADMX_SP;
-    result |= admx == ADMX_PC;
-    return result;
-}
-
-static int is_register_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
-    int result = 0;
-    result |= admr == ADMR_R0;
-    result |= admr == ADMR_R1;
-    result |= admr == ADMR_R2;
-    result |= admr == ADMR_R3;
-    result |= admr == ADMR_SP;
-    return result;
-}
-
-static int is_register_offset_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
-    int result = 0;
-    result |= admx == ADMX_IND_R0_OFFSET16;
-    result |= admx == ADMX_IND_R1_OFFSET16;
-    result |= admx == ADMX_IND_R2_OFFSET16;
-    result |= admx == ADMX_IND_R3_OFFSET16;
-    result |= admx == ADMX_IND_SP_OFFSET16;
-    result |= admx == ADMX_IND_PC_OFFSET16;
-    return result;
-}
-
-static int register_offset_admx_contains_admr_register(CPU_EXTENDED_ADDRESSING_MODE_t admx, CPU_REDUCED_ADDRESSING_MODE_t admr) {
-    int result = 0;
-    result |= (admr == ADMR_R0 && admx == ADMX_IND_R0_OFFSET16);
-    result |= (admr == ADMR_R1 && admx == ADMX_IND_R1_OFFSET16);
-    result |= (admr == ADMR_R2 && admx == ADMX_IND_R2_OFFSET16);
-    result |= (admr == ADMR_R3 && admx == ADMX_IND_R3_OFFSET16);
-    result |= (admr == ADMR_SP && admx == ADMX_IND_SP_OFFSET16);
-    return result;
-}
-
-static int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
-    int result = 0;
-    result |= instr == ADD;
-    result |= instr == SUB;
-    result |= instr == MUL;
-    result |= instr == DIV;
-    result |= instr == ADDF;
-    result |= instr == SUBF;
-    result |= instr == MULF;
-    result |= instr == DIVF;
-    result |= instr == BWS;
-    result |= instr == AND;
-    result |= instr == OR;
-    result |= instr == XOR;
-    return result;
-}
-
-static int is_overwriting_instruction(CPU_INSTRUCTION_MNEMONIC_t instr) {
-    // Meaning, the instruction does not depend on the previous value and is overwriting with new value
-    int result = 0;
-    result |= instr == MOV;
-    result |= instr == LEA;
-    return result;
-}
 
 static CPU_EXTENDED_ADDRESSING_MODE_t get_equal_admx_from_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
     switch(admr) {
@@ -120,7 +32,6 @@ static CPU_EXTENDED_ADDRESSING_MODE_t get_equal_admx_from_admr(CPU_REDUCED_ADDRE
             return ADMX_NONE;
     }
 }
-
 
 static void remove_instruction(Instruction_t* instruction, int* instruction_count, int index) {
     if (index < 0 || index >= *instruction_count) return;

@@ -11,6 +11,7 @@
 
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"
+#include "cpu/cpu_features.h"
 #include "cpu/cpu.h"
 
 

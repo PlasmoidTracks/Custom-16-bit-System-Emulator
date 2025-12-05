@@ -41,9 +41,19 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     MUL,        // mul dest, src    :: dest = dest * src (integer)
     DIV,        // div dest, src    :: dest = dest / src (integer)
     NEG,        // neg dest         :: dest = dest ~ 0x8000
-    ABS,        // abs dest         :: dest = dest & 0x7fff
+    ABS,        // abs dest         :: if dest < 0, dest = ~dest + 1
     INC,        // inc dest         :: dest = dest + 1
-    DEC,        // dec dest         ;; dest = dest - 1
+    DEC,        // dec dest         :: dest = dest - 1
+
+    // Saturated Arithmetic Signed Integer Operations
+    SSA,        // ssa dest, src    :: dest = clamp((dest + src), 0x8000, 0x7fff)
+    SSS,        // ssb dest, src    :: dest = clamp((dest - src), 0x8000, 0x7fff)
+    SSM,        // ssm dest, src    :: dest = clamp((dest * src), 0x8000, 0x7fff)
+
+    // Saturated Arithmetic Unsigned Integer Operations
+    USA,        // usa dest, src    :: dest = min((int32_t) (dest + src), 0xffff)
+    USS,        // uss dest, src    :: dest = max((int32_t) (dest - src), 0x0000)
+    USM,        // usm dest, src    :: dest = min((int32_t) (dest * src), 0xffff)
 
     // Arithmetic Float Operations
     ADDF,       // addf dest, src   :: dest = dest + src (float16)
@@ -116,6 +126,7 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Self Identification and HW-Info Operations
     HWCLOCK,    // returns the currrent [h]ard[w]are [clock] count in registers r0-r4 in little endian
     HWINSTR,    // returns the currrent [h]ard[w]are [instr]uction count in registers r0-r4 in little endian
+    HWFFLAG,    // returns the hardware feature flag
 
     // Other
     INT,        // int dest         :: trigger interrupt; 0xEF00 + dest -> pc

@@ -84,6 +84,12 @@ CPU_t* cpu_create(void) {
     #ifdef DCFF_INT_ARITH
         cpu->feature_flag |= CFF_INT_ARITH;
     #endif
+    #ifdef DCFF_INT_SIGNED_SAT_ARITH
+        cpu->feature_flag |= CFF_INT_SIGNED_SAT_ARITH;
+    #endif
+    #ifdef DCFF_INT_UNSIGNED_SAT_ARITH
+        cpu->feature_flag |= CFF_INT_UNSIGNED_SAT_ARITH;
+    #endif
     #ifdef DCFF_INT_ARITH_EXT
         cpu->feature_flag |= CFF_INT_ARITH_EXT;
     #endif
@@ -1168,6 +1174,70 @@ void cpu_clock(CPU_t* cpu) {
                             break;
                     #endif // DCFF_INT_ARITH
 
+                    #ifdef DCFF_INT_SIGNED_SAT_ARITH
+                        case SSA: {
+                            int32_t tmp = (int32_t) ((int16_t) cpu->intermediate.data_address_reduced) + (int32_t) ((int16_t) cpu->intermediate.data_address_extended);
+                            cpu->intermediate.result = (tmp < (int32_t)((int16_t) 0x8000)) ? 0x8000 : ((tmp > (int16_t) 0x7fff) ? 0x7fff : tmp);
+                            cpu->regs.sr.AO = 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+
+                        case SSS: {
+                            int32_t tmp = (int32_t) ((int16_t) cpu->intermediate.data_address_reduced) - (int32_t) ((int16_t) cpu->intermediate.data_address_extended);
+                            cpu->intermediate.result = (tmp < (int32_t)((int16_t) 0x8000)) ? 0x8000 : ((tmp > (int32_t)((int16_t) 0x7fff)) ? 0x7fff : tmp);
+                            cpu->regs.sr.AO = 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+
+                        case SSM: {
+                            int32_t tmp = (int32_t) ((int16_t) cpu->intermediate.data_address_reduced) * (int32_t) ((int16_t) cpu->intermediate.data_address_extended);
+                            cpu->intermediate.result = (tmp < (int32_t)((int16_t) 0x8000)) ? 0x8000 : ((tmp > (int16_t) 0x7fff) ? 0x7fff : tmp);
+                            cpu->regs.sr.AO = 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+                    #endif // DCFF_INT_SIGNED_SAT_ARITH
+
+                    #ifdef DCFF_INT_UNSIGNED_SAT_ARITH
+                        case USA: {
+                            int32_t tmp = (int32_t) cpu->intermediate.data_address_reduced + (int32_t) cpu->intermediate.data_address_extended;
+                            cpu->intermediate.result = (tmp < 0) ? 0 : ((tmp > 0xffff) ? 0xffff : tmp);
+                            cpu->regs.sr.AO = 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+
+                        case USS: {
+                            int32_t tmp = (int32_t) cpu->intermediate.data_address_reduced - (int32_t) cpu->intermediate.data_address_extended;
+                            cpu->intermediate.result = (tmp < 0) ? 0 : ((tmp > 0xffff) ? 0xffff : tmp);
+                            cpu->regs.sr.AO = 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+
+                        case USM: {
+                            int32_t tmp = (int32_t) cpu->intermediate.data_address_reduced * (int32_t) cpu->intermediate.data_address_extended;
+                            cpu->intermediate.result = (tmp < 0) ? 0 : ((tmp > 0xffff) ? 0xffff : tmp);
+                            cpu->regs.sr.AO = 0;
+                            cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+                    #endif // DCFF_INT_UNSIGNED_SAT_ARITH
+
                     #ifdef DCFF_INT_ARITH_EXT
                         case MUL:
                             cpu->intermediate.result = (int16_t) cpu->intermediate.data_address_reduced * (int16_t) cpu->intermediate.data_address_extended;
@@ -1694,6 +1764,13 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->regs.r1 = cpu->instruction & ((uint64_t) 0xffff << 16);
                             cpu->regs.r2 = cpu->instruction & ((uint64_t) 0xffff << 32);
                             cpu->regs.r3 = cpu->instruction & ((uint64_t) 0xffff << 48);
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case HWFFLAG:
+                            cpu->regs.r0 = cpu->feature_flag;
                             cpu->instruction ++;
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;

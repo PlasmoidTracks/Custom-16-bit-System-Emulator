@@ -19,7 +19,7 @@
 CRITICAL BUG: Labels inside .data segments are not present in the output!!!
 */
 
-int is_same_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
+static int is_same_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
     result |= (admr == ADMR_R0 && admx == ADMX_R0);
     result |= (admr == ADMR_R1 && admx == ADMX_R1);
@@ -30,7 +30,7 @@ int is_same_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE
     return result;
 }
 
-int is_same_indirect_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
+static int is_same_indirect_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
     result |= (admr == ADMR_R0 && admx == ADMX_IND_R0);
     result |= (admr == ADMR_R1 && admx == ADMX_IND_R1);
@@ -40,7 +40,7 @@ int is_same_indirect_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRES
     return result;
 }
 
-int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
+static int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
     result |= admx == ADMX_R0;
     result |= admx == ADMX_R1;
@@ -51,7 +51,7 @@ int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     return result;
 }
 
-int is_register_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
+static int is_register_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
     int result = 0;
     result |= admr == ADMR_R0;
     result |= admr == ADMR_R1;
@@ -61,7 +61,7 @@ int is_register_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
     return result;
 }
 
-int is_register_offset_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
+static int is_register_offset_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
     result |= admx == ADMX_IND_R0_OFFSET16;
     result |= admx == ADMX_IND_R1_OFFSET16;
@@ -72,7 +72,7 @@ int is_register_offset_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     return result;
 }
 
-int register_offset_admx_contains_admr_register(CPU_EXTENDED_ADDRESSING_MODE_t admx, CPU_REDUCED_ADDRESSING_MODE_t admr) {
+static int register_offset_admx_contains_admr_register(CPU_EXTENDED_ADDRESSING_MODE_t admx, CPU_REDUCED_ADDRESSING_MODE_t admr) {
     int result = 0;
     result |= (admr == ADMR_R0 && admx == ADMX_IND_R0_OFFSET16);
     result |= (admr == ADMR_R1 && admx == ADMX_IND_R1_OFFSET16);
@@ -82,7 +82,7 @@ int register_offset_admx_contains_admr_register(CPU_EXTENDED_ADDRESSING_MODE_t a
     return result;
 }
 
-int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
+static int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     int result = 0;
     result |= instr == ADD;
     result |= instr == SUB;
@@ -99,7 +99,7 @@ int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     return result;
 }
 
-int is_overwriting_instruction(CPU_INSTRUCTION_MNEMONIC_t instr) {
+static int is_overwriting_instruction(CPU_INSTRUCTION_MNEMONIC_t instr) {
     // Meaning, the instruction does not depend on the previous value and is overwriting with new value
     int result = 0;
     result |= instr == MOV;
@@ -108,7 +108,7 @@ int is_overwriting_instruction(CPU_INSTRUCTION_MNEMONIC_t instr) {
 }
 
 
-void remove_instruction(Instruction_t* instruction, int* instruction_count, int index) {
+static void remove_instruction(Instruction_t* instruction, int* instruction_count, int index) {
     if (index < 0 || index >= *instruction_count) return;
     for (int i = index; i < *instruction_count - 1; i++) {
         instruction[i] = instruction[i + 1];
@@ -116,7 +116,7 @@ void remove_instruction(Instruction_t* instruction, int* instruction_count, int 
     (*instruction_count)--;
 }
 
-void insert_instruction(Instruction_t* instruction, Instruction_t new_instruction, int* instruction_count, int index) {
+static void insert_instruction(Instruction_t* instruction, Instruction_t new_instruction, int* instruction_count, int index) {
     instruction = realloc(instruction, sizeof(Instruction_t) * (*instruction_count + 1));
     if (index < 0 || index >= *instruction_count) return;
     for (int i = *instruction_count; i > index; i--) {

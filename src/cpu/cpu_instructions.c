@@ -10,6 +10,12 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     // Arithmetic Integer Operations
     "add", "adc", "sub", "sbc", "mul", "div", "neg", "abs", "inc", "dec", 
 
+    // Saturated Arithmetic Signed Integer Operations
+    "ssa", "sss", "ssm",
+
+    // Saturated Arithmetic Unsigned Integer Operations
+    "usa", "uss", "usm",
+
     // Arithmetic Float Operations
     "addf", "subf", "mulf", "divf",
 
@@ -36,7 +42,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "inv", "ftc",
 
     // Self Identification and HW-Info Operations
-    "hwclock", "hwinstr", 
+    "hwclock", "hwinstr", "hwfflag", 
 
     // Other
     "int", "hlt"
@@ -50,6 +56,10 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
     // Arithmetic Integer Operations
     2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 
+    // Saturated Arithmetic Signed Integer Operations
+    2, 2, 2, 
+    // Saturated Arithmetic Unsigned Integer Operations
+    2, 2, 2,
     // Arithmetic Float Operations
     2, 2, 2, 2, 
     // Arithmetic BFloat Operations
@@ -68,7 +78,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 1, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    0, 0, 0, 
     // Other
     1, 0
 };
@@ -81,6 +91,10 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
+    // Saturated Arithmetic Signed Integer Operations
+    0, 0, 0, 
+    // Saturated Arithmetic Unsigned Integer Operations
+    0, 0, 0,
     // Arithmetic Float Operations
     0, 0, 0, 0, 
     // Arithmetic BFloat Operations
@@ -99,7 +113,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    0, 0, 0, 
     // Other
     0, 0
 };
@@ -113,6 +127,10 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    // Saturated Arithmetic Signed Integer Operations
+    0, 0, 0, 
+    // Saturated Arithmetic Unsigned Integer Operations
+    0, 0, 0,
     // Arithmetic Float Operations
     0, 0, 0, 0, 
     // Arithmetic BFloat Operations
@@ -131,7 +149,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    0, 0, 0, 
     // Other
     0, 0
 };

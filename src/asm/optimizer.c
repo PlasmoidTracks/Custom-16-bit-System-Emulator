@@ -323,6 +323,7 @@ char* optimizer_compile(char* content) {
             // =>
             // (removed)
             // mov [$x], ?
+            /*
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == MOV) {
                     if (   instruction[i].admr == ADMR_R0 
@@ -339,6 +340,7 @@ char* optimizer_compile(char* content) {
                 }
             }
             if (changes_applied) break;
+            */
             
 
             // mov rN, x

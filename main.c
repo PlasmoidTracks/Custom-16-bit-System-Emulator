@@ -81,10 +81,12 @@ int main(int argc, char* argv[]) {
     #endif
 
     #ifndef RUN_BINARY_DIRECTLY
-        long content_size;
-        long lexer_token_count = 0;
-        long parser_root_count = 0;
-        char* content;
+        #ifdef COMPILE_IR
+            long content_size;
+            long lexer_token_count = 0;
+            long parser_root_count = 0;
+            char* content;
+        #endif
     #endif
 
     #ifdef CCAN

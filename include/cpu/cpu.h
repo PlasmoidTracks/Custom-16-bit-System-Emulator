@@ -70,7 +70,7 @@ typedef enum CpuFeatureFlag_t {
     CFF_BFLOAT16                = 0x0400,   // ADDBF, SUBBF, MULBF, DIVBF
     CFF_FLOAT_CONVERT           = 0x0800,   // CIF, CIB, CFI, CFB, CBF, CBI
     CFF_CACHE_EXT               = 0x1000,   // INV, FTC
-    CFF_HW_INFO                 = 0x2000,   // HWCLOCK, HWINSTR
+    CFF_HW_INFO                 = 0x2000,   // HWCLOCK, HWINSTR, HWFFLAG
 } CpuFeatureFlag_t;
 
 

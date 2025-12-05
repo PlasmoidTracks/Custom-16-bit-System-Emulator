@@ -37,8 +37,9 @@ pop  :: [sp] -> dest; sp++          works ONLY with admr argument
 
 */
 
-// ToDo, make LEA its own class of feature
-#define DCFF_BASE                   // NOP, MOV, PUSH/POP, PUSHSR/POPSR, LEA, JMP/JZ/JNZ, CALL/RET, CMP/TST, AND/OR/XOR/NOT, BWS, INT, HLT
+// NOP is always available
+#define DCFF_CORE_BASE              // MOV, PUSH/POP, PUSHSR/POPSR, JMP/JZ/JNZ, CALL/RET, CMP/TST, AND/OR/XOR/NOT, BWS, INT, HLT
+#define DCFF_CORE_LEA               // LEA
 #define DCFF_INT_ARITH              // ADD, SUB, NEG, ABS, INC, DEC
 #define DCFF_INT_SIGNED_SAT_ARITH   // SAD, SSB, SML
 #define DCFF_INT_UNSIGNED_SAT_ARITH // USD, USS, USM

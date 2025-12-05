@@ -78,7 +78,7 @@ CPU_t* cpu_create(void) {
     cpu->state = CS_FETCH_INSTRUCTION;
 
     cpu->feature_flag = 0;
-    #ifdef DCFF_BASE
+    #ifdef DCFF_CORE_BASE
         cpu->feature_flag |= CFF_BASE;
     #endif
     #ifdef DCFF_INT_ARITH
@@ -962,7 +962,7 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    #ifdef DCFF_BASE
+                    #ifdef DCFF_CORE_BASE
                         case MOV:
                             cpu->intermediate.result = cpu->intermediate.data_address_extended;
                             cpu->state = CS_WRITEBACK_LOW;
@@ -991,12 +991,6 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->intermediate.argument_address_reduced = cpu->regs.sp;
                             cpu->state = CS_POPSR_LOW;
                             goto CS_POPSR_LOW;
-                            break;
-
-                        case LEA:
-                            cpu->intermediate.result = cpu->intermediate.argument_address_extended;
-                            cpu->state = CS_WRITEBACK_LOW;
-                            goto CS_WRITEBACK_LOW;
                             break;
                         
                         
@@ -1120,7 +1114,15 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->instruction ++;
                             cpu->state = CS_HALT;
                             break;
-                    #endif // DCFF_BASE
+                    #endif // DCFF_CORE_BASE
+
+                    #ifdef DCFF_CORE_LEA
+                        case LEA:
+                            cpu->intermediate.result = cpu->intermediate.argument_address_extended;
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                    #endif
 
                     #ifdef DCFF_INT_ARITH
                         case ADD:

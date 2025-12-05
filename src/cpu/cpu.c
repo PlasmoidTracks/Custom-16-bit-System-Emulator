@@ -180,7 +180,7 @@ void cpu_clock(CPU_t* cpu) {
         #ifdef _CPU_DEBUG_
         log_msg(LP_INFO, "CPU %lld/%lld: PC %.4x - interrupt on CS %d", cpu->clock, cpu->instruction, cpu->regs.pc, cpu->state);
         #endif
-        // TODO: go into separate interrupt states, that pushes the PC
+        
         if (!cpu->regs.sr.MI && !cpu->regs.sr.MNI) {
             cpu->regs.pc = cpu->intermediate.previous_pc;
             cpu->regs.sp = cpu->intermediate.previous_sp;
@@ -1641,8 +1641,13 @@ void cpu_clock(CPU_t* cpu) {
                         //cpu->instruction ++;
                         //cpu->state = CS_FETCH_INSTRUCTION;
                         cpu->instruction ++;
-                        cpu->state = CS_INTERRUPT_PUSH_PC_HIGH;
-                        goto CS_INTERRUPT_PUSH_PC_HIGH;
+                        if (!cpu->regs.sr.MI) {
+                            cpu->state = CS_INTERRUPT_PUSH_PC_HIGH;
+                            goto CS_INTERRUPT_PUSH_PC_HIGH;
+                        } else {
+                            cpu->state = CS_FETCH_INSTRUCTION; 
+                            goto CS_FETCH_INSTRUCTION;
+                        }
                         //cpu->intermediate.irq_id = ;
                         break;
 

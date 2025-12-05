@@ -39,7 +39,7 @@ pop  :: [sp] -> dest; sp++          works ONLY with admr argument
 
 
 #define DCFF_BASE            // NOP, MOV, PUSH/POP, PUSHSR/POPSR, LEA, JMP/JZ/JNZ, CALL/RET, CMP/TST, AND/OR/XOR/NOT, BWS, INT, HLT
-//#define DCFF_INT_ARITH       // ADD, SUB, NEG, ABS, INC, DEC
+#define DCFF_INT_ARITH       // ADD, SUB, NEG, ABS, INC, DEC
 #define DCFF_INT_ARITH_EXT   // MUL, DIV
 #define DCFF_INT_CARRY_EXT   // ADC, SBC
 #define DCFF_LOGIC_EXT       // JL/JNL, all flags, CL*/SE* ops

@@ -22,9 +22,6 @@
 #include "codegen/ir_parser.h"
 #include "codegen/ir_compiler.h"
 
-#include "transpile/ccan/ccan_lexer.h"
-#include "transpile/ccan/ccan_parser.h"
-
 #define RUN_BINARY_DIRECTLY
 #undef RUN_BINARY_DIRECTLY
 

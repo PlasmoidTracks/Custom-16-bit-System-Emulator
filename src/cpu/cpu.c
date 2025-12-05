@@ -1032,8 +1032,7 @@ void cpu_clock(CPU_t* cpu) {
                             goto CS_POP_LOW;
                             break;
 
-                        case CMP:
-                            {
+                        case CMP: {
                                 uint16_t a = cpu->intermediate.data_address_reduced;
                                 uint16_t b = cpu->intermediate.data_address_extended;
                                 cpu->regs.sr.Z = (a == b);
@@ -1047,8 +1046,7 @@ void cpu_clock(CPU_t* cpu) {
                             }
                             break;
                         
-                        case TST:
-                            {
+                        case TST: {
                                 uint16_t value = cpu->intermediate.data_address_extended;
                                 cpu->regs.sr.Z = (value == 0);
                                 cpu->regs.sr.L = ((value & 0x8000) != 0);
@@ -1086,8 +1084,7 @@ void cpu_clock(CPU_t* cpu) {
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case BWS:
-                            {
+                        case BWS: {
                                 int16_t shift = (int16_t) cpu->intermediate.data_address_extended;
                                 if (shift > 0)
                                     cpu->intermediate.result = cpu->intermediate.data_address_reduced >> shift;

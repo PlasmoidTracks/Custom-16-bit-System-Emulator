@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "utils/Log.h"
-
 #include "device.h"
 #include "bus.h"
 

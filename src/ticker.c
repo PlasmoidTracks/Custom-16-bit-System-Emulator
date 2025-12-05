@@ -2,7 +2,6 @@
 #include <time.h>       // for clock_gettime
 #include <stdint.h>
 
-#include "utils/Log.h"
 #include "interrupt.h"
 #include "device.h"
 #include "ticker.h"

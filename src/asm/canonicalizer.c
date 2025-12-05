@@ -3,15 +3,12 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "ExtendedTypes.h"
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"
 
 #include "cpu/cpu_addressing_modes.h"
-#include "cpu/cpu_instructions.h"
 
-#include "asm/optimizer.h"
 #include "asm/assembler.h"
 
 

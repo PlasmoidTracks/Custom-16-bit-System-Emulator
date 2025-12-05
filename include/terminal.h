@@ -2,6 +2,7 @@
 #define _TERMINAL_H_
 
 #include <stdint.h>
+
 #include "device.h"
 
 /*

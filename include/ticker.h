@@ -2,6 +2,7 @@
 #define _TICKER_H_
 
 #include <stdint.h>
+
 #include "device.h"
 
 /*

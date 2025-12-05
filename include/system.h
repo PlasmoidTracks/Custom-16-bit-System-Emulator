@@ -6,7 +6,6 @@
 #include "ram.h"
 #include "terminal.h"
 #include "ticker.h"
-#include "ticker.h"
 
 extern int VERBOSE;
 

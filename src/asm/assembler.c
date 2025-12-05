@@ -7,7 +7,6 @@
 #include "utils/IO.h"
 #include "utils/String.h"
 
-#include "cpu/cpu.h"
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu_instructions.h"
 

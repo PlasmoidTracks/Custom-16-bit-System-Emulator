@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cache.h"
-
 #include "utils/Log.h"
 #include "utils/ExtendedTypes.h"
 
+#include "cache.h"
 #include "device.h"
+
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu.h"
@@ -218,7 +218,7 @@ void cpu_clock(CPU_t* cpu) {
         #ifdef _CPU_DEBUG_
         log_msg(LP_INFO, "CPU %lld/%lld: PC %.4x - interrupt on CS %d", cpu->clock, cpu->instruction, cpu->regs.pc, cpu->state);
         #endif
-        // TODO: go into separate interrupt states, that pushes the PC
+        
         if (!cpu->regs.sr.MI && !cpu->regs.sr.MNI) {
             cpu->regs.pc = cpu->intermediate.previous_pc;
             cpu->regs.sp = cpu->intermediate.previous_sp;

@@ -1,9 +1,9 @@
 #ifndef _BUS_H_
 #define _BUS_H_
 
-#include "device.h"
 #include <stdint.h>
 
+#include "device.h"
 
 
 typedef struct BUS_t {

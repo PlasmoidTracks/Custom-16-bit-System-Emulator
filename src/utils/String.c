@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include "utils/ExtendedTypes.h"
-
 #include "utils/String.h"
 
 

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "utils/Log.h"
 #include "device.h"
 #include "terminal.h"
 

@@ -2344,11 +2344,6 @@ char* macro_code_expand(char* content) {
                                     label_uid += 1;
                                     changes_applied = 1;
 
-                        } else if (instruction[i].admx == ADMX_IMM16) {
-                            log_msg(LP_TODO, "unbable to expand ADD operation with addressing modes %s, %s", 
-                                cpu_reduced_addressing_mode_string[instruction[i].admr], 
-                                cpu_extended_addressing_mode_string[instruction[i].admx]
-                            );
                         } else {
                             // TODO: find replacement for remaining adms
                             log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s", 

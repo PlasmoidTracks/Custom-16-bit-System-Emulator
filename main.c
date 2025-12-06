@@ -3,24 +3,16 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "IO.h"
-#include "Log.h"
-
+#include "utils/IO.h"
 #include "utils/String.h"
 #include "utils/Log.h"
+
+#include "asm/assembler.h"
 
 #include "system.h"
 #include "cpu/cpu_utils.h"
 
-#include "asm/assembler.h"
-#include "asm/disassembler.h"
-#include "asm/optimizer.h"
-#include "asm/canonicalizer.h"
-#include "asm/macro_code_expansion.h"
 
-#include "codegen/ir_lexer.h"
-#include "codegen/ir_parser.h"
-#include "codegen/ir_compiler.h"
 
 #define RUN_BINARY_DIRECTLY
 #undef RUN_BINARY_DIRECTLY
@@ -40,13 +32,37 @@
 
     #define BINARY_DUMP
     //#undef BINARY_DUMP
-#endif
+#endif // RUN_BINARY_DIRECTLY
 
 #define DISASSEMBLE
 //#undef DISASSEMBLE
 
 #define HW_WATCH
 #undef HW_WATCH
+
+
+#ifdef COMPILE_IR
+    #include "codegen/ir_lexer.h"
+    #include "codegen/ir_parser.h"
+    #include "codegen/ir_compiler.h"
+#endif // COMPILE_IR
+
+#ifdef CANONICALIZE
+    #include "asm/canonicalizer.h"
+#endif // CANONICALIZE
+
+#ifdef MACRO_EXPAND
+    #include "asm/macro_code_expansion.h"
+#endif // MACRO_EXPAND
+
+#ifdef OPTIMIZE
+    #include "asm/optimizer.h"
+#endif // OPTIMIZE
+
+#ifdef DISASSEMBLE
+    #include "asm/disassembler.h"
+#endif // DISASSEMBLE
+
 
 int main(int argc, char* argv[]) {
 

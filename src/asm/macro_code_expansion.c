@@ -91,9 +91,18 @@ static Instruction_t instruction_create(
     return instr;
 }
 
+static int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
+    int result = 0;
+    result |= admx == ADMX_R0;
+    result |= admx == ADMX_R1;
+    result |= admx == ADMX_R2;
+    result |= admx == ADMX_R3;
+    result |= admx == ADMX_SP;
+    result |= admx == ADMX_PC;
+    return result;
+}
+
 char* macro_code_expand(char* content) {
-    char* output = NULL;         // final assembly string
-    long output_len = 0;         // current length of code output
 
     // split text into lines
     char** line = assembler_split_to_separate_lines(content);
@@ -119,6 +128,7 @@ char* macro_code_expand(char* content) {
     
     int changes_applied = 1;
     int label_uid = 0;
+    const char* label_prefix = ".L_macro_expansion_uid_";
 
     while (changes_applied) {
         changes_applied = 0;
@@ -127,9 +137,52 @@ char* macro_code_expand(char* content) {
             printf("Instruction %d: \"%s\" %s, %s\n", j + 1, cpu_instruction_string[instruction[j].instruction], cpu_reduced_addressing_mode_string[instruction[j].admr], cpu_extended_addressing_mode_string[instruction[j].admx]);
         }*/
 
-        char* label_prefix = ".L_macro_expansion_uid_";
 
-        // Optimize
+        /*
+        //temporary reconstruction
+        char* output = NULL;         // final assembly string
+        long output_len = 0;         // current length of code output
+        for (int i = 0; i < instruction_count; i++) {
+            Instruction_t instr = instruction[i];
+            int ec = instr.expression_count;
+            for (int j = 0; j < ec; j++) {
+                if (instr.is_address) {
+                    char tmp[32];
+                    sprintf(tmp, ".address $%.4x", instr.address);
+                    output = append_to_output(output, &output_len, tmp);
+                } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {
+                    output = append_to_output(output, &output_len, ".code");
+                } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {
+                    output = append_to_output(output, &output_len, ".data");
+                } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
+                    //log_msg(LP_INFO, "Label found");
+                    output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
+                    output = append_to_output(output, &output_len, " ");
+                } else {
+                    int tc = instr.expression[j].token_count;
+                    for (int k = 0; k < tc; k++) {
+                        output = append_to_output(output, &output_len, instr.expression[j].tokens[k].raw);
+                        if (k > 0 && k < tc - 2) {
+                            output = append_to_output(output, &output_len, " ");
+                        }
+                    }
+                    if (j == 1 && ec > 2) {
+                        output = append_to_output(output, &output_len, ",");
+                    }
+                    if (j < ec-1) {
+                        output = append_to_output(output, &output_len, " ");
+                    }
+                }
+            }
+            output = append_to_output(output, &output_len, "\n");
+        }
+        char filename[64];
+        sprintf(filename, "reco_%d.asm", label_uid);
+        data_export(filename, output, output_len);
+        */
+
+
+        // Expand
         for (int i = 0; i < instruction_count; i++) {
 
             #ifndef DCFF_INT_ARITH_EXT
@@ -1815,7 +1868,7 @@ char* macro_code_expand(char* content) {
                     CPU_EXTENDED_ADDRESSING_MODE_t admx = instruction[i].admx;
                     if (instruction[i].admr != ADMR_R0 && 
                         instruction[i].admr != ADMR_IND_R0) {
-                            if (instruction[i].admx != ADMX_R0 && 
+                            if (!is_register_admx(instruction[i].admx) &&
                                 instruction[i].admx != ADMX_IND_R0 &&
                                 instruction[i].admx != ADMX_IND_R0_OFFSET16 && 
                                 instruction[i].admx != ADMX_IND16_SCALED8_R0_OFFSET &&
@@ -2376,6 +2429,484 @@ char* macro_code_expand(char* content) {
                                                     }
                                                 }, 
                                             }
+                                        }
+                                    };
+                                    insert_instruction(&instruction, pop_indr0, &instruction_count, i++);
+
+                                    // pop r0
+                                    insert_instruction(&instruction, pop_r0, &instruction_count, i++);
+
+                                    label_uid += 1;
+                                    changes_applied = 1;
+
+                            } else if (is_register_admx(instruction[i].admx)) {
+
+                                remove_instruction(instruction, &instruction_count, i);
+
+                                    // push r0
+                                    Instruction_t push_r0 = {
+                                        .instruction = PUSH, 
+                                        .admr = ADMR_NONE, 
+                                        .admx = ADMX_R0,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "push"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }
+                                        }
+                                    };
+                                    insert_instruction(&instruction, push_r0, &instruction_count, i++);
+
+                                    // push admx
+                                    Instruction_t push_admx = {
+                                        .instruction = PUSH, 
+                                        .admr = ADMR_NONE, 
+                                        .admx = admx,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "push"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admx_expr
+                                        }
+                                    };
+                                    insert_instruction(&instruction, push_admx, &instruction_count, i++);
+
+                                    // push $8000
+                                    Instruction_t push_0x8000 = {
+                                        .instruction = PUSH, 
+                                        .admr = ADMR_NONE, 
+                                        .admx = admx,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "push"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_IMMEDIATE, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_IMMEDIATE, 
+                                                        .raw = "$8000"
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, push_0x8000, &instruction_count, i++);
+
+                                    // .L
+                                    char* label_L = malloc(64);
+                                    sprintf(label_L, "%s%d", label_prefix, label_uid);
+                                    Instruction_t L = {
+                                        .instruction = NOP, 
+                                        .admr = ADMR_NONE, 
+                                        .admx = ADMX_NONE,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 1, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_LABEL, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_LABEL, 
+                                                        .raw = label_L
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, L, &instruction_count, i++);
+
+                                    // mov r0, admr
+                                    Instruction_t mov_r0_admr = {
+                                        .instruction = MOV, 
+                                        .admr = ADMR_R0, 
+                                        .admx = get_equal_admx_from_admr(admr),
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 3, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "mov"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admr_expr,
+                                        }
+                                    };
+                                    insert_instruction(&instruction, mov_r0_admr, &instruction_count, i++);
+
+                                    // xor r0, admx
+                                    Instruction_t xor_r0_admx = {
+                                        .instruction = XOR, 
+                                        .admr = ADMR_R0, 
+                                        .admx = admx,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 3, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "xor"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admx_expr,
+                                        }
+                                    };
+                                    insert_instruction(&instruction, xor_r0_admx, &instruction_count, i++);
+
+                                    // push r0
+                                    insert_instruction(&instruction, push_r0, &instruction_count, i++);
+
+                                    // and admx, admr
+                                    Instruction_t and_indr0_admr = {
+                                        .instruction = AND, 
+                                        .admr = ADMR_IND_R0, 
+                                        .admx = get_equal_admx_from_admr(admr),
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 3, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "and"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admx_expr, 
+                                            admr_expr,
+                                        }
+                                    };
+                                    insert_instruction(&instruction, and_indr0_admr, &instruction_count, i++);
+
+                                    // bws admx, $ffff
+                                    Instruction_t bws_indr0_0xffff = {
+                                        .instruction = BWS, 
+                                        .admr = ADMR_IND_R0, 
+                                        .admx = ADMX_IMM16,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 3, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "bws"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admx_expr, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_IMMEDIATE, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_IMMEDIATE, 
+                                                        .raw = "$FFFF"
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, bws_indr0_0xffff, &instruction_count, i++);
+
+                                    // pop r0
+                                    Instruction_t pop_r0 = {
+                                        .instruction = POP, 
+                                        .admr = ADMR_R0, 
+                                        .admx = ADMX_NONE,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "pop"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, pop_r0, &instruction_count, i++);
+
+                                    // mov admr, r0
+                                    Instruction_t mov_admr_r0 = {
+                                        .instruction = MOV, 
+                                        .admr = admr, 
+                                        .admx = ADMX_R0,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 3, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "mov"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admr_expr,
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, mov_admr_r0, &instruction_count, i++);
+
+                                    // pop r0
+                                    insert_instruction(&instruction, pop_r0, &instruction_count, i++);
+
+                                    // bws r0, 1
+                                    Instruction_t bws_r0_1 = {
+                                        .instruction = BWS, 
+                                        .admr = ADMR_R0, 
+                                        .admx = ADMX_IMM16,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 3, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "bws"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_IMMEDIATE, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_IMMEDIATE, 
+                                                        .raw = "$0001"
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, bws_r0_1, &instruction_count, i++);
+
+                                    // tst r0
+                                    Instruction_t tst_r0 = {
+                                        .instruction = TST, 
+                                        .admr = ADMR_R0, 
+                                        .admx = ADMX_IMM16,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "tst"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_REGISTER, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_REGISTER, 
+                                                        .raw = "r0"
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, tst_r0, &instruction_count, i++);
+
+                                    // push r0
+                                    insert_instruction(&instruction, push_r0, &instruction_count, i++);
+
+                                    // jnz .L
+                                    Instruction_t jnz_L = {
+                                        .instruction = JNZ, 
+                                        .admr = ADMR_NONE, 
+                                        .admx = ADMX_IMM16,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "jnz"
+                                                    }
+                                                }, 
+                                            }, 
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_LABEL, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_LABEL, 
+                                                        .raw = label_L
+                                                    }
+                                                }, 
+                                            }, 
+                                        }
+                                    };
+                                    insert_instruction(&instruction, jnz_L, &instruction_count, i++);
+
+                                    // pop r0
+                                    insert_instruction(&instruction, pop_r0, &instruction_count, i++);
+
+                                    // pop admx
+                                    Instruction_t pop_indr0 = {
+                                        .instruction = POP, 
+                                        .admr = ADMR_IND_R0, 
+                                        .admx = ADMX_NONE,
+                                        .argument_bytes = 0, 
+                                        .is_address = 0, 
+                                        .is_raw_data = 0, 
+                                        .expression_count = 2, 
+                                        .expression = {
+                                            (Expression_t) {
+                                                .token_count = 1, 
+                                                .type = EXPR_INSTRUCTION, 
+                                                .tokens = {
+                                                    (Token_t) {
+                                                        .type = TT_INSTRUCTION, 
+                                                        .raw = "pop"
+                                                    }
+                                                }, 
+                                            }, 
+                                            admx_expr
                                         }
                                     };
                                     insert_instruction(&instruction, pop_indr0, &instruction_count, i++);
@@ -3333,10 +3864,12 @@ char* macro_code_expand(char* content) {
                 if (changes_applied) break;
             #endif // DCFF_INT_ARITH
 
-        }
+        }// reconstruct asm file
     }
 
     // reconstruct asm file
+    char* output = NULL;         // final assembly string
+    long output_len = 0;         // current length of code output
     for (int i = 0; i < instruction_count; i++) {
         Instruction_t instr = instruction[i];
         int ec = instr.expression_count;

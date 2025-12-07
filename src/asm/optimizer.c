@@ -116,13 +116,13 @@ static void remove_instruction(Instruction_t* instruction, int* instruction_coun
     (*instruction_count)--;
 }
 
-static void insert_instruction(Instruction_t* instruction, Instruction_t new_instruction, int* instruction_count, int index) {
-    instruction = realloc(instruction, sizeof(Instruction_t) * (*instruction_count + 1));
+static void insert_instruction(Instruction_t** instruction, Instruction_t new_instruction, int* instruction_count, int index) {
+    *instruction = realloc(*instruction, sizeof(Instruction_t) * (*instruction_count + 2));
     if (index < 0 || index >= *instruction_count) return;
     for (int i = *instruction_count; i > index; i--) {
-        instruction[i] = instruction[i - 1];
+        (*instruction)[i] = (*instruction)[i - 1];
     }
-    instruction[index] = new_instruction;
+    (*instruction)[index] = new_instruction;
     (*instruction_count)++;
 }
 
@@ -548,7 +548,7 @@ char* optimizer_compile(char* content) {
                         };
                         remove_instruction(instruction, &instruction_count, i + 1);
                         if (set_AO) {
-                            insert_instruction(instruction, new_instruction, &instruction_count, i + 1);
+                            insert_instruction(&instruction, new_instruction, &instruction_count, i + 1);
                         }
                         changes_applied = 1;
                     }

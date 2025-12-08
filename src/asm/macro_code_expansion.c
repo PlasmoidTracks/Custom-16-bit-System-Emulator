@@ -513,7 +513,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -617,7 +617,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -640,7 +640,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -669,7 +669,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -749,7 +749,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -785,7 +785,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -876,7 +876,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -979,7 +979,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1002,7 +1002,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1370,7 +1370,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1474,7 +1474,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1497,7 +1497,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1526,7 +1526,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1606,7 +1606,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1642,7 +1642,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1733,7 +1733,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1836,7 +1836,7 @@ char* macro_code_expand(char* content) {
                                     }, 
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -1859,7 +1859,7 @@ char* macro_code_expand(char* content) {
                                 .expression = {
                                     (Expression_t) {
                                         .token_count = 1, 
-                                        .type = EXPR_LABEL, 
+                                        .type = EXPR_IMMEDIATE, 
                                         .tokens = {
                                             (Token_t) {
                                                 .type = TT_LABEL, 
@@ -2033,7 +2033,7 @@ char* macro_code_expand(char* content) {
                                         .expression = {
                                             (Expression_t) {
                                                 .token_count = 1, 
-                                                .type = EXPR_LABEL, 
+                                                .type = EXPR_IMMEDIATE, 
                                                 .tokens = {
                                                     (Token_t) {
                                                         .type = TT_LABEL, 
@@ -2423,7 +2423,7 @@ char* macro_code_expand(char* content) {
                                             }, 
                                             (Expression_t) {
                                                 .token_count = 1, 
-                                                .type = EXPR_LABEL, 
+                                                .type = EXPR_IMMEDIATE, 
                                                 .tokens = {
                                                     (Token_t) {
                                                         .type = TT_LABEL, 
@@ -2625,7 +2625,7 @@ char* macro_code_expand(char* content) {
                                     .expression = {
                                         (Expression_t) {
                                             .token_count = 1, 
-                                            .type = EXPR_LABEL, 
+                                            .type = EXPR_IMMEDIATE, 
                                             .tokens = {
                                                 (Token_t) {
                                                     .type = TT_LABEL, 
@@ -2946,7 +2946,7 @@ char* macro_code_expand(char* content) {
                                         }, 
                                         (Expression_t) {
                                             .token_count = 1, 
-                                            .type = EXPR_LABEL, 
+                                            .type = EXPR_IMMEDIATE, 
                                             .tokens = {
                                                 (Token_t) {
                                                     .type = TT_LABEL, 
@@ -3128,7 +3128,7 @@ char* macro_code_expand(char* content) {
                                     .expression = {
                                         (Expression_t) {
                                             .token_count = 1, 
-                                            .type = EXPR_LABEL, 
+                                            .type = EXPR_IMMEDIATE, 
                                             .tokens = {
                                                 (Token_t) {
                                                     .type = TT_LABEL, 
@@ -3568,7 +3568,7 @@ char* macro_code_expand(char* content) {
                                         }, 
                                         (Expression_t) {
                                             .token_count = 1, 
-                                            .type = EXPR_LABEL, 
+                                            .type = EXPR_IMMEDIATE, 
                                             .tokens = {
                                                 (Token_t) {
                                                     .type = TT_LABEL, 
@@ -3887,7 +3887,7 @@ char* macro_code_expand(char* content) {
                             }, 
                             (Expression_t) {
                                 .token_count = 1, 
-                                .type = EXPR_LABEL, 
+                                .type = EXPR_IMMEDIATE, 
                                 .tokens = {
                                     (Token_t) {
                                         .type = TT_LABEL, 
@@ -3971,7 +3971,7 @@ char* macro_code_expand(char* content) {
                         .expression = {
                             (Expression_t) {
                                 .token_count = 1, 
-                                .type = EXPR_LABEL, 
+                                .type = EXPR_IMMEDIATE, 
                                 .tokens = {
                                     (Token_t) {
                                         .type = TT_LABEL, 

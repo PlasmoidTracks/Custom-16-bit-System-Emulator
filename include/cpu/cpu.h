@@ -41,8 +41,7 @@ pop  :: [sp] -> dest; sp++          works ONLY with admr argument
 
 
 typedef enum CpuState_t {
-    CS_FETCH_INSTRUCTION,                       // fetching the next instruction [reapeat until read successful]
-    // the one above is also where we check for interrupts
+    CS_FETCH_INSTRUCTION,                       // fetching the next instruction [reapeat until read successful]. This is also the one where we check for interrupts
     CS_FETCH_ADDRESSING_MODES,       // decode the instruction to get the argument count of the instruction
     CS_FETCH_ARGUMENT_BYTES, 
     CS_COMPUTE_ADDRESS,    // computes the absolute address from the addressing mode and arguments

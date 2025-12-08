@@ -49,7 +49,6 @@ const char* expression_type_string[] = {
     [EXPR_INDIRECT_REGISTER]        = "indirect_register",
     [EXPR_INDIRECT_REGISTER_OFFSET] = "indirect_register_offset",
     [EXPR_INDIRECT_SCALE_OFFSET]    = "indirect_scale_offset", 
-    [EXPR_LABEL]                    = "label", 
     [EXPR_SEGMENT_DATA]             = "segment_data", 
     [EXPR_SEGMENT_CODE]             = "segment_code", 
     [EXPR_ADDRESS]                  = "address", 
@@ -492,12 +491,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
     while (expression_index < expression_count) {
 
         // check for const 
-        if (expression[expression_index].type == EXPR_LABEL) {
-            instruction_index ++;
-            expression_index ++;
-
-            continue;
-        }
         if (instruction_index >= allocated_instructions) {
             allocated_instructions *= 2;
             instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
@@ -1126,8 +1119,13 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                         int corresponding_label_found = -1;
                         for (int j = 0; j < jump_label_index; j++) {
                             if (strcmp(instruction[i].expression[exp].tokens[0].raw, jump_label[j].name) == 0) {
-                                corresponding_label_found = j;
-                                break;
+                                if (corresponding_label_found == -1) {
+                                    corresponding_label_found = j;
+                                } else {
+                                    log_msg(LP_ERROR, "Label \"%s\" is not unique", instruction[i].expression[exp].tokens[0].raw);
+                                    exit(1);
+                                    break;
+                                }
                             }
                         }
                         if (corresponding_label_found == -1) {

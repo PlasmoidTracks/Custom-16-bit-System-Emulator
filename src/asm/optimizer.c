@@ -385,7 +385,7 @@ char* optimizer_compile(char* content) {
             }
             if (changes_applied) break;
             
-
+            /*
             // mov rN, x
             // op rM, rN
             // lea rN, [?]
@@ -421,7 +421,7 @@ char* optimizer_compile(char* content) {
                 }
             }
             if (changes_applied) break;
-            
+            */
 
             // mov rN, rM
             // add rN, x
@@ -463,6 +463,7 @@ char* optimizer_compile(char* content) {
                 }
             }
             if (changes_applied) break;
+            
 
             // mov rN, x
             // add rN, y
@@ -690,8 +691,6 @@ char* optimizer_compile(char* content) {
             if (changes_applied) break;
 
 
-            
-
             // mov rN, [rN]
             // instruction that doesnt use or modify rN
             // mov [r0], rN
@@ -735,7 +734,7 @@ char* optimizer_compile(char* content) {
             if (changes_applied) break;
 
 
-
+/*
             // mov rN, x
             // instruction that doesnt use or modify rN
             // mov ?, rN
@@ -777,8 +776,7 @@ char* optimizer_compile(char* content) {
                 }
             }
             if (changes_applied) break;
-            
-
+            */
             
             // and ?, $ffff
             // =>

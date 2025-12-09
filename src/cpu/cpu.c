@@ -913,6 +913,7 @@ void cpu_clock(CPU_t* cpu) {
                         }
                     default:
                         //log_msg(LP_ERROR, "CPU %d: Unkown indirect extended addressing mode category %d", cpu->clock, admc);
+                        cpu->state = CS_EXCEPTION;
                         break;
                 }
             }

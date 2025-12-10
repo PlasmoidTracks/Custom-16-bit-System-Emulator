@@ -24,11 +24,11 @@
     #define CANONICALIZE
     //#undef CANONICALIZE
 
-    #define MACRO_EXPAND
-    //#undef MACRO_EXPAND
-
     #define OPTIMIZE
     //#undef OPTIMIZE
+
+    #define MACRO_EXPAND
+    //#undef MACRO_EXPAND
 
     #define BINARY_DUMP
     //#undef BINARY_DUMP
@@ -51,13 +51,13 @@
     #include "asm/canonicalizer.h"
 #endif // CANONICALIZE
 
-#ifdef MACRO_EXPAND
-    #include "asm/macro_code_expansion.h"
-#endif // MACRO_EXPAND
-
 #ifdef OPTIMIZE
     #include "asm/optimizer.h"
 #endif // OPTIMIZE
+
+#ifdef MACRO_EXPAND
+    #include "asm/macro_code_expansion.h"
+#endif // MACRO_EXPAND
 
 #ifdef DISASSEMBLE
     #include "asm/disassembler.h"
@@ -170,17 +170,6 @@ int main(int argc, char* argv[]) {
         data_export(filename, canon_asm, strlen(canon_asm));
     #endif
 
-    // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
-    #ifdef MACRO_EXPAND
-        char* expanded_asm = macro_code_expand_from_file(filename);
-        if (!expanded_asm) {
-            log_msg(LP_ERROR, "Macro expander: Returned NULL");
-            return 1;
-        }
-        filename = append_filename(filename, ".exp");
-        data_export(filename, expanded_asm, strlen(expanded_asm));
-    #endif
-
     // optimizing asm to asm
     #ifdef OPTIMIZE
         char* optimized_asm = optimizer_compile_from_file(filename);
@@ -190,6 +179,17 @@ int main(int argc, char* argv[]) {
         }
         filename = append_filename(filename, ".opt");
         data_export(filename, optimized_asm, strlen(optimized_asm));
+    #endif
+
+    // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
+    #ifdef MACRO_EXPAND
+        char* expanded_asm = macro_code_expand_from_file(filename);
+        if (!expanded_asm) {
+            log_msg(LP_ERROR, "Macro expander: Returned NULL");
+            return 1;
+        }
+        filename = append_filename(filename, ".exp");
+        data_export(filename, expanded_asm, strlen(expanded_asm));
     #endif
 
 

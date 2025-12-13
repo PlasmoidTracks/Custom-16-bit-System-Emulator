@@ -21,37 +21,30 @@ System_t* system_create(
 ) {
     System_t* system = calloc(1, sizeof(System_t));
 
-    BUS_t* bus = bus_create();
-    system->bus = bus;
-    CPU_t* cpu = cpu_create();
-    system->cpu = cpu;
-    RAM_t* ram = ram_create(1 << 16);
-    system->ram = ram;
-    Terminal_t* terminal = terminal_create();
-    system->terminal = terminal;
+    system->bus = bus_create();
+    system->cpu = cpu_create();
+    system->ram = ram_create(1 << 16);
+    system->terminal = terminal_create();
 
     if (cache_active) {
-        Cache_t* cache = cache_create(cache_capacity);
-        cpu_mount_cache(cpu, cache);
+        cpu_mount_cache(system->cpu, cache_create(cache_capacity));
     }
 
-    bus_add_device(bus, &cpu->device);
-    bus_add_device(bus, &ram->device);
-    bus_add_device(bus, &terminal->device);
+    bus_add_device(system->bus, &system->cpu->device);
+    bus_add_device(system->bus, &system->ram->device);
+    bus_add_device(system->bus, &system->terminal->device);
 
     if (ticker_active) {
-        Ticker_t* ticker = ticker_create(ticker_frequency);
-        bus_add_device(bus, &ticker->device);
-        system->ticker = ticker;
+        system->ticker = ticker_create(ticker_frequency);
+        bus_add_device(system->bus, &system->ticker->device);
     }
-
-    system->bus = bus;
 
     system->clock_order_size = 0;
     system->clock_order = malloc(sizeof(SystemClockDevice_t) * 16);
     system->clock_order[system->clock_order_size++] = SCD_CPU;
     system->clock_order[system->clock_order_size++] = SCD_BUS;
     system->clock_order[system->clock_order_size++] = SCD_RAM;
+    system->clock_order[system->clock_order_size++] = SCD_BUS;
     system->clock_order[system->clock_order_size++] = SCD_TERMINAL;
     if (ticker_active) {
         system->clock_order[system->clock_order_size++] = SCD_BUS;

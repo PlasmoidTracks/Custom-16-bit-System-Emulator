@@ -25,6 +25,10 @@ void format_float_to_scientific_notation(char* const buffer, float value) {
         sprintf(buffer, "0.0");
         return;
     }
+    if (isinf(value)) {
+        sprintf(buffer, "inf");
+        return;
+    }
     int power = 0;
     while (fabsf(value) > 10.0) {
         power ++;

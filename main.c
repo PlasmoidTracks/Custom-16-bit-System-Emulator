@@ -68,7 +68,15 @@ int main(int argc, char* argv[]) {
 
     if (argc < 2) {
         log_msg(LP_ERROR, "Not enough arguments given");
-        log_msg(LP_INFO, "Usage: ./main [filename.ir]");
+        #ifdef RUN_BINARY_DIRECTLY
+            log_msg(LP_INFO, "Usage: ./main [filename.bin]");
+            #else 
+            #ifdef COMPILE_IR
+                log_msg(LP_INFO, "Usage: ./main [filename.ir]");
+            #else
+                log_msg(LP_INFO, "Usage: ./main [filename.asm]");
+            #endif
+        #endif
         return 0;
     }
 
@@ -121,8 +129,6 @@ int main(int argc, char* argv[]) {
             return 0;
         }
     #endif
-
-
 
     char** words = split(argv[1], ".", "");
     char* filename = malloc(128);

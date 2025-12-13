@@ -244,12 +244,12 @@ float16_t f16_mult(float16_t f16_a, float16_t f16_b) {
     
     // The result mantissa now is roughly 22 bits; shift it to 11 bits.
     if (result_mant & (1ULL << 21)) {
-        result_mant >>= 1;
+        result_mant >>= 11;
         result_exp++;
     } else {
         result_mant >>= 10;
     }
-    
+
     return f16_pack(result_sign, result_exp, (uint32_t)result_mant);
 }
 

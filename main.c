@@ -42,8 +42,6 @@
 
 
 #ifdef COMPILE_IR
-    #include "codegen/ir_lexer.h"
-    #include "codegen/ir_parser.h"
     #include "codegen/ir_compiler.h"
 #endif // COMPILE_IR
 
@@ -86,7 +84,7 @@ int main(int argc, char* argv[]) {
     System_t* system = system_create(
         1, 
         64, 
-        1, 
+        0, 
         1000.0
     );
 
@@ -162,7 +160,7 @@ int main(int argc, char* argv[]) {
 
     // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
     #ifdef MACRO_EXPAND
-        char* expanded_asm = macro_code_expand_from_file(filename);
+        char* expanded_asm = macro_code_expand_from_file(filename, system->cpu->feature_flag);
         if (!expanded_asm) {
             log_msg(LP_ERROR, "Macro expander: Returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;

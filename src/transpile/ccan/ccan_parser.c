@@ -57,7 +57,6 @@ CCANParserToken_t** ccan_parser_parse(CCANLexerToken_t* lexer_token, long lexer_
 
     // 2) Loop until no rule can be applied
     int something_changed = 1;
-    int xyz = 0;
     while (something_changed) {
 
         // Check for errors, from parser_warning_ruleset

@@ -88,7 +88,7 @@ typedef enum {
     CCAN_LEX_BANG,                  // !
     CCAN_LEX_PERCENT,               // %
     CCAN_LEX_QUESTION_MARK,         // ?
-    CCAN_LEX_BACKSLASH,             // \ 
+    CCAN_LEX_BACKSLASH,             /* \ */
 
     // Literals.
     CCAN_LEX_IDENTIFIER,            // name

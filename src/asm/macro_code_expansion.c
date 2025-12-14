@@ -56,45 +56,6 @@ static void insert_instruction(Instruction_t** instruction, Instruction_t new_in
     (*instruction_count)++;
 }
 
-static Expression_t expression_create(
-    int token_count, 
-    ExpressionType_t type, 
-    Token_t tokens[8]
-) {
-    Expression_t expr = {
-        .token_count = token_count, 
-        .type = type, 
-    };
-    for (int i = 0; i < 8; i++) {
-        expr.tokens[i] = tokens[i];
-    }
-    return expr;
-}
-
-static Instruction_t instruction_create(
-    CPU_INSTRUCTION_MNEMONIC_t instruction, 
-    CPU_REDUCED_ADDRESSING_MODE_t admr, 
-    CPU_EXTENDED_ADDRESSING_MODE_t admx, 
-    int expression_count, 
-    ...
-) {
-    Instruction_t instr = {
-        .instruction = instruction, 
-        .admr = admr, 
-        .admx = admx, 
-        .expression_count = expression_count
-    };
-
-    va_list args;
-    va_start(args, expression_count);  
-    for (int i = 0; i < expression_count; i++) {
-        instr.expression[i] = va_arg(args, Expression_t);
-    }
-    va_end(args);
-
-    return instr;
-}
-
 static int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
     result |= admx == ADMX_R0;
@@ -106,7 +67,7 @@ static int is_register_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     return result;
 }
 
-char* macro_code_expand(char* content) {
+char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
 
     // split text into lines
     char** line = assembler_split_to_separate_lines(content);
@@ -193,7 +154,7 @@ char* macro_code_expand(char* content) {
         // Expand
         for (int i = 0; i < instruction_count; i++) {
 
-            #ifndef DCFF_INT_ARITH_EXT
+            if (!(feature_flag & CFF_INT_ARITH_EXT)) {
                 // replace mul instruction with simulated mul using repeated addition
                 if (instruction[i].instruction == MUL) {
                     if (instruction[i].admr != ADMR_R0 && 
@@ -1915,10 +1876,10 @@ char* macro_code_expand(char* content) {
                     }
                 }
                 if (changes_applied) break;
-            #endif // DCFF_INT_ARITH_EXT
+            } // CFF_INT_ARITH_EXT
 
 
-            #ifndef DCFF_INT_ARITH
+            if (!(feature_flag & CFF_INT_ARITH)) {
                 if (instruction[i].instruction == ADD) {
                     Expression_t admr_expr = instruction[i].expression[1];
                     Expression_t admx_expr = instruction[i].expression[2];
@@ -4977,7 +4938,6 @@ char* macro_code_expand(char* content) {
                 }
                 if (changes_applied) break;
 
-
                 if (instruction[i].instruction == DEC) {
                     Expression_t admr_expr = instruction[i].expression[1];
                     CPU_REDUCED_ADDRESSING_MODE_t admr = instruction[i].admr;
@@ -5023,7 +4983,6 @@ char* macro_code_expand(char* content) {
                 }
                 if (changes_applied) break;
 
-
                 if (instruction[i].instruction == INC) {
                     Expression_t admr_expr = instruction[i].expression[1];
                     CPU_REDUCED_ADDRESSING_MODE_t admr = instruction[i].admr;
@@ -5068,7 +5027,6 @@ char* macro_code_expand(char* content) {
                     changes_applied = 1;
                 }
                 if (changes_applied) break;
-
 
                 if (instruction[i].instruction == SUB) {
                     Expression_t admr_expr = instruction[i].expression[1];
@@ -5171,7 +5129,6 @@ char* macro_code_expand(char* content) {
                 }
                 if (changes_applied) break;
 
-
                 if (instruction[i].instruction == NEG) {
                     Expression_t admr_expr = instruction[i].expression[1];
                     CPU_REDUCED_ADDRESSING_MODE_t admr = instruction[i].admr;
@@ -5248,7 +5205,7 @@ char* macro_code_expand(char* content) {
                     changes_applied = 1;
                 }
                 if (changes_applied) break;
-            #endif // DCFF_INT_ARITH
+            } // CFF_INT_ARITH
 
         }// reconstruct asm file
     }
@@ -5305,13 +5262,13 @@ char* macro_code_expand(char* content) {
 }
 
 
-char* macro_code_expand_from_file(char* filename) {
+char* macro_code_expand_from_file(char* filename, CpuFeatureFlag_t feature_flag) {
     char* content = read_file(filename, NULL);
     if (!content) {
         log_msg(LP_ERROR, "read_file failed [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
-    char* new_code = macro_code_expand(content);
+    char* new_code = macro_code_expand(content, feature_flag);
 
     return new_code;
 }

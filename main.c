@@ -104,13 +104,6 @@ int main(int argc, char* argv[]) {
         );
     #endif
 
-    #ifndef RUN_BINARY_DIRECTLY
-        #ifdef COMPILE_IR
-            long content_size;
-            char* content;
-        #endif
-    #endif
-
     #ifdef CCAN
         {
             long filesize;
@@ -128,13 +121,7 @@ int main(int argc, char* argv[]) {
         }
     #endif
 
-    char** words = split(argv[1], ".", "");
     char* filename = malloc(128);
-    sprintf(filename, "%s", words[0]);
-
-    // Compiling step
-    // from ira to ir
-
     sprintf(filename, "%s", argv[1]);
 
     // from ir to asm
@@ -146,6 +133,7 @@ int main(int argc, char* argv[]) {
         }
         filename = append_filename(filename, ".asm");
         data_export(filename, asm, strlen(asm));
+        free(asm);
     #endif
 
     // canonicalizes the assembly code to a standard format
@@ -157,6 +145,7 @@ int main(int argc, char* argv[]) {
         }
         filename = append_filename(filename, ".can");
         data_export(filename, canon_asm, strlen(canon_asm));
+        free(canon_asm);
     #endif
 
     // optimizing asm to asm
@@ -168,6 +157,7 @@ int main(int argc, char* argv[]) {
         }
         filename = append_filename(filename, ".opt");
         data_export(filename, optimized_asm, strlen(optimized_asm));
+        free(optimized_asm);
     #endif
 
     // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
@@ -179,6 +169,7 @@ int main(int argc, char* argv[]) {
         }
         filename = append_filename(filename, ".exp");
         data_export(filename, expanded_asm, strlen(expanded_asm));
+        free(expanded_asm);
     #endif
 
 
@@ -228,9 +219,9 @@ int main(int argc, char* argv[]) {
     cpu_print_state(system->cpu);
     cpu_print_stack(system->cpu, system->ram, 20);
 
-    ram_delete(system->ram);
-    cpu_delete(system->cpu);
-    bus_delete(system->bus);
+    free(bin);
+
+    system_delete(&system);
 
     return 0;
 }

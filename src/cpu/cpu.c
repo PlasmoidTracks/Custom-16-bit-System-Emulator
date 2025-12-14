@@ -126,9 +126,11 @@ CPU_t* cpu_create(void) {
 }
 
 
-void cpu_delete(CPU_t* cpu) {
-    cache_delete(cpu->cache);
-    free(cpu);
+void cpu_delete(CPU_t** cpu) {
+    if (!cpu) {return;}
+    cache_delete(&(*cpu)->cache);
+    free(*cpu);
+    *cpu = NULL;
 }
 
 void cpu_mount_cache(CPU_t* cpu, Cache_t* cache) {

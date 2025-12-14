@@ -17,9 +17,11 @@ RAM_t* ram_create(uint32_t capacity) {
     return ram;
 }
 
-void ram_delete(RAM_t* ram) {
-    free(ram->data);
-    free(ram);
+void ram_delete(RAM_t** ram) {
+    if (!ram) {return;}
+    free((*ram)->data);
+    free(*ram);
+    *ram = NULL;
 }
 
 uint8_t ram_read(RAM_t* ram, uint16_t address) {

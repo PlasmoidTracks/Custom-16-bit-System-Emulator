@@ -17,6 +17,8 @@ typedef struct Terminal_t {
 
 extern Terminal_t* terminal_create(void);
 
+extern void terminal_delete(Terminal_t** terminal);
+
 extern void terminal_clock(Terminal_t* terminal);
 
 

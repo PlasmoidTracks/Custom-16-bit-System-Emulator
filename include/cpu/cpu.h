@@ -155,7 +155,7 @@ typedef struct CPU_t {
 
 extern CPU_t* cpu_create(void);
 
-extern void cpu_delete(CPU_t* cpu);
+extern void cpu_delete(CPU_t** cpu);
 
 extern void cpu_mount_cache(CPU_t* cpu, Cache_t* cache);
 

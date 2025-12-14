@@ -26,6 +26,12 @@ Ticker_t* ticker_create(float frequency) {
     return ticker;
 }
 
+void ticker_delete(Ticker_t** ticker) {
+    if (!ticker) {return;}
+    free(*ticker);
+    *ticker = NULL;
+}
+
 void ticker_clock(Ticker_t* ticker) {
     double current_time = get_time_seconds();
     double delta_time = current_time - ticker->last_time;

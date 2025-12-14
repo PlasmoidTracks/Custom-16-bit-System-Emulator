@@ -21,6 +21,8 @@ typedef struct Ticker_t {
 
 extern Ticker_t* ticker_create(float frequency);
 
+extern void ticker_delete(Ticker_t** ticker);
+
 extern void ticker_clock(Ticker_t* ticker);
 
 

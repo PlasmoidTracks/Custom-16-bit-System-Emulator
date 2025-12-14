@@ -30,7 +30,7 @@ typedef struct Cache_t {
 
 extern Cache_t* cache_create(uint16_t capacity);
 
-extern void cache_delete(Cache_t* cache);
+extern void cache_delete(Cache_t** cache);
 
 extern int cache_read(Cache_t* cache, uint16_t address, uint8_t* data, int skipRead);
 

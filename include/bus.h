@@ -16,7 +16,7 @@ typedef struct BUS_t {
 
 extern BUS_t* bus_create(void);
 
-extern void bus_delete(BUS_t* bus);
+extern void bus_delete(BUS_t** bus);
 
 extern void bus_add_device(BUS_t* bus, Device_t* device);
 

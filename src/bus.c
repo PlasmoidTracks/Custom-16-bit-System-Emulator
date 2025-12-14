@@ -18,8 +18,10 @@ BUS_t* bus_create(void) {
     return bus;
 }
 
-void bus_delete(BUS_t* bus) {
-    free(bus);
+void bus_delete(BUS_t** bus) {
+    if (!bus) {return;}
+    free(*bus);
+    *bus = NULL;
 }
 
 void bus_add_device(BUS_t* bus, Device_t* device) {

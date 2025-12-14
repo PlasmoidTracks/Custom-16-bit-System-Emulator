@@ -13,6 +13,12 @@ Terminal_t* terminal_create(void) {
     return ticker;
 }
 
+void terminal_delete(Terminal_t** terminal) {
+    if (!terminal) {return;}
+    free(*terminal);
+    *terminal = NULL;
+}
+
 void terminal_clock(Terminal_t* terminal) {
     // check device for commands
     if (terminal->device.processed == 1) {

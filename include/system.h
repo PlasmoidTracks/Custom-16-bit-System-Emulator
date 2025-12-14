@@ -66,6 +66,8 @@ extern void hook_action_halt(System_t* system);
 
 extern System_t* system_create(int cache_active, uint16_t cache_capacity, int ticker_active, float ticker_frequency);
 
+extern void system_delete(System_t** system);
+
 extern void system_clock(System_t* system);
 
 // This function adds a hardware watch that allows for thorough debugging

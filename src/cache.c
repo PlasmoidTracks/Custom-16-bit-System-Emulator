@@ -33,13 +33,13 @@ Cache_t* cache_create(uint16_t capacity) {
     return cache;
 }
 
-void cache_delete(Cache_t* cache) {
-    if (cache) {
-        free(cache->data);
-        free(cache->address);
-        free(cache->state);
-        free(cache);
-    }
+void cache_delete(Cache_t** cache) {
+    if (!cache) {return;}
+    free((*cache)->data);
+    free((*cache)->address);
+    free((*cache)->state);
+    free(*cache);
+    *cache = NULL;
 }
 
 int cache_read(Cache_t* cache, uint16_t address, uint8_t* data, int skipRead) {

@@ -58,6 +58,16 @@ System_t* system_create(
     return system;
 }
 
+void system_delete(System_t** system) {
+    if (!system) {return;}
+    ram_delete(&(*system)->ram);
+    cpu_delete(&(*system)->cpu);
+    bus_delete(&(*system)->bus);
+    ticker_delete(&(*system)->ticker);
+    terminal_delete(&(*system)->terminal);
+    *system = NULL;
+}
+
 
 void system_clock(System_t *system) {
     if (!system) {

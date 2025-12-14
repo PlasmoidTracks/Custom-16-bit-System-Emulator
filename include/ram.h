@@ -17,7 +17,7 @@ typedef struct RAM_t {
 
 extern RAM_t* ram_create(uint32_t capacity);
 
-extern void ram_delete(RAM_t* ram);
+extern void ram_delete(RAM_t** ram);
 
 extern uint8_t ram_read(RAM_t* ram, uint16_t address);
 

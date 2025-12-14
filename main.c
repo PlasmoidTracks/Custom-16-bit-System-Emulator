@@ -107,8 +107,6 @@ int main(int argc, char* argv[]) {
     #ifndef RUN_BINARY_DIRECTLY
         #ifdef COMPILE_IR
             long content_size;
-            long lexer_token_count = 0;
-            long parser_root_count = 0;
             char* content;
         #endif
     #endif
@@ -141,22 +139,7 @@ int main(int argc, char* argv[]) {
 
     // from ir to asm
     #ifdef COMPILE_IR
-        content = read_file(filename, &content_size);
-        if (!content) {
-            log_msg(LP_ERROR, "IR: read_file failed [%s:%d]", __FILE__, __LINE__);
-            return 1;
-        }
-        IRLexerToken_t* lexer_token = ir_lexer_parse(content, content_size, &lexer_token_count);
-        if (!lexer_token) {
-            log_msg(LP_ERROR, "IR: Lexer returned NULL [%s:%d]", __FILE__, __LINE__);
-            return 1;
-        }
-        IRParserToken_t** parser_token = ir_parser_parse(lexer_token, lexer_token_count, &parser_root_count);
-        if (!lexer_token) {
-            log_msg(LP_ERROR, "IR: Parser returned NULL [%s:%d]", __FILE__, __LINE__);
-            return 1;
-        }
-        char* asm = ir_compile(parser_token, parser_root_count, 0xffffffff);
+        char* asm = ir_compile_from_filename(filename, 0xffffffff);
         if (!asm) {
             log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;

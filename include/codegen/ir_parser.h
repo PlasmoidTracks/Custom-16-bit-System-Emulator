@@ -37,6 +37,6 @@ typedef struct IRParserToken_t {
     struct IRParserToken_t* parent;
 } IRParserToken_t;
 
-extern IRParserToken_t** ir_parser_parse(IRLexerToken_t* token, long lexer_token_count, long* parser_root_count);
+extern IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser_root_count);
 
 #endif

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "utils/Log.h"
+
 #include "codegen/ir_lexer.h"
 #include "codegen/ir_parser.h"
 #include "codegen/ir_parser_ruleset.h"
@@ -29,8 +31,15 @@ void ir_print_token(IRParserToken_t* parser_token) {
 }
 
 
-IRParserToken_t** ir_parser_parse(IRLexerToken_t* lexer_token, long lexer_token_count, long* parser_root_count) {
+IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser_root_count) {
     // 1) Convert all lexer_token -> parser_token array
+    long lexer_token_count;
+    IRLexerToken_t* lexer_token = ir_lexer_parse(source, source_length, &lexer_token_count);
+    if (!lexer_token) {
+        log_msg(LP_ERROR, "IR: Lexer returned NULL [%s:%d]", __FILE__, __LINE__);
+        return NULL;
+    }
+    
     IRParserToken_t** parser_token = malloc(sizeof(IRParserToken_t*) * lexer_token_count);
     for (int i = 0; i < lexer_token_count; i++) {
         parser_token[i] = malloc(sizeof(IRParserToken_t));

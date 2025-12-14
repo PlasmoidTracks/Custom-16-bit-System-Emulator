@@ -39,6 +39,8 @@ extern int ir_identifier_index[IR_MAX_DEPTH];
 
 extern int ir_identifier_scope_depth;
 
-extern char* ir_compile(IRParserToken_t** lexer_token, long lexer_token_count, IRCompileOption_t options);
+extern char* ir_compile(char* source, long source_length, IRCompileOption_t options);
+
+extern char* ir_compile_from_filename(const char* const filename, IRCompileOption_t options);
 
 #endif

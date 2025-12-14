@@ -6,6 +6,7 @@
 
 #include "utils/Log.h"
 #include "utils/String.h"
+#include "utils/IO.h"
 
 #include "asm/assembler.h"
 
@@ -435,7 +436,15 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
     }
 }
 
-char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRCompileOption_t options) {
+char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
+    
+    long parser_token_count;
+    IRParserToken_t** parser_token = ir_parser_parse(source, source_length, &parser_token_count);
+    if (!parser_token) {
+        log_msg(LP_ERROR, "IR: Parser returned NULL [%s:%d]", __FILE__, __LINE__);
+        return NULL;
+    }
+    
     char* code_output = NULL;         // final assembly string
     char* data_output = NULL;         // final data string
     long code_output_len = 0;         // current length of code output
@@ -936,3 +945,17 @@ char* ir_compile(IRParserToken_t** parser_token, long parser_token_count, IRComp
     return code_output;
 }
 
+char* ir_compile_from_filename(const char* const filename, IRCompileOption_t options) {
+    long content_size;
+    char* content = read_file(filename, &content_size);
+    if (!content) {
+        log_msg(LP_ERROR, "IR: read_file failed [%s:%d]", __FILE__, __LINE__);
+        return NULL;
+    }
+    char* asm = ir_compile(content, content_size, options);
+    if (!asm) {
+        log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
+        return NULL;
+    }
+    return asm;
+}

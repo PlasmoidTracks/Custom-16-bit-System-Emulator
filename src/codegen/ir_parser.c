@@ -88,9 +88,11 @@ IRParserToken_t** ir_parser_parse(IRLexerToken_t* lexer_token, long lexer_token_
                 while (token->child_count >= 1) {
                     token = token->child[0];
                 }
-                log_msg(LP_ERROR, "%s at line %d", 
+                log_msg(LP_ERROR, "%s at line %d [%s:%d]", 
                     parser_warning_ruleset[rule].description, 
-                    token->token.line);
+                    token->token.line, 
+                    __FILE__, __LINE__
+                );
 
                 error = 1;
             }

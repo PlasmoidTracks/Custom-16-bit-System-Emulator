@@ -519,7 +519,7 @@ char* optimizer_compile(char* content) {
                                 value ^= value2;
                                 break;
                             default:
-                                log_msg(LP_ERROR, "Optimizer, I dont even know how this would be possible, yet here we are...");
+                                log_msg(LP_ERROR, "Optimizer, I dont even know how this would be possible, yet here we are... [%s:%d]", __FILE__, __LINE__);
                                 break;
                         }
 
@@ -1102,7 +1102,7 @@ char* optimizer_compile_from_file(const char* filename) {
     // load raw text from file
     char* content = read_file(filename, NULL);
     if (!content) {
-        log_msg(LP_ERROR, "read_file failed");
+        log_msg(LP_ERROR, "read_file failed [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
     char* machine_code = optimizer_compile(content);

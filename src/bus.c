@@ -70,7 +70,7 @@ void bus_clock(BUS_t* bus) {
                         // Ok, so lets find the RAM device, to route the request to it
                         Device_t* device_ram = bus_find_device_by_type(bus, DT_RAM);
                         if (!device_ram) {
-                            //log_msg(LP_ERROR, "BUS %d: No RAM device attached to the BUS", bus->clock);
+                            //log_msg(LP_ERROR, "BUS %d: No RAM device attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
                             // what do now?
                             break;
                         }
@@ -111,7 +111,7 @@ void bus_clock(BUS_t* bus) {
                         // Ok, so lets find the RAM device, to route the request to it
                         Device_t* device_ram = bus_find_device_by_type(bus, DT_RAM);
                         if (!device_ram) {
-                            //log_msg(LP_ERROR, "BUS %d: No RAM device attached to the BUS", bus->clock);
+                            //log_msg(LP_ERROR, "BUS %d: No RAM device attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
                             // what do now?
                             break;
                         }
@@ -137,7 +137,7 @@ void bus_clock(BUS_t* bus) {
                             //log_msg(LP_DEBUG, "BUS %d: Addressing Terminal as MMIO target", bus->clock);
                             Device_t* device_terminal = bus_find_device_by_type(bus, DT_TERMINAL);
                             if (!device_terminal) {
-                                //log_msg(LP_ERROR, "BUS %d: No Terminal device attached to the BUS", bus->clock);
+                                //log_msg(LP_ERROR, "BUS %d: No Terminal device attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
                                 // what do now?
                                 break;
                             }
@@ -149,7 +149,7 @@ void bus_clock(BUS_t* bus) {
                             }
 
                         } else {
-                            //log_msg(LP_ERROR, "BUS %d: Addressing Dummy as MMIO target", bus->clock);
+                            //log_msg(LP_ERROR, "BUS %d: Addressing Dummy as MMIO target", bus->clock [%s:%d]", __FILE__, __LINE__);
                             // For any other device, use dummy
                             device->processed = 1;
                             device->device_state = DS_IDLE;
@@ -188,7 +188,7 @@ void bus_clock(BUS_t* bus) {
                     {
                         Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
                         if (!device_target) {
-                            //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock);
+                            //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
                             break;
                         }
                         //log_msg(LP_DEBUG, "BUS %d: Found Target device to send data to", bus->clock);
@@ -207,7 +207,7 @@ void bus_clock(BUS_t* bus) {
                     {
                         Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
                         if (!device_target) {
-                            //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock);
+                            //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
                             break;
                         }
                         //log_msg(LP_DEBUG, "BUS %d: Found Target device to validate", bus->clock);
@@ -237,12 +237,12 @@ void bus_clock(BUS_t* bus) {
                     {
                         Device_t* device_target = bus_find_device_by_type(bus, DT_CPU);
                         if (!device_target) {
-                            //log_msg(LP_WARNING, "BUS %d: The CLOCK did not find a CPU to notify", bus->clock);
+                            //log_msg(LP_WARNING, "BUS %d: The CLOCK did not find a CPU to notify [%s:%d]", bus->clock, __FILE__, __LINE__);
                             device->device_state = DS_IDLE;
                             break;
                         }
                         if (device_target->device_state != DS_IDLE) {
-                            //log_msg(LP_WARNING, "BUS %d: The target device (CPU) is not idle", bus->clock);
+                            //log_msg(LP_WARNING, "BUS %d: The target device (CPU) is not idle [%s:%d]", bus->clock, __FILE__, __LINE__);
                             break;
                         }
                         device_target->device_state = DS_INTERRUPT;
@@ -282,7 +282,7 @@ void bus_clock(BUS_t* bus) {
                     {
                         Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
                         if (!device_target) {
-                            //log_msg(LP_ERROR, "BUS %d: Terminal target device is not attached to the BUS", bus->clock);
+                            //log_msg(LP_ERROR, "BUS %d: Terminal target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
                             break;
                         }
                         //log_msg(LP_DEBUG, "BUS %d: Found Terminal target device to validate", bus->clock);
@@ -299,7 +299,7 @@ void bus_clock(BUS_t* bus) {
 
 
         default:
-            //log_msg(LP_WARNING, "BUS %d: Attending to an unknown device %d / %llu", bus->clock, device_type, device->device_id);
+            //log_msg(LP_WARNING, "BUS %d: Attending to an unknown device %d / %llu [%s:%d]", bus->clock, device_type, device->device_id, __FILE__, __LINE__);
             break;
     }
 

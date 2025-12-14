@@ -61,7 +61,7 @@ System_t* system_create(
 
 void system_clock(System_t *system) {
     if (!system) {
-        log_msg(LP_ERROR, "System: NULL pointer");
+        log_msg(LP_ERROR, "System: NULL pointer [%s:%d]", __FILE__, __LINE__);
         return;
     }
     for (int i = 0; i < system->clock_order_size; i++) {
@@ -82,7 +82,7 @@ void system_clock(System_t *system) {
                 terminal_clock(system->terminal);
                 break;
             default:
-                log_msg(LP_ERROR, "System: Unknown SCD clock");
+                log_msg(LP_ERROR, "System: Unknown SCD clock [%s:%d]", __FILE__, __LINE__);
                 break;
         }
     }
@@ -91,12 +91,12 @@ void system_clock(System_t *system) {
 
 void system_hook(System_t* system, Hook_t hook) {
     if (!system) {
-        log_msg(LP_ERROR, "System: NULL pointer");
+        log_msg(LP_ERROR, "System: NULL pointer [%s:%d]", __FILE__, __LINE__);
         return;
     }
     if (system->hook == NULL) {
         if (system->hook_count != 0) {
-            log_msg(LP_ERROR, "System: corruption detected");
+            log_msg(LP_ERROR, "System: corruption detected [%s:%d]", __FILE__, __LINE__);
         }
         // now assuming first hook
         system->hook = malloc(sizeof(Hook_t));
@@ -117,7 +117,7 @@ void system_hook(System_t* system, Hook_t hook) {
             break;
 
         default:
-            log_msg(LP_ERROR, "System: Unknown Hook Condition %d", hook.condition);
+            log_msg(LP_ERROR, "System: Unknown Hook Condition %d [%s:%d]", hook.condition, __FILE__, __LINE__);
             break;
     }
     return;
@@ -135,7 +135,7 @@ void system_hook_print(System_t* system) {
 
 void system_clock_debug(System_t *system) {
     if (!system) {
-        log_msg(LP_ERROR, "System: NULL pointer");
+        log_msg(LP_ERROR, "System: NULL pointer [%s:%d]", __FILE__, __LINE__);
         return;
     }
     system_clock(system);
@@ -215,7 +215,7 @@ void system_clock_debug(System_t *system) {
 
 
             default:
-                log_msg(LP_ERROR, "System: Unknown Hook Condition %d", system->hook[h].condition);
+                log_msg(LP_ERROR, "System: Unknown Hook Condition %d [%s:%d]", system->hook[h].condition, __FILE__, __LINE__);
                 break;
         }
     }

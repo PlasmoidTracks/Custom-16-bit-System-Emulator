@@ -13,16 +13,16 @@
 #define _FILE_OFFSET_BITS 64
 
 char* read_file(const char* const filename, long* filesize) {
-    if (!filename) {log_msg(LP_ERROR, "Null pointer"); return NULL;}
+    if (!filename) {log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__); return NULL;}
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename);
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return NULL;
     }
     fseek(file, 0, SEEK_END);
     long fsize = ftell(file);
     if (fsize == 0) {
-        log_msg(LP_ERROR, "The size returned is 0 Bytes");
+        log_msg(LP_ERROR, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "Perhaps the file is too large. In that case try using read_file64(const char* const, long long int*)");
     }
     if (filesize) {*filesize = fsize;}
@@ -30,14 +30,14 @@ char* read_file(const char* const filename, long* filesize) {
 
     char* data = malloc(fsize + 1);
     if (!data) {
-        log_msg(LP_ERROR, "Memory allocation failure");
+        log_msg(LP_ERROR, "Memory allocation failure [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
 
     int result = fread(data, 1, fsize, file);
     if (result == 0) {
-        log_msg(LP_ERROR, "fread error");
+        log_msg(LP_ERROR, "fread error [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
@@ -48,26 +48,26 @@ char* read_file(const char* const filename, long* filesize) {
 
 char* read_file64(const char* const filename, long long int* filesize) {
     if (!filename) {
-        log_msg(LP_ERROR, "Null pointer");
+        log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename);
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return NULL;
     }
 
     // Use fseeko and ftello instead of Windows-specific _fseeki64/_ftelli64
     if (fseek(file, 0, SEEK_END) != 0) {
-        log_msg(LP_ERROR, "Unable to seek file");
+        log_msg(LP_ERROR, "Unable to seek file [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
 
     long long int fsize = (long long int)ftell(file);
     if (fsize < 0) {
-        log_msg(LP_ERROR, "Unable to determine file size");
+        log_msg(LP_ERROR, "Unable to determine file size [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
@@ -80,14 +80,14 @@ char* read_file64(const char* const filename, long long int* filesize) {
 
     char* data = malloc(fsize + 1);
     if (!data) {
-        log_msg(LP_ERROR, "Memory allocation failure");
+        log_msg(LP_ERROR, "Memory allocation failure [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
 
     int result = fread(data, 1, fsize, file);
     if (result == 0) {
-        log_msg(LP_ERROR, "fread error");
+        log_msg(LP_ERROR, "fread error [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
     fclose(file);
@@ -99,20 +99,20 @@ char* read_file64(const char* const filename, long long int* filesize) {
 
 char* read_file_partial(const char* const filename, long bytes, long offset, long* filesize) {
     if (!filename) {
-        log_msg(LP_ERROR, "Null pointer");
+        log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename);
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return NULL;
     }
 
     fseek(file, 0, SEEK_END);
     long fsize = ftell(file);
     if (fsize == 0) {
-        log_msg(LP_ERROR, "The size returned is 0 Bytes");
+        log_msg(LP_ERROR, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "Perhaps the file is too large. In that case try using read_file_partial64(const char* const, long long int, long long int, long long int*)");
     }
     if (filesize) {
@@ -120,7 +120,7 @@ char* read_file_partial(const char* const filename, long bytes, long offset, lon
     }
 
     if (offset >= fsize) {
-        log_msg(LP_ERROR, "Offset beyond end of file");
+        log_msg(LP_ERROR, "Offset beyond end of file [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
@@ -133,7 +133,7 @@ char* read_file_partial(const char* const filename, long bytes, long offset, lon
 
     char* data = malloc(bytes + 1);
     if (!data) {
-        log_msg(LP_ERROR, "Memory allocation failure");
+        log_msg(LP_ERROR, "Memory allocation failure [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
@@ -148,13 +148,13 @@ char* read_file_partial(const char* const filename, long bytes, long offset, lon
 
 char* read_file_partial64(const char* const filename, long long int bytes, long long int offset, long long int* filesize) {
     if (!filename) {
-        log_msg(LP_ERROR, "Null pointer");
+        log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename);
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return NULL;
     }
 
@@ -165,7 +165,7 @@ char* read_file_partial64(const char* const filename, long long int bytes, long 
     }
 
     if (offset >= fsize) {
-        log_msg(LP_ERROR, "Offset beyond end of file");
+        log_msg(LP_ERROR, "Offset beyond end of file [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
@@ -178,7 +178,7 @@ char* read_file_partial64(const char* const filename, long long int bytes, long 
 
     char* data = malloc(bytes + 1);
     if (!data) {
-        log_msg(LP_ERROR, "Memory allocation failure");
+        log_msg(LP_ERROR, "Memory allocation failure [%s:%d]", __FILE__, __LINE__);
         fclose(file);
         return NULL;
     }
@@ -192,10 +192,10 @@ char* read_file_partial64(const char* const filename, long long int bytes, long 
 }
 
 int data_export(const char* const filename, const void* data, size_t size) {
-    if (!filename) {log_msg(LP_ERROR, "Null pointer"); return 0;}
+    if (!filename) {log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__); return 0;}
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename);
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return 0;
     }
     fwrite(data, 1, size, file);
@@ -204,10 +204,10 @@ int data_export(const char* const filename, const void* data, size_t size) {
 }
 
 int data_append(const char* const filename, const void* data, size_t size) {
-    if (!filename) {log_msg(LP_ERROR, "Null pointer exception"); return 0;}
+    if (!filename) {log_msg(LP_ERROR, "Null pointer exception [%s:%d]", __FILE__, __LINE__); return 0;}
     FILE* file = fopen(filename, "ab");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename); 
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return 0;
     }
     fwrite(data, 1, size, file);
@@ -216,25 +216,25 @@ int data_append(const char* const filename, const void* data, size_t size) {
 }
 
 int data_import(const char* const filename, void* data, size_t size) {
-    if (!filename) {log_msg(LP_ERROR, "Null pointer"); return 0;}
+    if (!filename) {log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__); return 0;}
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        log_msg(LP_ERROR, "Unable to open file \"%s\"", filename);
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
         return 0;
     }
     size_t bytes_read = fread(data, 1, size, file);
     if (bytes_read < size) {
-        log_msg(LP_ERROR, "Only %zu bytes read out of %zu", bytes_read, size);
+        log_msg(LP_ERROR, "Only %zu bytes read out of %zu [%s:%d]", bytes_read, size, __FILE__, __LINE__);
     }
     fclose(file);
     return 1;
 }
 
 int append_file_format(const char* const filename, const char* format, ...) {
-    if (!filename || !format) {log_msg(LP_ERROR, "Null pointer exception"); return 0;}
+    if (!filename || !format) {log_msg(LP_ERROR, "Null pointer exception [%s:%d]", __FILE__, __LINE__); return 0;}
 
     FILE* file = fopen(filename, "a");  // Open the file in append mode
-    if (!file) {log_msg(LP_ERROR, "Unable to open file \"%s\"", filename); return 0;}
+    if (!file) {log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__); return 0;}
 
     va_list args;
     va_start(args, format);

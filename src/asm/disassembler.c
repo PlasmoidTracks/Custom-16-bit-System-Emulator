@@ -31,7 +31,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     if (valid_instruction) *valid_instruction = 1;
 
     if (instruction >= INSTRUCTION_COUNT) {
-        //log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x]", instruction);
+        //log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x] [%s:%d]", instruction, __FILE__, __LINE__);
         if (valid_instruction) *valid_instruction = 0;
         return strdup("");  // makes it heap allocated
     }
@@ -183,7 +183,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 break;
 
             default:
-                //log_msg(LP_ERROR, "Unsupported admr \"%s\"", cpu_reduced_addressing_mode_string[admr]);
+                //log_msg(LP_ERROR, "Unsupported admr \"%s\" [%s:%d]", cpu_reduced_addressing_mode_string[admr], __FILE__, __LINE__);
                 if (valid_instruction) *valid_instruction = 0;
                 break;
         }
@@ -285,7 +285,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 break;
             
             default:
-            //log_msg(LP_ERROR, "Unsupported admx \"%s\"", cpu_extended_addressing_mode_string[admx]);
+            //log_msg(LP_ERROR, "Unsupported admx \"%s\" [%s:%d]", cpu_extended_addressing_mode_string[admx], __FILE__, __LINE__);
             if (valid_instruction) *valid_instruction = 0;
                 break;
         }
@@ -329,7 +329,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         // I dont know if this is even good to do like this
         // TODO: Instead, just write ".data" and let it be data until we encounter valid instructions again. 
         if (!valid_instruction) { // this includes "nop"
-            ////log_msg(LP_WARNING, "Disassembler: Encountered an invalid instruction. Realigning to the next byte and retrying [%s]", instruction);
+            //log_msg(LP_WARNING, "Disassembler: Encountered an invalid instruction. Realigning to the next byte and retrying [%s] [%s:%d]", instruction, __FILE__, __LINE__);
 
             while (assembly_index + 3 >= allocated_space) {
                 allocated_space *= 2;
@@ -463,8 +463,8 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         if (segment) {
             for (int i = 0; i < segment_count; i++) {
                 if (previous_binary_index < segment[i] && binary_index > segment[i]) {
-                    //log_msg(LP_WARNING, "Disassembler: Detected segment overlap. realigning from 0x%.4x to 0x%.4x", binary_index, segment[i]);
-                    //log_msg(LP_WARNING, "Disassembler: This could mean that the previous instructions were wrongfully decompiled");
+                    //log_msg(LP_WARNING, "Disassembler: Detected segment overlap. realigning from 0x%.4x to 0x%.4x [%s:%d]", binary_index, segment[i], __FILE__, __LINE__);
+                    //log_msg(LP_INFO, "Disassembler: This could mean that the previous instructions were wrongfully decompiled");
                     disassembly.is_data[assembly_index] = 1;
                     binary_index = segment[i];
                     realign = 1;
@@ -476,7 +476,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
 
         if (instruction == NULL) {
-            //log_msg(LP_ERROR, "Disassembler: Decompilation failed");
+            //log_msg(LP_ERROR, "Disassembler: Decompilation failed [%s:%d]", __FILE__, __LINE__);
             return (Disassembly_t) {0};
         }
 

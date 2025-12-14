@@ -450,7 +450,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
 
         // failure
         else {
-            log_msg(LP_ERROR, "ASSEMBLER: Parsing tokens: Faulty expression!");
+            log_msg(LP_ERROR, "ASSEMBLER: Parsing tokens: Faulty expression! [%s:%d]", __FILE__, __LINE__);
             log_msg(LP_INFO, "ASSEMBLER: Parsing tokens: Previous Expression: \"%s\"", expression_type_string[expression[expression_index - 1].type]);
             log_msg(LP_INFO, "ASSEMBLER: Parsing tokens: Here is a breakdown of all the tokens:");
             for (int i = ((token_index - 8 > 0) ? (token_index - 8) : 0); i < ((token_index + 8 < token_count) ? (token_index + 8) : token_count); i++) {
@@ -542,7 +542,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
                     jump_label_index ++;
                     if (jump_label_index >= MAX_LABELS) {
-                        log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d)", MAX_LABELS);
+                        log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d) [%s:%d]", MAX_LABELS, __FILE__, __LINE__);
                         exit(1);
                     }
                     instruction_index ++;
@@ -578,7 +578,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     expression_index ++;
                     continue;
                 } else {
-                    log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead", expression_type_string[expression[expression_index].type]);
+                    log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                     return NULL;
                 }
             }
@@ -595,7 +595,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             }
 
             if (!found) {
-                log_msg(LP_ERROR, "Parsing expressions: Unknown instruction \"%s\"", expression[expression_index].tokens[0].raw);
+                log_msg(LP_ERROR, "Parsing expressions: Unknown instruction \"%s\" [%s:%d]", expression[expression_index].tokens[0].raw, __FILE__, __LINE__);
                 return NULL;
             }
 
@@ -630,7 +630,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         break;
                     
                     case EXPR_IMMEDIATE: // cant be immediate, so it must have been the placeholder '_'
-                        log_msg(LP_WARNING, "Assembler: Implicitly treating garbage arguments as raw data (Immediate cannot be writeback address in single operand admr)");
+                        log_msg(LP_WARNING, "Assembler: Implicitly treating garbage arguments as raw data (Immediate cannot be writeback address in single operand admr) [%s:%d]", __FILE__, __LINE__);
                         admr = ADMR_NONE;
                         break;
 
@@ -654,7 +654,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     }
 
                     default:
-                        log_msg(LP_ERROR, "Assembler: Parsing expressions: Unknown admr \"%s\"", expression_type_string[expression[expression_index].type]);
+                        log_msg(LP_ERROR, "Assembler: Parsing expressions: Unknown admr \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                         /*int index = 0;
                         while (expression[expression_index].tokens[index].raw) {
                             log_msg(LP_INFO, "expression token %d: \"%s\"", index, expression[expression_index].tokens[index].raw);
@@ -663,7 +663,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         break;
                 }
                 if ((int) admr == -1) {
-                    log_msg(LP_ERROR, "Assembler: Parsing expressions: admr is invalid! \"%s\"", expression[expression_index].tokens[0].raw);
+                    log_msg(LP_ERROR, "Assembler: Parsing expressions: admr is invalid! \"%s\" [%s:%d]", expression[expression_index].tokens[0].raw, __FILE__, __LINE__);
                     log_msg_inline(LP_INFO, "line: ");
                     for (int t = 0; t < expression[expression_index - 1].token_count; t++) {
                         printf("%s ", expression[expression_index - 1].tokens[t].raw);
@@ -752,7 +752,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     case EXPR_IMMEDIATE:
                         {
                             if (expression[expression_index].tokens[0].raw[0] == '_') {
-                                log_msg(LP_WARNING, "Assembler: Implicitly treating garbage arguments as raw data ('_' Token found)");
+                                log_msg(LP_WARNING, "Assembler: Implicitly treating garbage arguments as raw data ('_' Token found) [%s:%d]", __FILE__, __LINE__);
                                 admx = ADMX_NONE;
                             } else {
                                 admx = ADMX_IMM16;
@@ -786,7 +786,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         break;
 
                     default:
-                        log_msg(LP_ERROR, "Parsing expressions: Unknown admx \"%s\"", expression_type_string[expression[expression_index].type]);
+                        log_msg(LP_ERROR, "Parsing expressions: Unknown admx \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                         log_msg(LP_INFO, "Parsing expressions: Here is a breakdown of all the expressions:");
                         for (int i = ((expression_index - 8 > 0) ? (expression_index - 8) : 0); i < ((expression_index + 8 < expression_count) ? (expression_index + 8) : expression_count); i++) {
                             log_msg_inline(LP_INFO, "Parsing expressions: Expression %d :: \"%s\", [", i + 1, expression_type_string[expression[i].type]);
@@ -801,7 +801,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         break;
                 }
                 if ((int) admx == -1) {
-                    log_msg(LP_ERROR, "Parsing expressions: admx is invalid!");
+                    log_msg(LP_ERROR, "Parsing expressions: admx is invalid! [%s:%d]", __FILE__, __LINE__);
                     exit(1);
                 }
                 instruction[instruction_index].admx = admx;
@@ -856,7 +856,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         int value_base = parse_immediate(string_base); //(int) strtol(&string_base[1], NULL, 16);
                         int value_scale = parse_immediate(string_scale); //(int) strtol(&string_scale[1], NULL, 16);
                         if (value_scale > 0xff) {
-                            log_msg(LP_WARNING, "Parsing expressions: Scaling in indirect scaled register addressing mode will be truncated! [0x%.4x -> 0x%.2x]", value_scale, value_scale & 0x00ff);
+                            log_msg(LP_WARNING, "Parsing expressions: Scaling in indirect scaled register addressing mode will be truncated! [0x%.4x -> 0x%.2x] [%s:%d]", value_scale, value_scale & 0x00ff, __FILE__, __LINE__);
                         } 
                         instruction[instruction_index].arguments[0] = value_base & 0xff;
                         instruction[instruction_index].arguments[1] = (value_base >> 8) & 0xff;
@@ -887,8 +887,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     break;
 
                 default:
-                    {Instruction_t inst = instruction[instruction_index];
-                    log_msg(LP_ERROR, "Parsing expressions: Unhandled admx: \"%s\"", cpu_extended_addressing_mode_string[inst.admx]);}
+                    log_msg(LP_ERROR, "Parsing expressions: Unhandled admx: \"%s\" [%s:%d]", cpu_extended_addressing_mode_string[instruction[instruction_index].admx], __FILE__, __LINE__);
                     break;
             }
 
@@ -913,7 +912,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     break;
 
                 default:
-                    log_msg(LP_ERROR, "Parsing expressions: Unhandled admr: \"%d\"", instruction[instruction_index].admr);
+                    log_msg(LP_ERROR, "Parsing expressions: Unhandled admr: \"%d\" [%s:%d]", instruction[instruction_index].admr, __FILE__, __LINE__);
                     break;
             }
             instruction[instruction_index].argument_bytes = argument_bytes_used;
@@ -973,7 +972,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
                 jump_label_index ++;
                 if (jump_label_index >= MAX_LABELS) {
-                    log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d)", MAX_LABELS);
+                    log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d) [%s:%d]", MAX_LABELS, __FILE__, __LINE__);
                     exit(1);
                 }
                 
@@ -992,7 +991,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                 if (byte_alignment == 1) {
                     if (value > 0x00ff) {
-                        log_msg(LP_WARNING, "Due to the alignment, values above 0xff will be truncated! This also applies to floating point values!");
+                        log_msg(LP_WARNING, "Due to the alignment, values above 0xff will be truncated! This also applies to floating point values! [%s:%d]", __FILE__, __LINE__);
                     }
                     if (current_byte_align == 0) {
                         instruction[instruction_index].raw_data = value & 0x00ff;
@@ -1008,7 +1007,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 } else if (byte_alignment == 2) {
                     instruction[instruction_index].raw_data = value;
                 } else {
-                    log_msg(LP_ERROR, "No alignment specified in data segment!");
+                    log_msg(LP_ERROR, "No alignment specified in data segment! [%s:%d]", __FILE__, __LINE__);
                     exit(1);
                 }
             } else if (expression[expression_index].type == EXPR_SEGMENT_DATA) {
@@ -1079,7 +1078,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             } else if (expression[expression_index].type == EXPR_NONE) {
 
             } else {
-                log_msg(LP_WARNING, "Parsing expression: Unknown expression type while in data segment \"%s\"", expression_type_string[expression[expression_index].type]);
+                log_msg(LP_WARNING, "Parsing expression: Unknown expression type while in data segment \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                 log_msg(LP_INFO, "Parsing expression: Will treat code as code from now on, but this could be instable");
                 mode = CODE;
                 continue;
@@ -1122,14 +1121,14 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                                 if (corresponding_label_found == -1) {
                                     corresponding_label_found = j;
                                 } else {
-                                    log_msg(LP_ERROR, "Label \"%s\" is not unique", instruction[i].expression[exp].tokens[0].raw);
+                                    log_msg(LP_ERROR, "Label \"%s\" is not unique [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
                                     exit(1);
                                     break;
                                 }
                             }
                         }
                         if (corresponding_label_found == -1) {
-                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\"", instruction[i].expression[exp].tokens[0].raw);
+                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
                             exit(1);
                             break;
                         }
@@ -1153,7 +1152,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             }
                         }
                         if (corresponding_label_found == -1) {
-                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\"", instruction[i].expression[exp].tokens[1].raw);
+                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[1].raw, __FILE__, __LINE__);
                             exit(1);
                             break;
                         }
@@ -1177,7 +1176,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             }
                         }
                         if (corresponding_label_found == -1) {
-                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\"", instruction[i].expression[exp].tokens[1].raw);
+                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[1].raw, __FILE__, __LINE__);
                             exit(1);
                             break;
                         }
@@ -1201,7 +1200,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             }
                         }
                         if (corresponding_label_found == -1) {
-                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\"", instruction[i].expression[exp].tokens[1].raw);
+                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[1].raw, __FILE__, __LINE__);
                             exit(1);
                             break;
                         }
@@ -1221,14 +1220,14 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             }
                         }
                         if (corresponding_label_found == -1) {
-                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\"", instruction[i].expression[exp].tokens[3].raw);
+                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[3].raw, __FILE__, __LINE__);
                             exit(1);
                             break;
                         }
                         //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
                         instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
                         if (jump_label[corresponding_label_found].value > 0x00ff) {
-                            log_msg(LP_WARNING, "Solving label: While resolving label, value for \"%s\" will be cutoff to 8 bits", jump_label[corresponding_label_found].name);
+                            log_msg(LP_WARNING, "Solving label: While resolving label, value for \"%s\" will be cutoff to 8 bits [%s:%d]", jump_label[corresponding_label_found].name, __FILE__, __LINE__);
                         }
                     } else {
                         argument_byte_index ++;
@@ -1247,7 +1246,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                     break;
 
                 default:
-                    log_msg(LP_WARNING, "Solving label: Non implemented label resolve for expression type %d at instruction index %d, expression index %d", instruction[i].expression[exp].type, i, exp);
+                    log_msg(LP_WARNING, "Solving label: Non implemented label resolve for expression type %d at instruction index %d, expression index %d [%s:%d]", instruction[i].expression[exp].type, i, exp, __FILE__, __LINE__);
                     //exit(1);
                     break;
             }
@@ -1310,7 +1309,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             continue;
         }
         if (written[index]) {
-            log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations");
+            log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
             log_msg(LP_INFO, "Parsing instruciton: Overlap occured at address 0x%.4x", index);
             return NULL;
         }
@@ -1343,7 +1342,7 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     // int* segment_count - deref will be overwritten with the final segment count
     // usually each variable should be stack allocated and a reference should be passed. 
     if (!binary_size) {
-        log_msg(LP_ERROR, "binary_size is a required argument for assembler_compile");
+        log_msg(LP_ERROR, "binary_size is a required argument for assembler_compile [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
     *binary_size = 0;
@@ -1424,7 +1423,7 @@ uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, ui
     // load raw text from file
     char* content = read_file(filename, binary_size);
     if (!content) {
-        log_msg(LP_ERROR, "read_file failed");
+        log_msg(LP_ERROR, "read_file failed [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
     uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count);

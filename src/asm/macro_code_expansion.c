@@ -3629,9 +3629,10 @@ char* macro_code_expand(char* content) {
 
                         } else {
                             // TODO: find replacement for remaining admx's
-                            log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s", 
+                            log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s [%s:%d]", 
                                 cpu_reduced_addressing_mode_string[instruction[i].admr], 
-                                cpu_extended_addressing_mode_string[instruction[i].admx]
+                                cpu_extended_addressing_mode_string[instruction[i].admx],
+                                 __FILE__, __LINE__
                             );
                         }
                     } else if (instruction[i].admr == ADMR_R0) {
@@ -4799,17 +4800,19 @@ char* macro_code_expand(char* content) {
 
                         } else {
                             // TODO: find replacement for remaining admr's
-                            log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s", 
+                            log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s [%s:%d]", 
                                 cpu_reduced_addressing_mode_string[instruction[i].admr], 
                                 cpu_extended_addressing_mode_string[instruction[i].admx]
+                                , __FILE__, __LINE__
                             );
                         }
                         
                     } else {
                         // TODO: find replacement for remaining admr's
-                        log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s", 
+                        log_msg(LP_ERROR, "unbable to expand ADD operation with addressing modes %s, %s [%s:%d]", 
                             cpu_reduced_addressing_mode_string[instruction[i].admr], 
-                            cpu_extended_addressing_mode_string[instruction[i].admx]
+                            cpu_extended_addressing_mode_string[instruction[i].admx],
+                             __FILE__, __LINE__
                         );
                     }
                 }
@@ -5305,7 +5308,7 @@ char* macro_code_expand(char* content) {
 char* macro_code_expand_from_file(char* filename) {
     char* content = read_file(filename, NULL);
     if (!content) {
-        log_msg(LP_ERROR, "read_file failed");
+        log_msg(LP_ERROR, "read_file failed [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
     char* new_code = macro_code_expand(content);

@@ -67,7 +67,7 @@
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
-        log_msg(LP_ERROR, "Not enough arguments given");
+        log_msg(LP_ERROR, "Not enough arguments given [%s:%d]", __FILE__, __LINE__);
         #ifdef RUN_BINARY_DIRECTLY
             log_msg(LP_INFO, "Usage: ./main [filename.bin]");
             #else 
@@ -143,22 +143,22 @@ int main(int argc, char* argv[]) {
     #ifdef COMPILE_IR
         content = read_file(filename, &content_size);
         if (!content) {
-            log_msg(LP_ERROR, "IR: read_file failed");
+            log_msg(LP_ERROR, "IR: read_file failed [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         IRLexerToken_t* lexer_token = ir_lexer_parse(content, content_size, &lexer_token_count);
         if (!lexer_token) {
-            log_msg(LP_ERROR, "IR: Lexer returned NULL");
+            log_msg(LP_ERROR, "IR: Lexer returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         IRParserToken_t** parser_token = ir_parser_parse(lexer_token, lexer_token_count, &parser_root_count);
         if (!lexer_token) {
-            log_msg(LP_ERROR, "IR: Parser returned NULL");
+            log_msg(LP_ERROR, "IR: Parser returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         char* asm = ir_compile(parser_token, parser_root_count, 0xffffffff);
         if (!asm) {
-            log_msg(LP_ERROR, "IR: Compiler returned NULL");
+            log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         filename = append_filename(filename, ".asm");
@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
     #ifdef CANONICALIZE
         char* canon_asm = canonicalizer_compile_from_file(filename);
         if (!canon_asm) {
-            log_msg(LP_ERROR, "Canonicalizer: Returned NULL");
+            log_msg(LP_ERROR, "Canonicalizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         filename = append_filename(filename, ".can");
@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
     #ifdef OPTIMIZE
         char* optimized_asm = optimizer_compile_from_file(filename);
         if (!optimized_asm) {
-            log_msg(LP_ERROR, "Optimizer: Returned NULL");
+            log_msg(LP_ERROR, "Optimizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         filename = append_filename(filename, ".opt");
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
     #ifdef MACRO_EXPAND
         char* expanded_asm = macro_code_expand_from_file(filename);
         if (!expanded_asm) {
-            log_msg(LP_ERROR, "Macro expander: Returned NULL");
+            log_msg(LP_ERROR, "Macro expander: Returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         filename = append_filename(filename, ".exp");
@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
         uint8_t* bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count);
         
         if (!bin) {
-            log_msg(LP_ERROR, "Assembler: Returned NULL");
+            log_msg(LP_ERROR, "Assembler: Returned NULL [%s:%d]", __FILE__, __LINE__);
             return 0;
         }
     #else

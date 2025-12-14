@@ -7,7 +7,7 @@
 
 Cache_t* cache_create(uint16_t capacity) {
     if (capacity & (capacity - 1)) {
-        log_msg(LP_ERROR, "Cache capacity has to be a power of 2");
+        log_msg(LP_ERROR, "Cache capacity has to be a power of 2 [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 

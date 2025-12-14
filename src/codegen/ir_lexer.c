@@ -461,7 +461,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             continue;
         }}
 
-        log_msg(LP_ERROR, "IR Lexer: NO MATCH FOUND!");
+        log_msg(LP_ERROR, "IR Lexer: NO MATCH FOUND! [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "The following text contains the error: \n=====================\n%s\n=====================", &source[index]);
         log_msg(LP_INFO, "More context: \n=====================\n%s\n=====================", &source[index - 16]);
         exit(1);

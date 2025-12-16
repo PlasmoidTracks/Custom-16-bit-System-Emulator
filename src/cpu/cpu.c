@@ -1710,7 +1710,6 @@ void cpu_clock(CPU_t* cpu) {
                             break;
 
                         case DIVF:
-                            log_msg(LP_DEBUG, "DIVF: %f / %f = %f", float_from_f16(cpu->intermediate.data_address_reduced), float_from_f16(cpu->intermediate.data_address_extended), float_from_f16(f16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended)));
                             cpu->intermediate.result = f16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
                             cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;

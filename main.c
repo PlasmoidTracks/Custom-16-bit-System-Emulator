@@ -66,14 +66,12 @@ int main(int argc, char* argv[]) {
 
     if (argc < 2) {
         log_msg(LP_ERROR, "Not enough arguments given [%s:%d]", __FILE__, __LINE__);
-        #ifdef RUN_BINARY_DIRECTLY
+        #if defined RUN_BINARY_DIRECTLY
             log_msg(LP_INFO, "Usage: ./main [filename.bin]");
-            #else 
-            #ifdef COMPILE_IR
-                log_msg(LP_INFO, "Usage: ./main [filename.ir]");
-            #else
-                log_msg(LP_INFO, "Usage: ./main [filename.asm]");
-            #endif
+        #elif defined COMPILE_IR
+            log_msg(LP_INFO, "Usage: ./main [filename.ir]");
+        #else
+            log_msg(LP_INFO, "Usage: ./main [filename.asm]");
         #endif
         return 0;
     }
@@ -84,7 +82,7 @@ int main(int argc, char* argv[]) {
     System_t* system = system_create(
         1, 
         64, 
-        0, 
+        1, 
         1000.0
     );
 
@@ -204,8 +202,7 @@ int main(int argc, char* argv[]) {
     #endif
 
     // Execution step
-    //uint16_t min_sp = cpu->regs.sp;
-    for (int i = 0; i < 100000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
+    for (long long int i = 0; i < 1000000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
         #ifdef HW_WATCH
             system_clock_debug(system);
         #else

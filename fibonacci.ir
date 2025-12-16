@@ -12,7 +12,7 @@ static var time;
     funcptr = .irq_handler;
     deref address = funcptr;
 
-    N = 23;
+    N = 13;
 
     // create the output variable and set to -1
     var result;
@@ -26,9 +26,6 @@ static var time;
     callpusharg N;
     call .fib;
     callfreearg 4;
-
-    var abc;
-    abc = time;
     
     asm "mov r0, result";
     asm "mov r1, time";

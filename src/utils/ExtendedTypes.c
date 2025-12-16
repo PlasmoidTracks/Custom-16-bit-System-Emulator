@@ -17,275 +17,270 @@ bfloat16_t bf16_TWO = (uint16_t) 0x4000;
 // *************************************************
 //float16_t
 
-// Converts a 32-bit float to a 16-bit half-precision float,
-// including proper treatment of subnormals.
-float16_t f16_from_float(float f32) {
-    uint32_t f32_bits = *((uint32_t*)(&f32));
-    uint32_t sign = f32_bits >> 31;
-    int32_t exp32 = (f32_bits >> 23) & 0xFF;
-    uint32_t mant32 = f32_bits & 0x007FFFFF;
+#include <stdint.h>
 
-    uint16_t sign16 = (uint16_t)sign;
-    uint16_t exp16 = 0;
-    uint16_t mant16 = 0;
+typedef uint16_t float16_t;
+
+/* ============================================================
+   CLASSIFICATION
+   ============================================================ */
+typedef enum {
+    F16_ZERO,
+    F16_SUBNORMAL,
+    F16_NORMAL,
+    F16_INF,
+    F16_NAN
+} f16_class;
+
+/* ============================================================
+   FLOAT32 -> FLOAT16
+   ============================================================ */
+float16_t f16_from_float(float f32) {
+    uint32_t bits = *(uint32_t*)&f32;
+    uint32_t sign = bits >> 31;
+    int exp32 = (bits >> 23) & 0xFF;
+    uint32_t mant32 = bits & 0x7FFFFF;
+
+    uint16_t exp16, mant16;
 
     if (exp32 == 0xFF) {
-        // Handle Inf/NaN.
         exp16 = 0x1F;
-        mant16 = (mant32 ? 0x200 : 0);
+        mant16 = mant32 ? 0x200 : 0;
     } else if (exp32 == 0) {
-        // Zero or float32 subnormal -- flush to zero.
         exp16 = 0;
         mant16 = 0;
     } else {
-        // Normalized float32 number.
-        int32_t new_exp = exp32 - 127 + 15;
+        int new_exp = exp32 - 127 + 15;
         if (new_exp >= 0x1F) {
-            // Overflow: set to infinity.
             exp16 = 0x1F;
             mant16 = 0;
         } else if (new_exp <= 0) {
-            // Underflow: produce a subnormal float16.
-            // Add the implicit 1 to mantissa.
-            uint32_t sub_mant = mant32 | 0x00800000;
-            // Calculate how many bits to shift: shift = (1 - new_exp).
+            uint32_t m = mant32 | 0x800000;
             int shift = 1 - new_exp;
             if (shift > 24) {
-                // Too small: flush to zero.
                 exp16 = 0;
                 mant16 = 0;
             } else {
-                // Add rounding bias: half the value of the last bit to be shifted out.
-                uint32_t rounding = 1 << (shift - 1);
-                sub_mant += rounding;
-                // Shift to get the 10-bit mantissa.
-                mant16 = sub_mant >> (shift + 13);
-                // If rounding causes the mantissa to overflow (i.e. equals 0x400),
-                // then we must bump the exponent to 1 (normalized minimal)
-                if (mant16 == 0x400) {
-                    mant16 = 0;
-                    exp16 = 1;
-                } else {
-                    exp16 = 0;
-                }
+                m += 1u << (shift - 1);
+                mant16 = m >> (shift + 13);
+                exp16 = 0;
             }
         } else {
-            // Normal case: represent as normalized.
+            mant32 += 1u << 12;
+            mant16 = mant32 >> 13;
             exp16 = new_exp;
-            // Round the mantissa: add rounding bias (1 << 12) then shift.
-            uint32_t rounding = 1 << 12;
-            uint32_t round_mant = mant32 + rounding;
-            mant16 = round_mant >> 13;
-            if (mant16 == 0x400) { // Rounding overflow.
+            if (mant16 == 0x400) {
                 mant16 = 0;
                 exp16++;
             }
         }
     }
-    return (sign16 << 15) | (exp16 << 10) | (mant16 & 0x3FF);
+
+    return (sign << 15) | (exp16 << 10) | (mant16 & 0x3FF);
 }
 
-
-// Converts a 16-bit half-precision float to a 32-bit float,
-// properly normalizing subnormal numbers.
+/* ============================================================
+   FLOAT16 -> FLOAT32
+   ============================================================ */
 float float_from_f16(float16_t f16) {
-    uint16_t sign = f16 >> 15;
-    uint16_t exp  = (f16 >> 10) & 0x1F;
-    uint16_t mant = f16 & 0x3FF;
-    
-    uint32_t sign32 = sign << 31;
+    uint32_t sign = (f16 >> 15) & 1;
+    uint32_t exp = (f16 >> 10) & 0x1F;
+    uint32_t mant = f16 & 0x3FF;
+
     uint32_t exp32, mant32;
-    
+
     if (exp == 0) {
         if (mant == 0) {
-            // Zero value.
             exp32 = 0;
             mant32 = 0;
         } else {
-            // Subnormal half: normalize it.
             int shift = 0;
-            while ((mant & 0x400) == 0) { // while the 11th bit is not set
+            while ((mant & 0x400) == 0) {
                 mant <<= 1;
                 shift++;
             }
-            mant &= 0x3FF; // remove the hidden bit now
-            exp32 = (127 - 14) - shift;  // effective exponent: -14 - shift, then add bias (127)
+            mant &= 0x3FF;
+            exp32 = 127 - 14 - shift;
             mant32 = mant << 13;
         }
     } else if (exp == 0x1F) {
-        // Inf or NaN.
         exp32 = 0xFF;
-        mant32 = (mant ? (mant << 13) : 0);
+        mant32 = mant << 13;
     } else {
-        // Normalized half.
         exp32 = exp - 15 + 127;
         mant32 = mant << 13;
     }
-    
-    uint32_t f32 = sign32 | (exp32 << 23) | mant32;
-    return *((float*)&f32);
+
+    uint32_t bits = (sign << 31) | (exp32 << 23) | mant32;
+    return *(float*)&bits;
 }
 
-// Unpacks a float16_t into its sign, effective exponent, and mantissa.
-// For normalized numbers, the mantissa has the implicit bit added;
-// for subnormals, the effective exponent is set to -14.
-static void f16_unpack(float16_t f, int *sign, int *exp, uint32_t *mant) {
+/* ============================================================
+   UNPACK + CLASSIFY
+   ============================================================ */
+static f16_class f16_unpack(float16_t f, int *sign, int *exp, uint32_t *mant) {
     *sign = (f >> 15) & 1;
-    int e = (f >> 10) & 0x1F;
+    uint16_t e = (f >> 10) & 0x1F;
     uint32_t m = f & 0x3FF;
+
     if (e == 0) {
-        // For subnormals or zero:
-        *exp = (m == 0) ? -15 : -14;
+        if (m == 0) {
+            *exp = 0;
+            *mant = 0;
+            return F16_ZERO;
+        }
+        *exp = -14;
         *mant = m;
-    } else {
-        *exp = e - 15;
-        *mant = m | 0x400;  // add implicit 1 (bit 10)
+        return F16_SUBNORMAL;
     }
+
+    if (e == 0x1F) {
+        *exp = 0;
+        *mant = m;
+        return m ? F16_NAN : F16_INF;
+    }
+
+    *exp = e - 15;
+    *mant = m | 0x400;
+    return F16_NORMAL;
 }
 
-// Packs sign, effective exponent, and mantissa into a float16_t.
-// If the effective exponent is below -14, the number is packed as subnormal.
+/* ============================================================
+   PACK
+   ============================================================ */
 static float16_t f16_pack(int sign, int exp, uint32_t mant) {
-    // If the result is zero, pack and return.
     if (mant == 0)
-        return (sign << 15);
-    
-    // Normalize the mantissa so that it fits in 11 bits (with the implicit bit)
-    while (mant >= (1 << 11)) { // too large: shift right and increase exponent
+        return sign << 15;
+
+    while (mant >= (1u << 11)) {
         mant >>= 1;
         exp++;
     }
-    while (mant && mant < (1 << 10)) { // too small: shift left and decrease exponent
+    while (mant < (1u << 10)) {
         mant <<= 1;
         exp--;
     }
-    
-    if (exp > 15) { // overflow: set to infinity
+
+    if (exp > 15)
         return (sign << 15) | (0x1F << 10);
-    }
-    
+
     if (exp < -14) {
-        // Subnormal: shift the mantissa to the right.
         int shift = (-14) - exp;
-        if (shift < 32)
-            mant = (mant + (1 << (shift - 1))) >> shift;  // rounding
-        else
-            mant = 0;
-        // Encoded exponent for subnormals is zero.
-        return (sign << 15) | (0) | (mant & 0x3FF);
+        mant = (shift >= 32) ? 0 : (mant + (1u << (shift - 1))) >> shift;
+        return (sign << 15) | (mant & 0x3FF);
     }
-    
-    // Normalized result: remove the implicit bit.
-    int encoded_exp = exp + 15;
-    mant = mant - (1 << 10);
-    return (sign << 15) | ((encoded_exp & 0x1F) << 10) | (mant & 0x3FF);
+
+    return (sign << 15) | ((exp + 15) << 10) | (mant & 0x3FF);
 }
 
-// Adjusts exponents by shifting mantissas so that the operands have the same effective exponent.
-static int adjust_exponent16(uint32_t *mant1, int exp1, uint32_t *mant2, int exp2) {
-    if (exp1 > exp2) {
-        *mant2 >>= (exp1 - exp2);
-        return 0; // first operand has the greater effective exponent
-    } else if (exp2 > exp1) {
-        *mant1 >>= (exp2 - exp1);
-        return 1; // second operand has the greater effective exponent
-    }
-    return -1; // exponents are equal
-}
+/* ============================================================
+   ADD / SUB / MUL / DIV
+   ============================================================ */
+float16_t f16_add(float16_t a, float16_t b) {
+    int sa, sb, ea, eb;
+    uint32_t ma, mb;
+    f16_class ca = f16_unpack(a, &sa, &ea, &ma);
+    f16_class cb = f16_unpack(b, &sb, &eb, &mb);
 
-// Adds two float16_t values.
-float16_t f16_add(float16_t f16_a, float16_t f16_b) {
-    int sign1, sign2, exp1, exp2;
-    uint32_t mant1, mant2;
-    f16_unpack(f16_a, &sign1, &exp1, &mant1);
-    f16_unpack(f16_b, &sign2, &exp2, &mant2);
-    
-    // Align exponents by shifting the smaller mantissa
-    if (adjust_exponent16(&mant1, exp1, &mant2, exp2))
-        exp1 = exp2;
-    else
-        exp2 = exp1;
-    
-    uint32_t result_mant;
-    int result_sign;
-    if (sign1 == sign2) {
-        result_mant = mant1 + mant2;
-        result_sign = sign1;
+    if (ca == F16_NAN || cb == F16_NAN) return 0x7E00;
+
+    if (ca == F16_INF || cb == F16_INF) {
+        if (ca == cb && sa != sb) return 0x7E00;
+        int s = (ca == F16_INF) ? sa : sb;
+        return (s << 15) | (0x1F << 10);
+    }
+
+    if (ca == F16_ZERO) return b;
+    if (cb == F16_ZERO) return a;
+
+    if (ea > eb) mb >>= (ea - eb);
+    else if (eb > ea) ma >>= (eb - ea);
+
+    int exp = ea > eb ? ea : eb;
+    uint32_t mant;
+    int sign;
+
+    if (sa == sb) {
+        mant = ma + mb;
+        sign = sa;
     } else {
-        if (mant1 > mant2) {
-            result_mant = mant1 - mant2;
-            result_sign = sign1;
+        if (ma >= mb) {
+            mant = ma - mb;
+            sign = sa;
         } else {
-            result_mant = mant2 - mant1;
-            result_sign = sign2;
+            mant = mb - ma;
+            sign = sb;
         }
     }
-    int result_exp = exp1; // effective exponent
-    return f16_pack(result_sign, result_exp, result_mant);
+
+    return f16_pack(sign, exp, mant);
 }
 
-// Subtracts two float16_t values.
-float16_t f16_sub(float16_t f16_a, float16_t f16_b) {
-    // Subtraction is addition with the second operand negated.
-    return f16_add(f16_a, f16_neg(f16_b));
+float16_t f16_sub(float16_t a, float16_t b) {
+    return f16_add(a, b ^ 0x8000);
 }
 
-// Multiplies two float16_t values.
-float16_t f16_mult(float16_t f16_a, float16_t f16_b) {
-    int sign1, sign2, exp1, exp2;
-    uint32_t mant1, mant2;
-    f16_unpack(f16_a, &sign1, &exp1, &mant1);
-    f16_unpack(f16_b, &sign2, &exp2, &mant2);
-    
-    int result_sign = sign1 ^ sign2;
-    // Multiply the mantissas (each up to 11 bits) using 64-bit precision.
-    uint64_t result_mant = (uint64_t)mant1 * mant2;
-    int result_exp = exp1 + exp2;  // effective exponents add
-    
-    // The result mantissa now is roughly 22 bits; shift it to 11 bits.
-    if (result_mant & (1ULL << 21)) {
-        result_mant >>= 11;
-        result_exp++;
+float16_t f16_mult(float16_t a, float16_t b) {
+    int sa, sb, ea, eb;
+    uint32_t ma, mb;
+    f16_class ca = f16_unpack(a, &sa, &ea, &ma);
+    f16_class cb = f16_unpack(b, &sb, &eb, &mb);
+    int sign = sa ^ sb;
+
+    if (ca == F16_NAN || cb == F16_NAN) return 0x7E00;
+    if ((ca == F16_INF && cb == F16_ZERO) ||
+        (cb == F16_INF && ca == F16_ZERO)) return 0x7E00;
+    if (ca == F16_INF || cb == F16_INF)
+        return (sign << 15) | (0x1F << 10);
+    if (ca == F16_ZERO || cb == F16_ZERO)
+        return sign << 15;
+
+    uint64_t prod = (uint64_t)ma * mb;
+    int exp = ea + eb;
+
+    if (prod & (1ULL << 21)) {
+        prod >>= 11;
+        exp++;
     } else {
-        result_mant >>= 10;
+        prod >>= 10;
     }
 
-    return f16_pack(result_sign, result_exp, (uint32_t)result_mant);
+    return f16_pack(sign, exp, (uint32_t)prod);
 }
 
-// Divides two float16_t values.
-float16_t f16_div(float16_t f16_a, float16_t f16_b) {
-    int sign1, sign2, exp1, exp2;
-    uint32_t mant1, mant2;
-    f16_unpack(f16_a, &sign1, &exp1, &mant1);
-    f16_unpack(f16_b, &sign2, &exp2, &mant2);
-    
-    // Check for division by zero.
-    if (mant2 == 0)
-        return f16_pack(sign1 ^ sign2, 16, 0); // yields infinity
-    
-    // Normalize the divisor’s mantissa if needed.
+float16_t f16_div(float16_t a, float16_t b) {
+    int sa, sb, ea, eb;
+    uint32_t ma, mb;
+    f16_class ca = f16_unpack(a, &sa, &ea, &ma);
+    f16_class cb = f16_unpack(b, &sb, &eb, &mb);
+    int sign = sa ^ sb;
+
+    if (ca == F16_NAN || cb == F16_NAN) return 0x7E00;
+    if (ca == F16_INF && cb == F16_INF) return 0x7E00;
+    if (cb == F16_INF) return sign << 15;
+    if (ca == F16_INF) return (sign << 15) | (0x1F << 10);
+    if (cb == F16_ZERO) return (sign << 15) | (0x1F << 10);
+    if (ca == F16_ZERO) return sign << 15;
+
     int shift = 0;
-    while (mant2 < (1 << 10)) {
-        mant2 <<= 1;
+    while (mb < (1u << 10)) {
+        mb <<= 1;
         shift++;
     }
-    uint64_t dividend = (uint64_t)mant1 << (10 + shift);  // extra precision for division
-    uint32_t result_mant = (uint32_t)(dividend / mant2);
-    int result_exp = exp1 - exp2 - shift;
-    
-    return f16_pack(sign1 ^ sign2, result_exp, result_mant);
+
+    uint64_t dividend = (uint64_t)ma << (10 + shift);
+    uint32_t mant = dividend / mb;
+    int exp = ea - eb - shift;
+
+    return f16_pack(sign, exp, mant);
 }
 
-// Negates the float16_t value.
-float16_t f16_neg(float16_t f16) {
-    return f16 ^ 0x8000;
-}
+/* ============================================================
+   UNARY
+   ============================================================ */
+float16_t f16_neg(float16_t x) { return x ^ 0x8000; }
+float16_t f16_abs(float16_t x) { return x & 0x7FFF; }
 
-// Returns the absolute value.
-float16_t f16_abs(float16_t f16) {
-    return f16 & 0x7FFF;
-}
 
 
 
@@ -294,176 +289,241 @@ float16_t f16_abs(float16_t f16) {
 // *************************************************
 // bfloat16_t
 
-// Converts float to bfloat16
+#include <stdint.h>
+
+typedef uint16_t bfloat16_t;
+
+/* ============================================================
+   CLASSIFICATION
+   ============================================================ */
+typedef enum {
+    BF16_ZERO,
+    BF16_SUBNORMAL,   /* practically unused in bf16, but kept for symmetry */
+    BF16_NORMAL,
+    BF16_INF,
+    BF16_NAN
+} bf16_class;
+
+/* ============================================================
+   FLOAT32 -> BFLOAT16  (round-to-nearest-even)
+   ============================================================ */
 bfloat16_t bf16_from_float(float f32) {
-    uint32_t f32_bits = *((uint32_t*)(&f32));
-
-    // Extract the sign, exponent, and mantissa
-    uint32_t sign32 = (f32_bits >> 31) & 0x1;
-    uint32_t exponent32 = (f32_bits >> 23) & 0xFF;
-    uint32_t mantissa32 = (f32_bits >> 16) & 0x7F;  // bf16 has 7 mantissa bits
-
-    // Round the mantissa according to the cutoff bit (the 8th bit of mantissa in float32)
-    mantissa32 += (f32_bits >> 15) & 1;
-
-    // Pack into bfloat16: sign (1) | exponent (8) | mantissa (7)
-    return (sign32 << 15) | (exponent32 << 7) | mantissa32;
+    uint32_t bits = *(uint32_t*)&f32;
+    uint32_t lsb = (bits >> 16) & 1;
+    uint32_t rounding_bias = 0x7FFF + lsb;
+    bits += rounding_bias;
+    return (bfloat16_t)(bits >> 16);
 }
 
-// Converts bfloat16 to float
+/* ============================================================
+   BFLOAT16 -> FLOAT32
+   ============================================================ */
 float float_from_bf16(bfloat16_t bf16) {
-    // Extract the sign, exponent, and mantissa
-    uint32_t sign16 = (bf16 >> 15) & 0x1;
-    uint32_t exponent16 = (bf16 >> 7) & 0xFF;
-    uint32_t mantissa16 = bf16 & 0x7F;
-
-    // Convert to float32 format: sign (1) | exponent (8) | mantissa (23)
-    uint32_t f32_bits = (sign16 << 31) | (exponent16 << 23) | (mantissa16 << 16);
-
-    return *((float*)(&f32_bits));
+    uint32_t bits = ((uint32_t)bf16) << 16;
+    return *(float*)&bits;
 }
 
-// Unpacks a bfloat16 into sign, exponent, and mantissa
-static void bf16_unpack(bfloat16_t bf16, int *sign, int *exp, uint32_t *mant) {
-    *sign = (bf16 >> 15) & 1;
-    *exp = (bf16 >> 7) & 0xFF;
-    *mant = bf16 & 0x7F;
-    if (*exp != 0) {
-        *mant |= (1 << 7);  // Implicit leading one for normalized values
+/* ============================================================
+   UNPACK + CLASSIFY
+   ============================================================ */
+static bf16_class bf16_unpack(
+    bfloat16_t f,
+    int *sign,
+    int *exp,
+    uint32_t *mant
+) {
+    *sign = (f >> 15) & 1;
+    uint16_t e = (f >> 7) & 0xFF;
+    uint32_t m = f & 0x7F;
+
+    if (e == 0) {
+        if (m == 0) {
+            *exp = 0;
+            *mant = 0;
+            return BF16_ZERO;
+        }
+        *exp = 1 - 127;
+        *mant = m;
+        return BF16_SUBNORMAL;
     }
+
+    if (e == 0xFF) {
+        *exp = 0;
+        *mant = m;
+        return m ? BF16_NAN : BF16_INF;
+    }
+
+    *exp = e - 127;
+    *mant = m | 0x80;
+    return BF16_NORMAL;
 }
 
-// Packs sign, exponent, and mantissa into a bfloat16
+/* ============================================================
+   PACK
+   ============================================================ */
 static bfloat16_t bf16_pack(int sign, int exp, uint32_t mant) {
-    if (exp <= 0) {  // Handle subnormals or zero
-        mant >>= 1 - exp;  // Right shift mantissa to fit into subnormal range
-        exp = 0;
-    } else if (exp >= 255) {  // Handle overflow to infinity
-        mant = 0;
-        exp = 255;
-    } else {
-        // Normalize mantissa
-        while (mant >= (1 << 8)) {
-            mant >>= 1;
-            exp++;
-        }
-        while (mant && mant < (1 << 7)) {
-            mant <<= 1;
-            exp--;
-        }
+    if (mant == 0)
+        return sign << 15;
+
+    while (mant >= (1u << 8)) {
+        mant >>= 1;
+        exp++;
     }
-    return ((sign & 1) << 15) | ((exp & 0xFF) << 7) | (mant & 0x7F);
+    while (mant < (1u << 7)) {
+        mant <<= 1;
+        exp--;
+    }
+
+    if (exp >= 128)
+        return (sign << 15) | (0xFF << 7);
+
+    if (exp <= -127) {
+        int shift = (-127) - exp + 1;
+        if (shift >= 32)
+            mant = 0;
+        else
+            mant >>= shift;
+        return (sign << 15) | (mant & 0x7F);
+    }
+
+    return (sign << 15) | ((exp + 127) << 7) | (mant & 0x7F);
 }
 
-// Adjusts exponents by shifting mantissas
-static int adjust_exponent_bf16(uint32_t *mant1, int exp1, uint32_t *mant2, int exp2) {
-    if (exp1 > exp2) {
-        *mant2 >>= (exp1 - exp2);
-        return 0;  // Indicates the first operand has the greater exponent
-    } else if (exp2 > exp1) {
-        *mant1 >>= (exp2 - exp1);
-        return 1;  // Indicates the second operand has the greater exponent
-    }
-    return -1;  // Indicates exponents are equal
-}
+/* ============================================================
+   ADD
+   ============================================================ */
+bfloat16_t bf16_add(bfloat16_t a, bfloat16_t b) {
+    int sa, sb, ea, eb;
+    uint32_t ma, mb;
+    bf16_class ca = bf16_unpack(a, &sa, &ea, &ma);
+    bf16_class cb = bf16_unpack(b, &sb, &eb, &mb);
 
-// Adds two bfloat16 values
-bfloat16_t bf16_add(bfloat16_t bf16_a, bfloat16_t bf16_b) {
-    int sign1, sign2, exp1, exp2;
-    uint32_t mant1, mant2;
+    if (ca == BF16_NAN || cb == BF16_NAN)
+        return 0x7FC0;
 
-    bf16_unpack(bf16_a, &sign1, &exp1, &mant1);
-    bf16_unpack(bf16_b, &sign2, &exp2, &mant2);
-
-    // Align mantissas
-    if (adjust_exponent_bf16(&mant1, exp1, &mant2, exp2)) {
-        exp1 = exp2;
-    } else {
-        exp2 = exp1;
+    if (ca == BF16_INF || cb == BF16_INF) {
+        if (ca == cb && sa != sb)
+            return 0x7FC0;
+        int s = (ca == BF16_INF) ? sa : sb;
+        return (s << 15) | (0xFF << 7);
     }
 
-    // Perform addition or subtraction based on sign
-    uint32_t result_mant;
-    int result_sign;
-    if (sign1 == sign2) {
-        result_mant = mant1 + mant2;
-        result_sign = sign1;
+    if (ca == BF16_ZERO) return b;
+    if (cb == BF16_ZERO) return a;
+
+    if (ea > eb) mb >>= (ea - eb);
+    else if (eb > ea) ma >>= (eb - ea);
+
+    int exp = (ea > eb) ? ea : eb;
+
+    uint32_t mant;
+    int sign;
+
+    if (sa == sb) {
+        mant = ma + mb;
+        sign = sa;
     } else {
-        if (mant1 > mant2) {
-            result_mant = mant1 - mant2;
-            result_sign = sign1;
+        if (ma >= mb) {
+            mant = ma - mb;
+            sign = sa;
         } else {
-            result_mant = mant2 - mant1;
-            result_sign = sign2;
+            mant = mb - ma;
+            sign = sb;
         }
     }
 
-    // Normalize result
-    return bf16_pack(result_sign, exp1, result_mant);
+    return bf16_pack(sign, exp, mant);
 }
 
-// Subtracts two bfloat16 values
-bfloat16_t bf16_sub(bfloat16_t bf16_a, bfloat16_t bf16_b) {
-    return bf16_add(bf16_a, bf16_neg(bf16_b));
+/* ============================================================
+   SUB
+   ============================================================ */
+bfloat16_t bf16_sub(bfloat16_t a, bfloat16_t b) {
+    return bf16_add(a, b ^ 0x8000);
 }
 
-// Multiplies two bfloat16 values
-bfloat16_t bf16_mult(bfloat16_t bf16_a, bfloat16_t bf16_b) {
-    int sign1, sign2, exp1, exp2;
-    uint32_t mant1, mant2;
+/* ============================================================
+   MUL
+   ============================================================ */
+bfloat16_t bf16_mult(bfloat16_t a, bfloat16_t b) {
+    int sa, sb, ea, eb;
+    uint32_t ma, mb;
+    bf16_class ca = bf16_unpack(a, &sa, &ea, &ma);
+    bf16_class cb = bf16_unpack(b, &sb, &eb, &mb);
 
-    bf16_unpack(bf16_a, &sign1, &exp1, &mant1);
-    bf16_unpack(bf16_b, &sign2, &exp2, &mant2);
+    int sign = sa ^ sb;
 
-    // Calculate the sign of the result
-    int result_sign = sign1 ^ sign2;
+    if (ca == BF16_NAN || cb == BF16_NAN)
+        return 0x7FC0;
 
-    // Multiply the mantissas
-    uint64_t result_mant = (uint64_t)mant1 * (uint64_t)mant2;
+    if ((ca == BF16_INF && cb == BF16_ZERO) ||
+        (cb == BF16_INF && ca == BF16_ZERO))
+        return 0x7FC0;
 
-    // Adjust exponent
-    int result_exp = exp1 + exp2 - 127;
-    if (result_mant >= (1ULL << 15)) {
-        result_mant >>= 8;
-        result_exp++;
+    if (ca == BF16_INF || cb == BF16_INF)
+        return (sign << 15) | (0xFF << 7);
+
+    if (ca == BF16_ZERO || cb == BF16_ZERO)
+        return sign << 15;
+
+    uint64_t prod = (uint64_t)ma * mb;
+    int exp = ea + eb;
+
+    if (prod & (1ULL << 15)) {
+        prod >>= 8;
+        exp++;
     } else {
-        result_mant >>= 7;
+        prod >>= 7;
     }
 
-    return bf16_pack(result_sign, result_exp, (uint32_t)result_mant);
+    return bf16_pack(sign, exp, (uint32_t)prod);
 }
 
-// Divides two bfloat16 values
-bfloat16_t bf16_div(bfloat16_t bf16_a, bfloat16_t bf16_b) {
-    int sign1, sign2, exp1, exp2;
-    uint32_t mant1, mant2;
+/* ============================================================
+   DIV
+   ============================================================ */
+bfloat16_t bf16_div(bfloat16_t a, bfloat16_t b) {
+    int sa, sb, ea, eb;
+    uint32_t ma, mb;
+    bf16_class ca = bf16_unpack(a, &sa, &ea, &ma);
+    bf16_class cb = bf16_unpack(b, &sb, &eb, &mb);
 
-    bf16_unpack(bf16_a, &sign1, &exp1, &mant1);
-    bf16_unpack(bf16_b, &sign2, &exp2, &mant2);
+    int sign = sa ^ sb;
 
-    if (mant2 == 0) {  // Handle division by zero
-        return bf16_pack(sign1 ^ sign2, 255, 0);  // Return infinity with appropriate sign
-    }
+    if (ca == BF16_NAN || cb == BF16_NAN)
+        return 0x7FC0;
 
-    // Normalize the divisor to improve division accuracy
+    if (ca == BF16_INF && cb == BF16_INF)
+        return 0x7FC0;
+
+    if (cb == BF16_INF)
+        return sign << 15;
+
+    if (ca == BF16_INF)
+        return (sign << 15) | (0xFF << 7);
+
+    if (cb == BF16_ZERO)
+        return (sign << 15) | (0xFF << 7);
+
+    if (ca == BF16_ZERO)
+        return sign << 15;
+
     int shift = 0;
-    while (mant2 < (1 << 7)) {
-        mant2 <<= 1;
+    while (mb < (1u << 7)) {
+        mb <<= 1;
         shift++;
     }
 
-    uint64_t dividend = (uint64_t)mant1 << (7 + shift);  // Increase precision for the division
-    uint32_t result_mant = (uint32_t)(dividend / mant2);  // Perform the division
+    uint64_t dividend = (uint64_t)ma << (7 + shift);
+    uint32_t mant = dividend / mb;
+    int exp = ea - eb - shift;
 
-    int result_exp = exp1 - exp2 - shift + 127;
-
-    return bf16_pack(sign1 ^ sign2, result_exp, result_mant);
+    return bf16_pack(sign, exp, mant);
 }
 
-bfloat16_t bf16_neg(bfloat16_t bf16) {
-    return bf16 ^= 0x8000;
-}
+/* ============================================================
+   UNARY
+   ============================================================ */
+bfloat16_t bf16_neg(bfloat16_t x) { return x ^ 0x8000; }
+bfloat16_t bf16_abs(bfloat16_t x) { return x & 0x7FFF; }
 
-bfloat16_t bf16_abs(bfloat16_t bf16) {
-    return bf16 &= 0x7fff;
-}

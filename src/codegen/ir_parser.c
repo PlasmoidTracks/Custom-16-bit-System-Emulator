@@ -6,18 +6,23 @@
 #include "codegen/ir_lexer.h"
 #include "codegen/ir_parser.h"
 #include "codegen/ir_parser_ruleset.h"
-#include "codegen/ir_token_name_table.h"
 
-void ir_recursion(IRParserToken_t* parser_token, int depth) {
-    //if (depth > 0) return;
-    for (int i = 0; i < depth; i++) {
-        printf("    ");
+#define IR_PARSER_DEBUG
+#undef IR_PARSER_DEBUG
+
+#ifdef IR_PARSER_DEBUG
+    #include "codegen/ir_token_name_table.h"
+    static void ir_recursion(IRParserToken_t* parser_token, int depth) {
+        //if (depth > 0) return;
+        for (int i = 0; i < depth; i++) {
+            printf("    ");
+        }
+        printf("%s, \"%s\"\n", ir_token_name[parser_token->token.type], parser_token->token.raw);
+        for (int i = 0; i < parser_token->child_count; i++) {
+            ir_recursion(parser_token->child[i], depth + 1);
+        }
     }
-    printf("%s, \"%s\"\n", ir_token_name[parser_token->token.type], parser_token->token.raw);
-    for (int i = 0; i < parser_token->child_count; i++) {
-        ir_recursion(parser_token->child[i], depth + 1);
-    }
-}
+#endif // IR_PARSER_DEBUG
 
 void ir_print_token(IRParserToken_t* parser_token) {
     if (parser_token->child_count == 0) {
@@ -229,10 +234,12 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
     if (parser_root_count) {*parser_root_count = lexer_token_count;}
 
     // 6) Done reducing. Let's display the final AST forest.
-    for (int i = 0; i < lexer_token_count; i++) {
-        //log_msg(LP_INFO, "AST root %d", i);
-        //ir_recursion(parser_token[i], 0);
-    }
+    #ifdef IR_PARSER_DEBUG
+        for (int i = 0; i < lexer_token_count; i++) {
+            log_msg(LP_INFO, "AST root %d", i);
+            ir_recursion(parser_token[i], 0);
+        }
+    #endif //IR_PARSER_DEBUG
 
     return parser_token;
 }

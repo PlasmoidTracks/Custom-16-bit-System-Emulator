@@ -18,7 +18,7 @@
 
 
 #define DUMP_INTERMEDIATE
-//#undef DUMP_INTERMEDIATE
+#undef DUMP_INTERMEDIATE
 
 
 static CPU_EXTENDED_ADDRESSING_MODE_t get_equal_admx_from_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
@@ -146,7 +146,7 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
                 output = append_to_output(output, &output_len, "\n");
             }
             char filename[64];
-            sprintf(filename, "reco/reco_%d.asm", interation++);
+            sprintf(filename, "reco_%d.asm", interation++);
             data_export(filename, output, output_len);
         #endif
 

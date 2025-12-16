@@ -19,8 +19,10 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     JMP,        // jmp dest         :: dest -> pc
     JZ,         // jz dest          :: if Z == 1, dest -> pc
     JNZ,        // jnz dest         :: if Z == 0, dest -> pc
-    JL,         // jl dest          :: if N == 1, dest -> pc
-    JNL,        // jnl dest         :: if N == 0, dest -> pc
+    JFZ,        // jfz dest         :: if FZ == 1, dest -> pc
+    JNFZ,       // jnfz dest        :: if FZ == 0, dest -> pc
+    JL,         // jl dest          :: if L == 1, dest -> pc
+    JNL,        // jnl dest         :: if L == 0, dest -> pc
     JUL,        // jul dest         :: if UL == 1, dest -> pc
     JNUL,       // jnul dest        :: if UL == 0, dest -> pc
     JFL,        // jfl dest         :: if FL == 1, dest -> pc
@@ -90,6 +92,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Status Bit Manipulation
     CLZ,        // clear Z bit
     SEZ,        // set Z bit
+    CLFZ,       // clear FZ bit
+    SEFZ,       // set FZ bit
     CLL,        // clear N/L bit
     SEL,        // set N/L bit
     CLUL,       // clear UL bit
@@ -110,6 +114,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Conditional Operations
     CMOVZ,      // cmovXX dest, src    :: if Z=1 {src -> dest}
     CMOVNZ,     // cmovXX dest, src    :: if Z=0 {src -> dest}
+    CMOVFZ,     // cmovXX dest, src    :: if FZ=1 {src -> dest}
+    CMOVNFZ,    // cmovXX dest, src    :: if FZ=0 {src -> dest}
     CMOVL,      // cmovXX dest, src    :: if L=1 {src -> dest}
     CMOVNL,     // cmovXX dest, src    :: if L=0 {src -> dest}
     CMOVUL,     // cmovXX dest, src    :: if UL=1 {src -> dest}

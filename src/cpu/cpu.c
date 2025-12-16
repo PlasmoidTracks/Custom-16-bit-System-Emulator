@@ -1040,6 +1040,7 @@ void cpu_clock(CPU_t* cpu) {
                                 uint16_t a = cpu->intermediate.data_address_reduced;
                                 uint16_t b = cpu->intermediate.data_address_extended;
                                 cpu->regs.sr.Z = (a == b);
+                                cpu->regs.sr.FZ = (a == b || (((a & 0x7fff) == 0) && ((b & 0x7fff) == 0)));
                                 cpu->regs.sr.L = ((int16_t) a < (int16_t) b);
                                 cpu->regs.sr.UL = (a < b);
                                 cpu->regs.sr.FL = (float_from_f16(a) < float_from_f16(b));
@@ -1053,6 +1054,7 @@ void cpu_clock(CPU_t* cpu) {
                         case TST: {
                                 uint16_t value = cpu->intermediate.data_address_extended;
                                 cpu->regs.sr.Z = (value == 0);
+                                cpu->regs.sr.FZ = ((value & 0x7fff) == 0);
                                 cpu->regs.sr.L = ((value & 0x8000) != 0);
                                 cpu->instruction ++;
                                 cpu->state = CS_FETCH_INSTRUCTION;
@@ -1282,6 +1284,24 @@ void cpu_clock(CPU_t* cpu) {
                     #endif // DCFF_INT_CARRY_EXT
 
                     #ifdef DCFF_LOGIC_EXT
+                        case JFZ:
+                            if (cpu->regs.sr.FZ) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case JNFZ:
+                            if (!cpu->regs.sr.FZ) {
+                                cpu->regs.pc = cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
                         case JL:
                             if (cpu->regs.sr.L) {
                                 cpu->regs.pc = cpu->intermediate.data_address_extended;
@@ -1381,6 +1401,20 @@ void cpu_clock(CPU_t* cpu) {
     
                         case SEZ:
                             cpu->regs.sr.Z = 1;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CLFZ:
+                            cpu->regs.sr.FZ = 0;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+    
+                        case SEFZ:
+                            cpu->regs.sr.FZ = 1;
                             cpu->instruction ++;
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;
@@ -1524,6 +1558,30 @@ void cpu_clock(CPU_t* cpu) {
                             goto CS_FETCH_INSTRUCTION;
                             break;
 
+                        case CMOVFZ:
+                            if (cpu->regs.sr.FZ) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNFZ:
+                            if (!cpu->regs.sr.FZ) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
                         case CMOVL:
                             if (cpu->regs.sr.L) {
                                 cpu->intermediate.result = cpu->intermediate.data_address_extended;
@@ -1652,6 +1710,7 @@ void cpu_clock(CPU_t* cpu) {
                             break;
 
                         case DIVF:
+                            log_msg(LP_DEBUG, "DIVF: %f / %f = %f", float_from_f16(cpu->intermediate.data_address_reduced), float_from_f16(cpu->intermediate.data_address_extended), float_from_f16(f16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended)));
                             cpu->intermediate.result = f16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
                             cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;

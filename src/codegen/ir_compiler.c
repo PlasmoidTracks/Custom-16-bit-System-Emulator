@@ -15,12 +15,28 @@
 #include "codegen/ir_lexer.h"
 #include "codegen/ir_compiler.h"
 
+#define IR_COMPILER_DEBUG
+#undef IR_COMPILER_DEBUG
+
 IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 int ir_identifier_index[IR_MAX_DEPTH] = {0};   // this gets set to 0 after each "IR_LEX_RETURN", so we can start with a new scope
 int ir_identifier_scope_depth = 0;
 int static_identifier_count = 0;
 int data_segment_address = 0x4000;
 int identifier_offset[IR_MAX_DEPTH] = {0};
+
+#ifdef IR_COMPILER_DEBUG
+    static void ir_recursion(IRParserToken_t* parser_token, int depth) {
+        //if (depth > 0) return;
+        for (int i = 0; i < depth; i++) {
+            printf("    ");
+        }
+        printf("%s, \"%s\"\n", ir_token_name[parser_token->token.type], parser_token->token.raw);
+        for (int i = 0; i < parser_token->child_count; i++) {
+            ir_recursion(parser_token->child[i], depth + 1);
+        }
+    }
+#endif //IR_COMPILER_DEBUG
 
 int ir_identifier_get_stack_offset(const char* ident_name) {
     //log_msg(LP_DEBUG, "IR Compiler: Looking for ident \"%s\"", ident_name);
@@ -161,6 +177,10 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
             case IR_LEX_REF: {
                 *output = append_to_output(*output, length, "; unary operation -> ref\n");
                 IRIdentifier_t* ident = ir_get_identifier_from_name(token1->child[0]->token.raw);
+                if (!ident) {
+                    log_msg(LP_ERROR, "IR Compiler: Unknown ir_identifier \"%s\" [%s:%d]", token1->child[0]->token.raw, __FILE__, __LINE__);
+                    break;
+                }
                 if (ident->type_modifier & IR_TM_STATIC) {
                     char tmp[32];
                     sprintf(tmp, "lea r1, [%d]", ident->absolute_address);
@@ -327,7 +347,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_INTEGER_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> less equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\ncmovz r1, 1\n");
                 break;
                 
             case IR_LEX_INTEGER_GREATER:
@@ -342,17 +362,17 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_FLOAT_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> float less\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\ncmovz r1, 0\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_FLOAT_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> float less equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\ncmovfz r1, 1\n");
                 break;
                 
             case IR_LEX_FLOAT_GREATER:
                 *output = append_to_output(*output, length, "; binary operation -> float greater\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\ncmovz r1, 0\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_FLOAT_GREATER_EQUAL:
@@ -362,17 +382,17 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_BFLOAT_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat less\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovz r1, 0\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_BFLOAT_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat less equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovfz r1, 1\n");
                 break;
                 
             case IR_LEX_BFLOAT_GREATER:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat greater\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnbl r1, 1\ncmovz r1, 0\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnbl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_BFLOAT_GREATER_EQUAL:
@@ -387,7 +407,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> unsigned less equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovul r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovul r1, 1\ncmovz r1, 1\n");
                 break;
                 
             case IR_LEX_UNSIGNED_INTEGER_GREATER:
@@ -936,6 +956,11 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 sprintf(tmp, "; UNKNOWN TOKEN: %s\n", ir_token_name[token->token.type]);
                 code_output = append_to_output(code_output, &code_output_len, tmp);
                 log_msg(LP_ERROR, "IR Compiler: Unknown token: %s - \"%s\" [%s:%d]", ir_token_name[token->token.type], token->token.raw, __FILE__, __LINE__);
+                #ifdef IR_COMPILER_DEBUG
+                    for (int i = parser_token_index; i < ((parser_token_index + 8) >= parser_token_count ? parser_token_count : parser_token_index + 8); i++) {
+                        ir_recursion(parser_token[i], 0);
+                    }
+                #endif //IR_COMPILER_DEBUG
                 parser_token_index++;
                 break;
             }

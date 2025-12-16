@@ -130,6 +130,7 @@ typedef struct CPU_t {
                 uint16_t value;  // Full status register
                 struct {
                     uint16_t Z : 1;                             // [Z]ero result / [E]qual
+                    uint16_t FZ: 1;                             // [F]loat [Z]ero result / [F]loat [E]qual (includes 0.0 == -0.0)
                     uint16_t L : 1;                             // [N]egative / signed [L]ess
                     uint16_t UL : 1;                            // [U]nsigned [L]ess
                     uint16_t FL : 1;                            // [F]loat [L]ess
@@ -139,7 +140,7 @@ typedef struct CPU_t {
                     uint16_t SWC : 1;                           // [S]kip [W]riting [C]ache     (when set, skip updating cache)
                     uint16_t MI : 1;                            // [M]ask [I]nterrupts          (when set, hardware interrupts from the bus will be ignored)
                     uint16_t MNI : 1;                           // [M]ask [N]onmaskable [I]nterrupts    (internal flag ONLY, no user control, this is for cpu cycle management)
-                    uint16_t reserved : 6;                      // Ensures correct size
+                    uint16_t reserved : 5;                      // Ensures correct size
                 };
             } sr;
         } regs;

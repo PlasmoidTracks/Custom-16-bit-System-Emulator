@@ -212,12 +212,19 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                     if (options & DO_USE_FLOAT_LITERALS) {
                         float16_t value = data[0] | (data[1] << 8);
                         float v = float_from_f16(value);
-                        if (v != 0.0 && v >= 0.01 && v <= 65535.0 && (
-                            v - (float)((int) v) == 0 || 
-                            (value & 0x00ff) == 0 ||    // here, checking for the mantissa, if its more than two digits, fallback to hex
-                            v == float_from_f16(f16_from_float(3.14159265358979323)) ||
-                            v == float_from_f16(f16_from_float(2.71828182845904523)))) {
-                            sprintf(&instruction_string[instruction_string_index], "f%f", float_from_f16(value));
+                        if (v != 0.0 
+                            && v >= 0.01 
+                            && v <= 65535.0 
+                            && (v - (float)((int) v) == 0 
+                                || (value & 0x00ff) == 0 // here, checking for the mantissa, if its more than two digits, fallback to hex
+                                || v == float_from_f16(f16_from_float(3.14159265358979323)) 
+                                || v == float_from_f16(f16_from_float(2.71828182845904523)))
+                            ) 
+                        {
+                            char buf[64];
+                            sprintf(buf, "f%f", float_from_f16(value));
+                            sprintf(&instruction_string[instruction_string_index], "%s", buf);
+                            instruction_string_index += strlen(buf);
                         } else {
                             sprintf(&instruction_string[instruction_string_index], "$%.4X", data[0] | (data[1] << 8));
                             instruction_string_index += 5;
@@ -390,7 +397,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                             (value & 0x00ff) == 0 ||    // here, checking for the mantissa, if its more than two digits, fallback to hex
                             v == float_from_f16(f16_from_float(3.14159265358979323)) ||
                             v == float_from_f16(f16_from_float(2.71828182845904523)))) {
-                            sprintf(disassembly.code[assembly_index++], "f%f", float_from_f16(value));
+                            sprintf(disassembly.code[assembly_index++], "f%f\n", float_from_f16(value));
                         } else {
                             if (options & DO_ADD_SPECULATIVE_CODE) {
                                 sprintf(disassembly.code[assembly_index++], "$%.2x%.2x                      ; %s%*s; %d byte instruction\n",
@@ -424,7 +431,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                             (value & 0x00ff) == 0 ||    // here, checking for the mantissa, if its more than two digits, fallback to hex
                             v == float_from_f16(f16_from_float(3.14159265358979323)) ||
                             v == float_from_f16(f16_from_float(2.71828182845904523)))) {
-                            sprintf(disassembly.code[assembly_index++], "f%f", float_from_f16(value));
+                            sprintf(disassembly.code[assembly_index++], "f%f\n", float_from_f16(value));
                         } else {
                             sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n", machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
                         }

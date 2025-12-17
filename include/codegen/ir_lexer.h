@@ -40,31 +40,31 @@ typedef enum {
     IR_LEX_BFLOAT_MINUS,                        // f-
     IR_LEX_INTEGER_PLUS,                        // i+
     IR_LEX_FLOAT_PLUS,                          // f+
-    IR_LEX_BFLOAT_PLUS,                         // b+
+    IR_LEX_BFLOAT_PLUS,                         // bf+
     IR_LEX_INTEGER_SLASH,                       // i/
     IR_LEX_FLOAT_SLASH,                         // f/
-    IR_LEX_BFLOAT_SLASH,                        // b/
+    IR_LEX_BFLOAT_SLASH,                        // bf/
     IR_LEX_INTEGER_STAR,                        // i*
     IR_LEX_FLOAT_STAR,                          // f*
-    IR_LEX_BFLOAT_STAR,                         // b*
+    IR_LEX_BFLOAT_STAR,                         // bf*
     IR_LEX_BANG_EQUAL,                          // !=
     IR_LEX_EQUAL_EQUAL,                         // ==
     IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL,      // u>=
     IR_LEX_INTEGER_GREATER_EQUAL,               // i>=
     IR_LEX_FLOAT_GREATER_EQUAL,                 // f>=
-    IR_LEX_BFLOAT_GREATER_EQUAL,                // b>=
+    IR_LEX_BFLOAT_GREATER_EQUAL,                // bf>=
     IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL,         // u<=
     IR_LEX_INTEGER_LESS_EQUAL,                  // i<=
     IR_LEX_FLOAT_LESS_EQUAL,                    // f<=
-    IR_LEX_BFLOAT_LESS_EQUAL,                   // b<=
+    IR_LEX_BFLOAT_LESS_EQUAL,                   // bf<=
     IR_LEX_UNSIGNED_INTEGER_GREATER,            // u>
     IR_LEX_INTEGER_GREATER,                     // i>
     IR_LEX_FLOAT_GREATER,                       // f>
-    IR_LEX_BFLOAT_GREATER,                      // b>
+    IR_LEX_BFLOAT_GREATER,                      // bf>
     IR_LEX_UNSIGNED_INTEGER_LESS,               // u<
     IR_LEX_INTEGER_LESS,                        // i<
     IR_LEX_FLOAT_LESS,                          // f<
-    IR_LEX_BFLOAT_LESS,                         // b<
+    IR_LEX_BFLOAT_LESS,                         // bf<
     IR_LEX_SHIFT_LEFT,                          // <<
     IR_LEX_SHIFT_RIGHT,                         // >>
 

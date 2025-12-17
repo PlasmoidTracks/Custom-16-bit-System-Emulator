@@ -12,6 +12,12 @@ bfloat16_t bf16_ONE = (uint16_t) 0x3f80;
 float16_t f16_TWO = (uint16_t) 0x4000;
 bfloat16_t bf16_TWO = (uint16_t) 0x4000;
 
+float16_t f16_INF = (uint16_t) 0x7c00;
+bfloat16_t bf16_INF = (uint16_t) 0x7f80;
+
+float16_t f16_MAX_INT = (uint16_t) 0x6800;   /* 2048 */
+bfloat16_t bf16_MAX_INT = (uint16_t) 0x4380; /* 256 */
+
 
 
 // *************************************************

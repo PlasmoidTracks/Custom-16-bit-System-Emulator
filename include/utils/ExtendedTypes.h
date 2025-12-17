@@ -23,6 +23,12 @@ extern bfloat16_t bf16_ONE;
 extern float16_t f16_TWO;
 extern bfloat16_t bf16_TWO;
 
+extern float16_t f16_INF;
+extern bfloat16_t bf16_INF;
+
+extern float16_t f16_MAX_INT;
+extern bfloat16_t bf16_MAX_INT;
+
 
 extern float16_t f16_from_float(float f32);
 extern float float_from_f16(float16_t f16);

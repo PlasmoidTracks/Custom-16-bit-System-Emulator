@@ -6,8 +6,6 @@
 
 #include <stdint.h>
 
-#include "codegen/ir_parser.h"
-
 typedef enum {
     IRCO_KEEP_COMMENTS = 0001, 
     IRCO_ADD_VARNAMES = 0002, 

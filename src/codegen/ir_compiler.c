@@ -25,6 +25,8 @@ int static_identifier_count = 0;
 int data_segment_address = 0x4000;
 int identifier_offset[IR_MAX_DEPTH] = {0};
 
+int is_in_function_body = 0;
+
 #ifdef IR_COMPILER_DEBUG
     static void ir_recursion(IRParserToken_t* parser_token, int depth) {
         //if (depth > 0) return;
@@ -467,7 +469,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
     
     char* code_output = NULL;         // final assembly string
     char* data_output = NULL;         // final data string
-    long code_output_len = 0;         // current length of code output
+    long code_output_len = 0;         // current length of assembly output
     long data_output_len = 0;         // current length of data output
 
     long parser_token_index = 0;
@@ -479,7 +481,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
     code_output = append_to_output(code_output, &code_output_len, ".address 0\n.code\ncall .main\nhlt\n");
     {char tmp[32];
     data_output = append_to_output(data_output, &data_output_len, "; data setup\n");
-    sprintf(tmp, ".address 0x%.4x\n.data\n", data_segment_address);
+    sprintf(tmp, ".data\n.address 0x%.4x\n", data_segment_address);
     data_output = append_to_output(data_output, &data_output_len, tmp);}
 
     while (parser_token_index < parser_token_count) {
@@ -584,17 +586,34 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     code_output = append_to_output(code_output, &code_output_len, "mov [r0], r1\n");
                     parser_token_index ++;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
-                    code_output = append_to_output(code_output, &code_output_len, "; static variable assignment\n");
-                    IRParserToken_t* expr = parser_token[parser_token_index]->child[2];
-                    parser_evaluate_expression(&code_output, &code_output_len, expr);
-                    int absolute_address = ident->absolute_address;
-                    char tmp[64];
-                    sprintf(tmp, "lea r0, [%d]", absolute_address);
-                    code_output = append_to_output(code_output, &code_output_len, tmp);
-                    sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[0]->token.raw);
-                    code_output = append_to_output(code_output, &code_output_len, tmp);
-                    code_output = append_to_output(code_output, &code_output_len, "mov [r0], r1\n");
-                    parser_token_index ++;
+                    if (is_in_function_body) {
+                        code_output = append_to_output(code_output, &code_output_len, "; static variable assignment inside function body\n");
+                        IRParserToken_t* expr = parser_token[parser_token_index]->child[2];
+                        parser_evaluate_expression(&code_output, &code_output_len, expr);
+                        int absolute_address = ident->absolute_address;
+                        char tmp[64];
+                        sprintf(tmp, "lea r0, [%d]", absolute_address);
+                        code_output = append_to_output(code_output, &code_output_len, tmp);
+                        sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[0]->token.raw);
+                        code_output = append_to_output(code_output, &code_output_len, tmp);
+                        code_output = append_to_output(code_output, &code_output_len, "mov [r0], r1\n");
+                        parser_token_index ++;
+                    } else {
+                        data_output = append_to_output(data_output, &data_output_len, "; static variable assignment outside function body\n");
+                        IRParserToken_t* expr = parser_token[parser_token_index]->child[2];
+                        if (expr->child[0]->token.type != IR_LEX_NUMBER) {
+                            log_msg(LP_ERROR, "IR Compiler: static variables outside of function bodies cannot be assigned anything other than numeric values. Instead got %s [%s:%d]", ir_token_name[expr->child[0]->token.type], __FILE__, __LINE__);
+                            #ifdef IR_COMPILER_DEBUG
+                                ir_recursion(expr, 0);
+                            #endif
+                            return NULL;
+                        }
+                        int absolute_address = ident->absolute_address;
+                        char tmp[64];
+                        sprintf(tmp, ".address $%.4x\n%s\n", absolute_address, expr->child[0]->token.raw);
+                        data_output = append_to_output(data_output, &data_output_len, tmp);
+                        parser_token_index ++;
+                    }
                 }
                 break;
             }
@@ -621,16 +640,21 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
                     parser_token_index ++;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
-                    IRParserToken_t* expr = parser_token[parser_token_index]->child[3];
-                    parser_evaluate_expression(&code_output, &code_output_len, expr);
-                    int absolute_address = ident->absolute_address;
-                    char tmp[64];
-                    sprintf(tmp, "lea r0, [%d]", absolute_address);
-                    code_output = append_to_output(code_output, &code_output_len, tmp);
-                    sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[1]->token.raw);
-                    code_output = append_to_output(code_output, &code_output_len, tmp);
-                    code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
-                    parser_token_index ++;
+                    if (is_in_function_body) {
+                        IRParserToken_t* expr = parser_token[parser_token_index]->child[3];
+                        parser_evaluate_expression(&code_output, &code_output_len, expr);
+                        int absolute_address = ident->absolute_address;
+                        char tmp[64];
+                        sprintf(tmp, "lea r0, [%d]", absolute_address);
+                        code_output = append_to_output(code_output, &code_output_len, tmp);
+                        sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[1]->token.raw);
+                        code_output = append_to_output(code_output, &code_output_len, tmp);
+                        code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
+                        parser_token_index ++;
+                    } else {
+                        log_msg(LP_ERROR, "IR Compiler: Deref variable assignment of static variable may not occure outside of function bodies");
+                        return NULL;
+                    }
                 }
                 break;
             }
@@ -655,13 +679,18 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     parser_token_index ++;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     // TODO: First solve expression, then save it in r1, the find ir_identifier, set r0 to the ident and mov indirectly?
-                    int absolute_address = ident->absolute_address;
-                    char tmp[64];
-                    sprintf(tmp, "lea r0, [%d]\n", absolute_address);
-                    code_output = append_to_output(code_output, &code_output_len, tmp);
-                    sprintf(tmp, "mov [r0], %s\n", parser_token[parser_token_index]->child[2]->token.raw);
-                    code_output = append_to_output(code_output, &code_output_len, tmp);
-                    parser_token_index ++;
+                    if (is_in_function_body) {
+                        int absolute_address = ident->absolute_address;
+                        char tmp[64];
+                        sprintf(tmp, "lea r0, [%d]\n", absolute_address);
+                        code_output = append_to_output(code_output, &code_output_len, tmp);
+                        sprintf(tmp, "mov [r0], %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                        code_output = append_to_output(code_output, &code_output_len, tmp);
+                        parser_token_index ++;
+                    } else {
+                        log_msg(LP_ERROR, "IR Compiler: static variables outside of function bodies cannot be assigned anything other than numeric values. Instead got label \"%s\" [%s:%d]", ident->name, __FILE__, __LINE__);
+                        return NULL;
+                    }
                 }
                 break;
             }
@@ -749,6 +778,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 code_output = append_to_output(code_output, &code_output_len, "mov r3, sp\n");
                 parser_token_index++;
                 ir_identifier_scope_depth ++;
+                is_in_function_body = 1;
                 break;
 
             case IR_LEX_SCOPEEND:
@@ -757,6 +787,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 ir_identifier_index[ir_identifier_scope_depth] = 0;
                 identifier_offset[ir_identifier_scope_depth] = 0;
                 ir_identifier_scope_depth --;
+                is_in_function_body = 0;
                 break;
 
             case IR_LEX_RETURN:
@@ -868,6 +899,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 code_output = append_to_output(code_output, &code_output_len, "pushsr\n");
                 parser_token_index++;
                 ir_identifier_scope_depth ++;
+                is_in_function_body = 1;
                 break;
 
             case IR_LEX_IRQEND:
@@ -881,6 +913,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 ir_identifier_index[ir_identifier_scope_depth] = 0;
                 identifier_offset[ir_identifier_scope_depth] = 0;
                 ir_identifier_scope_depth --;
+                is_in_function_body = 0;
                 break;
             
             case IR_PAR_INLINE_ASM: {
@@ -966,6 +999,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             }
         }
     }
+    
+    code_output = append_to_output(code_output, &code_output_len, data_output);
 
     return code_output;
 }

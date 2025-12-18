@@ -41,7 +41,7 @@ IRGrammarRule_t parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 100, 
-        .description = "number -> expression",
+        .description = "char literal -> expression",
     },
     {
         .context = {

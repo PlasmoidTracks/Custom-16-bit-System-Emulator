@@ -466,13 +466,42 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
         log_msg(LP_ERROR, "IR: Parser returned NULL [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
+
+    //ToDo, do pre-pass, where we store how much stack space 'scopebegin' should allocate through static memory use analysis, so, just counting how many variable declarations are done.
+    long parser_token_index = 0;
+    int scopebegin_count = 0;
+    int scopebegin_offset[256] = {0}; // ToDo, dont hardcode how often 'scopebegin's there can be. 
+    while (parser_token_index < parser_token_count) {
+        IRParserToken_t* token = parser_token[parser_token_index];
+        switch ((int) token->token.type) {
+
+            case IR_LEX_SCOPEEND:
+                scopebegin_count ++;
+                scopebegin_offset[scopebegin_count] = 0;
+                break;
+            
+            case IR_PAR_VARIABLE_DECLARATION:
+                scopebegin_offset[scopebegin_count] += 2;
+                break;
+
+            default:
+                break;
+        }
+        parser_token_index++;
+    }
     
+    for (int i = 0; i < scopebegin_count; i++) {
+        log_msg(LP_DEBUG, "scope %d : %d", i, scopebegin_offset[i]);
+    }
+
+    int scopebegin_index = 0;
+
     char* code_output = NULL;         // final assembly string
     char* data_output = NULL;         // final data string
     long code_output_len = 0;         // current length of assembly output
     long data_output_len = 0;         // current length of data output
 
-    long parser_token_index = 0;
+    parser_token_index = 0;
 
     (void) options;
 
@@ -530,7 +559,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     } else {
                         //log_msg(LP_DEBUG, "IR Compiler: Added anonymous ir_identifier");
                         identifier_offset[ir_identifier_scope_depth] += 1;
-                        code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
+                        //code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                     }
                 } else {
                     if (type_mod & IR_TM_STATIC) {
@@ -556,7 +585,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         identifier_offset[ir_identifier_scope_depth] += 1;
 
-                        code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
+                        //code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                     }
                 }
                 
@@ -770,16 +799,20 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 break;
             }
 
-            case IR_LEX_SCOPEBEGIN:
+            case IR_LEX_SCOPEBEGIN: {
                 code_output = append_to_output(code_output, &code_output_len, "; scope begin\n");
                 // Function requires pushing of the old frame pointer in case it arrived from another function call
                 // and then r3 is set to the current stack-pointer to act as the frame-pointer
                 code_output = append_to_output(code_output, &code_output_len, "push r3\n");
                 code_output = append_to_output(code_output, &code_output_len, "mov r3, sp\n");
+                char tmp[64];
+                sprintf(tmp, "sub sp, %d\n", scopebegin_offset[scopebegin_index++]);
+                code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index++;
                 ir_identifier_scope_depth ++;
                 is_in_function_body = 1;
                 break;
+            }
 
             case IR_LEX_SCOPEEND:
                 code_output = append_to_output(code_output, &code_output_len, "; scope end\n");
@@ -800,7 +833,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             case IR_PAR_CALLPUSHARG: {
                 code_output = append_to_output(code_output, &code_output_len, "; callpusharg\n");
                 IRParserToken_t* expr = parser_token[parser_token_index]->child[1];
-                code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
+                //code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                 parser_evaluate_expression(&code_output, &code_output_len, expr);
                 // expr is now in r1
                 code_output = append_to_output(code_output, &code_output_len, "lea r0, [sp]\nmov [r0], r1\n");

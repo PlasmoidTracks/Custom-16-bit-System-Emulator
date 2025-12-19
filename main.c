@@ -22,13 +22,13 @@
     //#undef COMPILE_IR
 
     #define CANONICALIZE
-    //#undef CANONICALIZE
+    #undef CANONICALIZE
 
     #define OPTIMIZE
-    //#undef OPTIMIZE
+    #undef OPTIMIZE
 
     #define MACRO_EXPAND
-    //#undef MACRO_EXPAND
+    #undef MACRO_EXPAND
 
     #define BINARY_DUMP
     //#undef BINARY_DUMP
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     System_t* system = system_create(
         1, 
         64, 
-        1, 
+        0, 
         1000.0
     );
 

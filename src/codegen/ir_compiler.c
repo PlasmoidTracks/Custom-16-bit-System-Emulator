@@ -140,18 +140,16 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                     char tmp[32];
                     sprintf(tmp, "mov r1, [r3 + %d]", stack_offset);
                     *output = append_to_output(*output, length, tmp);
-                    sprintf(tmp, "\t; %s", token.raw);
+                    sprintf(tmp, "\t; %s\n", token.raw);
                     *output = append_to_output(*output, length, tmp);
-                    *output = append_to_output(*output, length, "\n");
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     *output = append_to_output(*output, length, "; expression -> loading static ir_identifier from data segment\n");
                     int absolute_address = ident->absolute_address;
                     char tmp[32];
                     sprintf(tmp, "mov r1, [%d]", absolute_address);
                     *output = append_to_output(*output, length, tmp);
-                    sprintf(tmp, "\t; %s", token.raw);
+                    sprintf(tmp, "\t; %s\n", token.raw);
                     *output = append_to_output(*output, length, tmp);
-                    *output = append_to_output(*output, length, "\n");
                 }
                 break;
             }
@@ -475,12 +473,16 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
         IRParserToken_t* token = parser_token[parser_token_index];
         switch ((int) token->token.type) {
 
-            case IR_LEX_SCOPEEND:
+            case IR_LEX_SCOPEBEGIN:
                 scopebegin_count ++;
                 scopebegin_offset[scopebegin_count] = 0;
                 break;
             
             case IR_PAR_VARIABLE_DECLARATION:
+                scopebegin_offset[scopebegin_count] += 2;
+                break;
+            
+            case IR_PAR_CALLPUSHARG:
                 scopebegin_offset[scopebegin_count] += 2;
                 break;
 
@@ -494,7 +496,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
         log_msg(LP_DEBUG, "scope %d : %d", i, scopebegin_offset[i]);
     }
 
-    int scopebegin_index = 0;
+    int scopebegin_index = 1;
 
     char* code_output = NULL;         // final assembly string
     char* data_output = NULL;         // final data string
@@ -834,9 +836,14 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 code_output = append_to_output(code_output, &code_output_len, "; callpusharg\n");
                 IRParserToken_t* expr = parser_token[parser_token_index]->child[1];
                 //code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
+
                 parser_evaluate_expression(&code_output, &code_output_len, expr);
                 // expr is now in r1
-                code_output = append_to_output(code_output, &code_output_len, "lea r0, [sp]\nmov [r0], r1\n");
+                ir_identifier_index[ir_identifier_scope_depth] ++;
+                int ident_index = ir_identifier_index[ir_identifier_scope_depth];
+                char tmp[64];
+                sprintf(tmp, "lea r0, [r3 + %d]\nmov [r0], r1\n", -2 * ident_index);
+                code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index++;
                 break;
             }
@@ -861,9 +868,9 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             
             case IR_PAR_CALLFREEARG: {
                 code_output = append_to_output(code_output, &code_output_len, "; callfreearg\n");
-                char tmp[256];
-                sprintf(tmp, "add sp, %s\n", token->child[1]->token.raw);
-                code_output = append_to_output(code_output, &code_output_len, tmp);
+                //char tmp[256];
+                //sprintf(tmp, "add sp, %s\n", token->child[1]->token.raw);
+                //code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index++;
                 break;
             }

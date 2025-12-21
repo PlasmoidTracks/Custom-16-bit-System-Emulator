@@ -69,7 +69,7 @@ CPU_t* cpu_create(void) {
     cpu->clock = 0ULL;
 
     cpu->memory_layout = (CpuMemoryLayout_t) {
-        .segment_stack = 0x3FFF, 
+        .segment_stack = 0x7FFF, 
         .segment_irq_table = 0xEF00, // currently space for 128 interrupt vectors
     };
 
@@ -269,7 +269,7 @@ void cpu_clock(CPU_t* cpu) {
                         }
                         #endif
                     } else {
-                        //log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d, PC: 0x%.4x] [%s:%d]", cpu->clock, cpu->intermediate.instruction, cpu->regs.pc - 1, __FILE__, __LINE__);
+                        log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d, PC: 0x%.4x] [%s:%d]", cpu->clock, cpu->intermediate.instruction, cpu->regs.pc - 1, __FILE__, __LINE__);
                         cpu->state = CS_EXCEPTION;
                         break;
                     }
@@ -316,7 +316,7 @@ void cpu_clock(CPU_t* cpu) {
                             );
                         #endif
                         if (cpu->intermediate.addressing_mode.addressing_mode_reduced == ADMR_NONE || cpu->intermediate.addressing_mode.addressing_mode_extended == ADMX_NONE) {
-                            //log_msg(LP_ERROR, "CPU %d: Encountered an invalid instruction [%s:%d]", cpu->clock, __FILE__, __LINE__);
+                            log_msg(LP_ERROR, "CPU %d: Encountered an invalid instruction [admr or admx is none] [%s:%d]", cpu->clock, __FILE__, __LINE__);
                             cpu->state = CS_EXCEPTION;
                         }
                     } else {
@@ -332,7 +332,7 @@ void cpu_clock(CPU_t* cpu) {
                                 );
                             #endif
                             if (cpu->intermediate.addressing_mode.addressing_mode_reduced == ADMR_NONE) {
-                                //log_msg(LP_ERROR, "CPU %d: Encountered an invalid instruction [%s:%d]", cpu->clock, __FILE__, __LINE__);
+                                log_msg(LP_ERROR, "CPU %d: Encountered an invalid instruction [admr is none] [%s:%d]", cpu->clock, __FILE__, __LINE__);
                                 cpu->state = CS_EXCEPTION;
                             }
                         } else {
@@ -347,7 +347,7 @@ void cpu_clock(CPU_t* cpu) {
                                 );
                             #endif
                             if (cpu->intermediate.addressing_mode.addressing_mode_extended == ADMX_NONE) {
-                                //log_msg(LP_ERROR, "CPU %d: Encountered an invalid instruction [%s:%d]", cpu->clock, __FILE__, __LINE__);
+                                log_msg(LP_ERROR, "CPU %d: Encountered an invalid instruction [admx is none] [%s:%d]", cpu->clock, __FILE__, __LINE__);
                                 cpu->state = CS_EXCEPTION;
                             }
                         }
@@ -914,7 +914,7 @@ void cpu_clock(CPU_t* cpu) {
                             break;
                         }
                     default:
-                        //log_msg(LP_ERROR, "CPU %d: Unkown indirect extended addressing mode category %d [%s:%d]", cpu->clock, admc, __FILE__, __LINE__);
+                        log_msg(LP_ERROR, "CPU %d: Unkown indirect extended addressing mode category %d [%s:%d]", cpu->clock, admc, __FILE__, __LINE__);
                         cpu->state = CS_EXCEPTION;
                         break;
                 }
@@ -1839,7 +1839,7 @@ void cpu_clock(CPU_t* cpu) {
                     #endif // DCFF_HW_INFO
 
                     default:
-                        //log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d] [%s:%d]", cpu->intermediate.instruction, __FILE__, __LINE__);
+                        log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d] [%s:%d]", cpu->intermediate.instruction, __FILE__, __LINE__);
                         cpu->instruction ++;
                         cpu->state = CS_EXCEPTION;
                         break;
@@ -1896,7 +1896,7 @@ void cpu_clock(CPU_t* cpu) {
                         break;
 
                     default:
-                        //log_msg(LP_ERROR, "CPU %d: Unkown addressing mode category %d [%s:%d]", cpu->clock, cpu->intermediate.addressing_mode.addressing_mode_reduced, __FILE__, __LINE__);
+                        log_msg(LP_ERROR, "CPU %d: Unkown addressing mode category %d [%s:%d]", cpu->clock, cpu->intermediate.addressing_mode.addressing_mode_reduced, __FILE__, __LINE__);
                         cpu->state = CS_EXCEPTION;
                         break;
                 }

@@ -22,7 +22,7 @@ IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 int ir_identifier_index[IR_MAX_DEPTH] = {0};   // this gets set to 0 after each "IR_LEX_RETURN", so we can start with a new scope
 int ir_identifier_scope_depth = 0;
 int static_identifier_count = 0;
-int data_segment_address = 0x4000;
+int data_segment_address = 0x8000;
 int identifier_offset[IR_MAX_DEPTH] = {0};
 
 int is_in_function_body = 0;
@@ -534,7 +534,6 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 break;
             
             case IR_PAR_VARIABLE_DECLARATION: {
-                code_output = append_to_output(code_output, &code_output_len, "; variable declaration\n");
                 // Add ir_identifier to current frame list
                 if (ir_identifier_index[ir_identifier_scope_depth] >= IR_MAX_IDENT) {
                     log_msg(LP_ERROR, "IR Compiler: Too many identifiers, max is %d [%s:%d]", IR_MAX_IDENT, __FILE__, __LINE__);
@@ -555,11 +554,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     if (type_mod & IR_TM_STATIC) {
                         log_msg(LP_ERROR, "IR Compiler: Static variables cannot be anonymous [%s:%d]", __FILE__, __LINE__);
                         return NULL;
-                    } else {
-                        //log_msg(LP_DEBUG, "IR Compiler: Added anonymous ir_identifier");
-                        identifier_offset[ir_identifier_scope_depth] += 1;
-                        //code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                     }
+                    identifier_offset[ir_identifier_scope_depth] += 1;
                 } else {
                     if (type_mod & IR_TM_STATIC) {
                         memcpy(ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name, ident_name, strlen(ident_name));
@@ -583,8 +579,6 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         //log_msg(LP_DEBUG, "IR Compiler: Added ir_identifier \"%s\"", ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name);
                         ir_identifier_index[ir_identifier_scope_depth] ++;
                         identifier_offset[ir_identifier_scope_depth] += 1;
-
-                        //code_output = append_to_output(code_output, &code_output_len, "sub sp, 2\n");
                     }
                 }
                 

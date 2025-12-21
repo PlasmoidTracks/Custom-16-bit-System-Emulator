@@ -624,6 +624,7 @@ char* optimizer_compile(char* content) {
             // =>
             // [precompute] z :: x + y
             // sub sp, z (or equivalent for ADD/SUB chain)
+            /*
             if (i < instruction_count - 2) {
                 if ((instruction[i].instruction == SUB || instruction[i].instruction == ADD) && instruction[i].admr == ADMR_SP) {
                     int16_t sub = (int16_t) parse_immediate(instruction[i].expression[2].tokens[0].raw);
@@ -689,6 +690,7 @@ char* optimizer_compile(char* content) {
                 }
             }
             if (changes_applied) break;
+            */
 
 
             // mov rN, [rN]

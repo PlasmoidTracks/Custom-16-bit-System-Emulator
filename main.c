@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
 
     // from ir to asm
     #ifdef COMPILE_IR
-        char* asm = ir_compile_from_filename(filename, IRCO_USE_RELATIVE_JUMPS);
+        char* asm = ir_compile_from_filename(filename, ((IRCO_USE_RELATIVE_JUMPS) | (IRCO_ADD_PREAMBLE)));
         if (!asm) {
             log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;

@@ -1122,7 +1122,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
         for (int exp = expression_count - 1; exp >= 0; exp --) {
             switch (instruction[i].expression[exp].type) {
                 case EXPR_IMMEDIATE:
-                    if (!cpu_instruction_is_relative_jump[instruction[i].instruction]) {
+                    if ((int) instruction[i].instruction != -1 && !cpu_instruction_is_relative_jump[instruction[i].instruction]) {
                         // here the first two bytes are guaranteed to be the label destination
                         if (instruction[i].expression[exp].tokens[0].type == TT_LABEL) {
                             // find corresponding label

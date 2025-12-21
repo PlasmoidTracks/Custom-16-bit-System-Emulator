@@ -505,8 +505,10 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
     (void) options;
 
     // default header
-    code_output = append_to_output(code_output, &code_output_len, "; code setup\n");
-    code_output = append_to_output(code_output, &code_output_len, ".address 0\n.code\ncall .main\nhlt\n");
+    if (options & IRCO_ADD_PREAMBLE) {
+        code_output = append_to_output(code_output, &code_output_len, "; code setup\n");
+        code_output = append_to_output(code_output, &code_output_len, ".address 0\n.code\ncall .main\nhlt\n");
+    }
     {char tmp[32];
     data_output = append_to_output(data_output, &data_output_len, "; data setup\n");
     sprintf(tmp, ".data\n.address 0x%.4x\n", data_segment_address);
@@ -837,7 +839,11 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             case IR_PAR_CALL_LABEL: {
                 code_output = append_to_output(code_output, &code_output_len, "; call\n");
                 char tmp[256];
-                sprintf(tmp, "call %s\n", token->child[1]->token.raw);
+                if (options & IRCO_USE_RELATIVE_JUMPS) {
+                    sprintf(tmp, "rcall %s\n", token->child[1]->token.raw);
+                } else {
+                    sprintf(tmp, "call %s\n", token->child[1]->token.raw);
+                }
                 code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index++;
                 break;

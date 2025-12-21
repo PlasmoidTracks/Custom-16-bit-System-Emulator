@@ -864,28 +864,13 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             case IR_PAR_GOTO: {
                 code_output = append_to_output(code_output, &code_output_len, "; goto\n");
                 IRParserToken_t* expr = parser_token[parser_token_index]->child[1];
-                if (expr->child_count == 0) {
-                    IRLexerToken_t lexer_token = expr->token;
-                    switch (lexer_token.type) {
-                        case IR_LEX_LABEL: {
-                            code_output = append_to_output(code_output, &code_output_len, "; expression -> loading label\n");
-                            char tmp[32];
-                            sprintf(tmp, "mov r1, %s\n", lexer_token.raw);
-                            code_output = append_to_output(code_output, &code_output_len, tmp);
-                            break;
-                        }
-                        
-                        default:
-                            log_msg(LP_CRITICAL, "Unknown expression \"%s\"", ir_token_name[lexer_token.type]);
-                            char tmp[256];
-                            sprintf(tmp, "; UNKNOWN TOKEN: %s\n", ir_token_name[lexer_token.type]);
-                            code_output = append_to_output(code_output, &code_output_len, tmp);
-                            break;
-                    }
-                }
-                parser_evaluate_expression(&code_output, &code_output_len, expr);
+                code_output = append_to_output(code_output, &code_output_len, "; expression -> loading label\n");
                 char tmp[256];
-                sprintf(tmp, "jmp r1\n");
+                if (options & IRCO_USE_RELATIVE_JUMPS) {
+                    sprintf(tmp, "rjmp %s\n", expr->token.raw);
+                } else {
+                    sprintf(tmp, "jmp %s\n", expr->token.raw);
+                }
                 code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index++;
                 break;
@@ -897,7 +882,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 IRParserToken_t* expr = parser_token[parser_token_index]->child[1];
                 parser_evaluate_expression(&code_output, &code_output_len, expr);
                 char tmp[64];
-                sprintf(tmp, "tst r1\njnz %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                sprintf(tmp, "tst r1\nrjnz %s\n", parser_token[parser_token_index]->child[2]->token.raw);
                 code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index ++;
                 break;

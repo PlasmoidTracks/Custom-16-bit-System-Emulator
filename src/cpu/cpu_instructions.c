@@ -8,7 +8,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "jmp", "jz", "jnz", "jfz", "jnfz", "jl", "jnl", "jul", "jnul", "jfl", "jnfl", "jbl", "jnbl", "jao", "jnao", "call", "ret",
 
     // Relative Jumps and Calls
-    "rjmp", "rjz", "rjnz", "rjfz", "rjnfz", "rjl", "rjnl", "rjul", "rjnul", "rjfl", "rjnfl", "rjbl", "rjnbl", "rjao", "rjnao", 
+    "rjmp", "rjz", "rjnz", "rjfz", "rjnfz", "rjl", "rjnl", "rjul", "rjnul", "rjfl", "rjnfl", "rjbl", "rjnbl", "rjao", "rjnao", "rcall", 
 
     // Arithmetic Integer Operations
     "add", "adc", "sub", "sbc", "mul", "div", "neg", "abs", "inc", "dec", 
@@ -58,7 +58,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Jumps and Calls
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
     // Relative Jumps
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
     2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 
     // Saturated Arithmetic Signed Integer Operations
@@ -95,7 +95,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Jumps and Calls
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Relative Jumps
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
     // Saturated Arithmetic Signed Integer Operations
@@ -126,14 +126,52 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
 };
 
 
-// If an entry is one, it only uses admr, else admx
+// If an entry is one, it is a jump instruction
 const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Data Manipulation
     0, 0, 0, 0, 0, 0, 0, 
     // Jumps and Calls
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Relative Jumps
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    // Arithmetic Integer Operations
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    // Saturated Arithmetic Signed Integer Operations
+    0, 0, 0, 
+    // Saturated Arithmetic Unsigned Integer Operations
+    0, 0, 0,
+    // Arithmetic Float Operations
+    0, 0, 0, 0, 
+    // Arithmetic BFloat Operations
+    0, 0, 0, 0, 
+    // Type Conversion Operations
+    0, 0, 0, 0, 0, 0, 0, 
+    // Bitwise Logic
+    0, 0, 0, 0, 0, 
+    // Tests
+    0, 0, 
+    // Status Bit Manipulation
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    // Conditional Operations
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    // Cache Operations
+    0, 0, 
+    // Self Identification and HW-Info Operations
+    0, 0, 0, 
+    // Other
+    0, 0
+};
+
+
+// If an entry is one, it is a relative jump instruction and will treat labels differently during assembly
+const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
+    // Data Manipulation
+    0, 0, 0, 0, 0, 0, 0, 
+    // Jumps and Calls
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    // Relative Jumps
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Saturated Arithmetic Signed Integer Operations

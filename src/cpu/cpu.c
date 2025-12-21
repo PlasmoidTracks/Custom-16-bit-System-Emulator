@@ -1669,6 +1669,13 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;
                             break;
+                        
+                        case RCALL:
+                            cpu->intermediate.result = cpu->regs.pc;
+                            cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            cpu->state = CS_PUSH_HIGH;
+                            goto CS_PUSH_HIGH;
+                            break;
                     #endif // DCFF_REL_JUMP
 
                     #ifdef DCFF_CMOV_EXT

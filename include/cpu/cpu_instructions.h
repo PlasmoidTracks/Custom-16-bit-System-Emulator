@@ -52,6 +52,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     RJAO,        // rjao value      :: if AO == 1, pc + value -> pc
     RJNAO,       // rjnao value     :: if AO == 0, pc + value -> pc
 
+    RCALL,       // rcall value     :: sp -= 2; pc -> [sp]; pc + value -> pc
+
     // Arithmetic Integer Operations
     ADD,        // add dest, src    :: dest = dest + src (integer)
     ADC,        // adc dest, src    :: dest = dest + src (integer) + AO
@@ -168,5 +170,7 @@ extern const int cpu_instruction_argument_count[INSTRUCTION_COUNT];
 extern const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT];
 
 extern const int cpu_instruction_is_jump[INSTRUCTION_COUNT];
+
+extern const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT];
 
 #endif

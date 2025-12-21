@@ -7,6 +7,9 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     // Jumps and Calls
     "jmp", "jz", "jnz", "jfz", "jnfz", "jl", "jnl", "jul", "jnul", "jfl", "jnfl", "jbl", "jnbl", "jao", "jnao", "call", "ret",
 
+    // Relative Jumps and Calls
+    "rjmp", "rjz", "rjnz", "rjfz", "rjnfz", "rjl", "rjnl", "rjul", "rjnul", "rjfl", "rjnfl", "rjbl", "rjnbl", "rjao", "rjnao", 
+
     // Arithmetic Integer Operations
     "add", "adc", "sub", "sbc", "mul", "div", "neg", "abs", "inc", "dec", 
 
@@ -54,6 +57,8 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     0, 2, 1, 1, 0, 0, 2, 
     // Jumps and Calls
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
+    // Relative Jumps
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
     2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 
     // Saturated Arithmetic Signed Integer Operations
@@ -89,6 +94,8 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     0, 0, 0, 1, 0, 0, 0, 
     // Jumps and Calls
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    // Relative Jumps
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
     // Saturated Arithmetic Signed Integer Operations
@@ -125,6 +132,8 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     0, 0, 0, 0, 0, 0, 0, 
     // Jumps and Calls
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    // Relative Jumps
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Arithmetic Integer Operations
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Saturated Arithmetic Signed Integer Operations

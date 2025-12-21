@@ -100,6 +100,9 @@ CPU_t* cpu_create(void) {
     #ifdef DCFF_LOGIC_EXT
         cpu->feature_flag |= CFF_LOGIC_EXT;
     #endif
+    #ifdef DCFF_REL_JUMP
+        cpu->feature_flag |= CFF_REL_JUMP;
+    #endif
     #ifdef DCFF_CMOV_EXT
         cpu->feature_flag |= CFF_CMOV_EXT;
     #endif
@@ -1533,6 +1536,141 @@ void cpu_clock(CPU_t* cpu) {
                             break;
                     #endif // CFF_LOGIC_EXT
 
+                    #ifdef DCFF_REL_JUMP
+                        case RJMP:
+                            cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case RJZ:
+                            if (cpu->regs.sr.Z) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case RJNZ:
+                            if (!cpu->regs.sr.Z) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case RJL:
+                            if (cpu->regs.sr.L) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case RJNL:
+                            if (!cpu->regs.sr.L) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case RJFZ:
+                            if (cpu->regs.sr.FZ) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJNFZ:
+                            if (!cpu->regs.sr.FZ) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJUL:
+                            if (cpu->regs.sr.UL) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJNUL:
+                            if (!cpu->regs.sr.UL) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJFL:
+                            if (cpu->regs.sr.FL) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJNFL:
+                            if (!cpu->regs.sr.FL) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJBL:
+                            if (cpu->regs.sr.BL) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJNBL:
+                            if (!cpu->regs.sr.BL) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJAO:
+                            if (cpu->regs.sr.AO) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                        
+                        case RJNAO:
+                            if (!cpu->regs.sr.AO) {
+                                cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                    #endif // DCFF_REL_JUMP
+
                     #ifdef DCFF_CMOV_EXT
                         case CMOVZ:
                             if (cpu->regs.sr.Z) {
@@ -1839,7 +1977,7 @@ void cpu_clock(CPU_t* cpu) {
                     #endif // DCFF_HW_INFO
 
                     default:
-                        log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d] [%s:%d]", cpu->intermediate.instruction, __FILE__, __LINE__);
+                        log_msg(LP_ERROR, "CPU %d: Unknown instruction [%d] [%s:%d]", cpu->clock, cpu->intermediate.instruction, __FILE__, __LINE__);
                         cpu->instruction ++;
                         cpu->state = CS_EXCEPTION;
                         break;

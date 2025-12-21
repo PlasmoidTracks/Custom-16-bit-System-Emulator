@@ -35,6 +35,8 @@ const char* token_type_string[] = {
     [TT_ADDRESS]                    = "address",
     [TT_SEGMENT_CODE]               = "segment_code",
     [TT_SEGMENT_DATA]               = "segment_data",
+    [TT_INCLUDE]                    = "include",
+    [TT_INCBIN]                     = "incbin",
     [TT_TEXT]                       = "text",
     [TT_CONST]                      = "const",
     [TT_STRING]                     = "string",
@@ -51,6 +53,8 @@ const char* expression_type_string[] = {
     [EXPR_INDIRECT_SCALE_OFFSET]    = "indirect_scale_offset", 
     [EXPR_SEGMENT_DATA]             = "segment_data", 
     [EXPR_SEGMENT_CODE]             = "segment_code", 
+    [EXPR_INCLUDE]                  = "include", 
+    [EXPR_INCBIN]                   = "incbin", 
     [EXPR_ADDRESS]                  = "address", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
 };
@@ -138,6 +142,10 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
                 token[i].type = TT_SEGMENT_CODE;
             } else if (strcmp(&word[i][1], "data") == 0) {
                 token[i].type = TT_SEGMENT_DATA;
+            } else if (strcmp(&word[i][1], "include") == 0) {
+                token[i].type = TT_INCLUDE;
+            } else if (strcmp(&word[i][1], "incbin") == 0) {
+                token[i].type = TT_INCBIN;
             } else if (strcmp(&word[i][1], "text") == 0) {
                 token[i].type = TT_TEXT;
             } else if (strcmp(&word[i][1], "const") == 0) {
@@ -429,6 +437,33 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 0].type == TT_SEGMENT_CODE) {
 
                 expression[expression_index].type = EXPR_SEGMENT_CODE;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
+                expression_index ++;
+        }
+
+        // .include
+        else if (token_index + 0 < token_count &&
+            tokens[token_index + 0].type == TT_INCLUDE &&
+            tokens[token_index + 1].type == TT_STRING) {
+
+                expression[expression_index].type = EXPR_INCLUDE;
+                Token_t* token = malloc(sizeof(Token_t));
+                token->type = TT_STRING;
+                token->raw = read_file(tokens[token_index].raw, NULL);
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
+                expression_index ++;
+        }
+
+        // .incbin
+        else if (token_index + 0 < token_count &&
+            tokens[token_index + 0].type == TT_INCBIN &&
+            tokens[token_index + 1].type == TT_STRING) {
+
+                expression[expression_index].type = EXPR_INCBIN;
                 expression[expression_index].tokens[0] = tokens[token_index];
                 expression[expression_index].token_count = 1;
                 token_index += 1;
@@ -1094,6 +1129,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
             }
         }
+        if (expression[expression_index].type == EXPR_INCLUDE) {
+            instruction[instruction_index].expression[0] = expression[expression_index];
+            instruction[instruction_index].expression_count = 1;
+        }
     }
 
     if (current_byte_align) { // here if the last assembly line is a 1-aligned byte data that is not aligned to 2
@@ -1241,6 +1280,8 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_ADDRESS:
                 case EXPR_SEGMENT_CODE:
                 case EXPR_SEGMENT_DATA:
+                case EXPR_INCLUDE:
+                case EXPR_INCBIN:
                 case EXPR_TEXT_DEFINITION:
                 // etc.
                     break;
@@ -1385,6 +1426,8 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     for (int i = 0; i < expression_count; i++) {
         //printf("Expression %d: \"%s\"\n", i + 1, (int) expression[i].type == -1 ? "?" : expression_type_string[expression[i].type]);
     }
+
+    // ToDo, resolve all include and incbin directives, then restart
 
     // build instruction array
     int instruction_count = 0;

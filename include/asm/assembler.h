@@ -25,6 +25,8 @@ typedef enum TokenType_t {
     TT_ADDRESS, 
     TT_SEGMENT_CODE, 
     TT_SEGMENT_DATA, 
+    TT_INCLUDE, 
+    TT_INCBIN, 
     TT_TEXT, 
     TT_CONST, 
     TT_STRING, 
@@ -41,6 +43,8 @@ typedef enum {
     EXPR_INDIRECT_SCALE_OFFSET, 
     EXPR_SEGMENT_DATA, 
     EXPR_SEGMENT_CODE, 
+    EXPR_INCLUDE, 
+    EXPR_INCBIN, 
     EXPR_ADDRESS, 
     EXPR_TEXT_DEFINITION, 
 } ExpressionType_t;

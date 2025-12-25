@@ -154,7 +154,7 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     HWFFLAG,    // returns the [h]ard[w]are [f]eature [flag]
 
     // Other
-    INT,        // int dest         :: trigger [int]errupt; 0xEF00 + dest -> pc
+    INT,        // int dest         :: trigger [int]errupt; SEGMENT_IRQ_TABLE + dest -> pc
     HLT,        // hlt              :: [h]a[lt]s CPU execution
 
     INSTRUCTION_COUNT // Number of defined instructions

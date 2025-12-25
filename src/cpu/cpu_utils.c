@@ -5,6 +5,8 @@
 #include "utils/ExtendedTypes.h"
 #include "utils/String.h"
 
+#include "memory_layout.h"
+
 #include "cpu/cpu.h"
 #include "cpu/cpu_instructions.h"
 #include "ram.h"
@@ -169,10 +171,8 @@ void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
     printf(" \033[1;33m   Addr   |  Hex   |  Int   |     Float16     |    BFloat16     | Regs \033[0m\n");
     printf("-------------------------------------------------------------------------\n");
 
-    uint16_t base = cpu->memory_layout.segment_stack;
-
     for (int i = 0; i < count; ++i) {
-        uint16_t address = base - i * 2;
+        uint16_t address = SEGMENT_STACK - i * 2;
         uint16_t value = ram->data[address - 1] | (ram->data[address] << 8);
         char* ascii = cpu_ascii_to_string(value);
 
@@ -215,10 +215,8 @@ void cpu_print_stack_compact(CPU_t* cpu, RAM_t* ram, int count) {
 
     printf("\033[1;36m[STACK]\033[0m ");
 
-    uint16_t base = cpu->memory_layout.segment_stack;
-
     for (int i = 0; i < count; ++i) {
-        uint16_t address = base - i * 2;
+        uint16_t address = SEGMENT_STACK - i * 2;
         uint16_t value = ram->data[address] | (ram->data[address + 1] << 8);
 
         // Build a register label prefix

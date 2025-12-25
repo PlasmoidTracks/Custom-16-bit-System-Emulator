@@ -8,6 +8,7 @@
 
 #include "cache.h"
 #include "device.h"
+#include "memory_layout.h"
 
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"
@@ -58,7 +59,7 @@ CPU_t* cpu_create(void) {
     CPU_t* cpu = malloc(sizeof(CPU_t));
     if (!cpu) return NULL;  // Always check for malloc failure
 
-    cpu->device = device_create(DT_CPU);
+    cpu->device = device_create(DT_CPU, 0, 0, 0, 0);
 
     // Zero out the entire CPU structure
     memset(cpu, 0, sizeof(CPU_t));
@@ -68,13 +69,8 @@ CPU_t* cpu_create(void) {
 
     cpu->clock = 0ULL;
 
-    cpu->memory_layout = (CpuMemoryLayout_t) {
-        .segment_stack = 0x7FFF, 
-        .segment_irq_table = 0xEF00, // currently space for 128 interrupt vectors
-    };
-
     //cpu->regs.pc = cpu->memory_layout.segment_code;
-    cpu->regs.sp = cpu->memory_layout.segment_stack + 1;        // sp always writes to the byte below, so we need to start one byte higher
+    cpu->regs.sp = SEGMENT_STACK + 1;        // sp always writes to the byte below, so we need to start one byte higher
 
     cpu->state = CS_FETCH_INSTRUCTION;
 
@@ -2235,7 +2231,7 @@ void cpu_clock(CPU_t* cpu) {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW:
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
-                int success = cpu_read_memory(cpu, cpu->memory_layout.segment_irq_table + cpu->intermediate.irq_id * 2, &data);
+                int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2, &data);
                 if (success) {
                     cpu->intermediate.data_address_extended = (uint8_t) data;
                     cpu->state = CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH;
@@ -2249,7 +2245,7 @@ void cpu_clock(CPU_t* cpu) {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH:
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
-                int success = cpu_read_memory(cpu, cpu->memory_layout.segment_irq_table + cpu->intermediate.irq_id * 2 + 1, &data);
+                int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2 + 1, &data);
                 if (success) {
                     cpu->intermediate.data_address_extended |= ((uint16_t) data) << 8;
                     cpu->regs.pc = cpu->intermediate.data_address_extended;

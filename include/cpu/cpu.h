@@ -121,7 +121,6 @@ typedef struct CPU_t {
     uint16_t feature_flag;
 
     Cache_t* cache;
-    CpuMemoryLayout_t memory_layout;
 
     union {
         struct {

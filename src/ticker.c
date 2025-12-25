@@ -20,7 +20,7 @@ Ticker_t* ticker_create(float frequency) {
     ticker->time = 0.0;
     ticker->intervall = 1.0 / frequency;
     ticker->last_time = get_time_seconds();
-    ticker->device = device_create(DT_CLOCK);
+    ticker->device = device_create(DT_CLOCK, 0, 0, 0, 0);
     ticker->device.device_state = DS_IDLE;
 
     return ticker;

@@ -2,7 +2,7 @@
 
 #include "device.h"
 
-Device_t device_create(DEVICE_TYPE_t type) {
+Device_t device_create(DEVICE_TYPE_t type, int readable, int writable, uint16_t address_listener_low, uint16_t address_listener_high) {
     return (Device_t) {
         .device_id = (DeviceID_t) rand64(),
         .device_type = type,
@@ -10,7 +10,11 @@ Device_t device_create(DEVICE_TYPE_t type) {
         .processed = 0,
         .address = 0,
         .data = 0,
-        .device_target_id = 0
+        .device_target_id = 0, 
+        .readable = readable, 
+        .writable = writable, 
+        .address_listener_low = address_listener_low, 
+        .address_listener_high = address_listener_high, 
     };
 }
 

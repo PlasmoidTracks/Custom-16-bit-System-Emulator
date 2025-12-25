@@ -8,6 +8,8 @@
 #include "utils/String.h"
 #include "utils/IO.h"
 
+#include "memory_layout.h"
+
 #include "asm/assembler.h"
 
 #include "codegen/ir_parser.h"
@@ -22,7 +24,7 @@ IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 int ir_identifier_index[IR_MAX_DEPTH] = {0};   // this gets set to 0 after each "IR_LEX_RETURN", so we can start with a new scope
 int ir_identifier_scope_depth = 0;
 int static_identifier_count = 0;
-int data_segment_address = 0x8000;
+int data_segment_address = SEGMENT_STATIC_MEMORY;
 int identifier_offset[IR_MAX_DEPTH] = {0};
 
 int is_in_function_body = 0;

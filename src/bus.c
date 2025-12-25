@@ -144,6 +144,7 @@ void bus_clock(BUS_t* bus) {
                                 break;
                             }
                             if (device_terminal->device_state == DS_IDLE) {
+                                device_terminal->address = device->address;
                                 device_terminal->data = device->data;
                                 device_terminal->device_target_id = device->device_id;
                                 device_terminal->device_state = DS_STORE;
@@ -181,42 +182,40 @@ void bus_clock(BUS_t* bus) {
                     //log_msg(LP_DEBUG, "BUS %d: The RAM is idle", bus->clock);
                     break;
                 
-                case DS_FETCH:
+                case DS_FETCH: {
                     //log_msg(LP_DEBUG, "BUS %d: The RAM is retrieving data", bus->clock);
                     if (device->processed == 0) {
                         //log_msg(LP_DEBUG, "BUS %d: The RAM is not done with the request yet", bus->clock);
                         break;
                     }
-                    {
-                        Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
-                        if (!device_target) {
-                            //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
-                            break;
-                        }
-                        //log_msg(LP_DEBUG, "BUS %d: Found Target device to send data to", bus->clock);
-                        device_target->data = device->data;
-                        device_target->processed = 1;
-                        device->device_state = DS_IDLE;
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
+                        break;
                     }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Target device to send data to", bus->clock);
+                    device_target->data = device->data;
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
                     break;
+                }
                 
-                case DS_STORE:
+                case DS_STORE: {
                     //log_msg(LP_DEBUG, "BUS %d: The RAM is storing data", bus->clock);
                     if (device->processed == 0) {
                         //log_msg(LP_DEBUG, "BUS %d: The RAM is not done with the request yet", bus->clock);
                         break;
                     }
-                    {
-                        Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
-                        if (!device_target) {
-                            //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
-                            break;
-                        }
-                        //log_msg(LP_DEBUG, "BUS %d: Found Target device to validate", bus->clock);
-                        device_target->processed = 1;
-                        device->device_state = DS_IDLE;
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
+                        break;
                     }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Target device to validate", bus->clock);
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
                     break;
+                }
                 
                 default:
                     //log_msg(LP_DEBUG, "BUS %d: The RAM is in an unknown state %d", bus->clock, device_state);
@@ -234,25 +233,24 @@ void bus_clock(BUS_t* bus) {
                     //log_msg(LP_DEBUG, "BUS %d: The CLOCK is idle", bus->clock);
                     break;
                 
-                case DS_INTERRUPT:
+                case DS_INTERRUPT: {
                     //log_msg(LP_DEBUG, "BUS %d: The CLOCK has sent an interrupt signal", bus->clock);
-                    {
-                        Device_t* device_target = bus_find_device_by_type(bus, DT_CPU);
-                        if (!device_target) {
-                            //log_msg(LP_WARNING, "BUS %d: The CLOCK did not find a CPU to notify [%s:%d]", bus->clock, __FILE__, __LINE__);
-                            device->device_state = DS_IDLE;
-                            break;
-                        }
-                        if (device_target->device_state != DS_IDLE) {
-                            //log_msg(LP_WARNING, "BUS %d: The target device (CPU) is not idle [%s:%d]", bus->clock, __FILE__, __LINE__);
-                            break;
-                        }
-                        device_target->device_state = DS_INTERRUPT;
-                        device_target->address = device->address;
+                    Device_t* device_target = bus_find_device_by_type(bus, DT_CPU);
+                    if (!device_target) {
+                        //log_msg(LP_WARNING, "BUS %d: The CLOCK did not find a CPU to notify [%s:%d]", bus->clock, __FILE__, __LINE__);
                         device->device_state = DS_IDLE;
-                        //log_msg(LP_DEBUG, "BUS %d: Target device (CPU) notified", bus->clock);
+                        break;
                     }
+                    if (device_target->device_state != DS_IDLE) {
+                        //log_msg(LP_WARNING, "BUS %d: The target device (CPU) is not idle [%s:%d]", bus->clock, __FILE__, __LINE__);
+                        break;
+                    }
+                    device_target->device_state = DS_INTERRUPT;
+                    device_target->address = device->address;
+                    device->device_state = DS_IDLE;
+                    //log_msg(LP_DEBUG, "BUS %d: Target device (CPU) notified", bus->clock);
                     break;
+                }
                 
                 default:
                     //log_msg(LP_DEBUG, "BUS %d: The CLOCK is in an unknown state %d", bus->clock, device_state);
@@ -275,23 +273,22 @@ void bus_clock(BUS_t* bus) {
                 case DS_FETCH:
                     break;
                 
-                case DS_STORE:
+                case DS_STORE: {
                     //log_msg(LP_DEBUG, "BUS %d: The Terminal is storing data", bus->clock);
                     if (device->processed == 0) {
                         //log_msg(LP_DEBUG, "BUS %d: The Terminal is not done with the request yet", bus->clock);
                         break;
                     }
-                    {
-                        Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
-                        if (!device_target) {
-                            //log_msg(LP_ERROR, "BUS %d: Terminal target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
-                            break;
-                        }
-                        //log_msg(LP_DEBUG, "BUS %d: Found Terminal target device to validate", bus->clock);
-                        device_target->processed = 1;
-                        device->device_state = DS_IDLE;
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Terminal target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
+                        break;
                     }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Terminal target device to validate", bus->clock);
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
                     break;
+                }
                 
                 default:
                     //log_msg(LP_DEBUG, "BUS %d: The Terminal is in an unknown state %d", bus->clock, device_state);

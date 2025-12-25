@@ -61,7 +61,9 @@ Labels
   - .my_label
   - $1234
   
-Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed.
+Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed. 
+There is an exception for relative jump instructions using labels as an immediate 16-bit value (i.e. "rjmp .label"). 
+Here labels are not resolved to their absolute address representation, but instead to the relative address. 
 
 
 Address Control
@@ -90,15 +92,14 @@ Segments
 
 Other stuff
 -----------
-- Arguments can also be '_', thus instructions like mov _, _ are valid. 
-  - This will just translate to null arguments and will be illegal instructions when missused. 
+- Arguments can also be '_', thus instructions like mov _, _ are valid during compilation. 
+  - This will just translate to null arguments and will result in illegal instructions when executed. 
   - This is done to allow the decompiled comments to also be valid when uncommented. 
   - This is to allow for instructions to also fully encode raw data. 
 
 
 mov r0, [$1234 + r0] can also be written as:
 - mov r0, [r0 + $1234]
-
 
 mov r0, [$1234 + $12 * r0] can also be written as:
 - mov r0, [$1234 + r0 * $12]

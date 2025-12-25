@@ -39,9 +39,14 @@ typedef struct Device_t {
     int processed;                          // Flag to indicated that the current request has been processed
     uint64_t address;                       // the request body, like address
     uint64_t data;                          // the response to the request
+
+    int readable;                           // whether the device is readable
+    int writable;                           // whether the device is writable
+    uint16_t address_listener_low;          // the lowest memory address this device is listening to
+    uint16_t address_listener_high;         // the highest memory address this device is listening to
 } Device_t;
 
-extern Device_t device_create(DEVICE_TYPE_t type);
+extern Device_t device_create(DEVICE_TYPE_t type, int readable, int writable, uint16_t address_listener_low, uint16_t address_listener_high);
 
 // sets the device back to idle and set processed to 0
 extern void device_reset(Device_t* device);

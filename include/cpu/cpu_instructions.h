@@ -35,6 +35,25 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CALL,       // call dest        :: sp -= 2; pc -> [sp]; dest -> pc
     RET,        // ret              :: [sp] -> pc; sp += 2
 
+    // Relative Jumps and Calls
+    RJMP,        // rjmp value      :: pc + value -> pc
+    RJZ,         // rjz value       :: if Z == 1, pc + value -> pc
+    RJNZ,        // rjnz value      :: if Z == 0, pc + value -> pc
+    RJFZ,        // rjfz value      :: if FZ == 1, pc + value -> pc
+    RJNFZ,       // rjnfz value     :: if FZ == 0, pc + value -> pc
+    RJL,         // rjl value       :: if L == 1, pc + value -> pc
+    RJNL,        // rjnl value      :: if L == 0, pc + value -> pc
+    RJUL,        // rjul value      :: if UL == 1, pc + value -> pc
+    RJNUL,       // rjnul value     :: if UL == 0, pc + value -> pc
+    RJFL,        // rjfl value      :: if FL == 1, pc + value -> pc
+    RJNFL,       // rjnfl value     :: if FL == 0, pc + value -> pc
+    RJBL,        // rjfl value      :: if BL == 1, pc + value -> pc
+    RJNBL,       // rjnfl value     :: if BL == 0, pc + value -> pc
+    RJAO,        // rjao value      :: if AO == 1, pc + value -> pc
+    RJNAO,       // rjnao value     :: if AO == 0, pc + value -> pc
+
+    RCALL,       // rcall value     :: sp -= 2; pc -> [sp]; pc + value -> pc
+
     // Arithmetic Integer Operations
     ADD,        // add dest, src    :: dest = dest + src (integer)
     ADC,        // adc dest, src    :: dest = dest + src (integer) + AO
@@ -135,7 +154,7 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     HWFFLAG,    // returns the [h]ard[w]are [f]eature [flag]
 
     // Other
-    INT,        // int dest         :: trigger [int]errupt; 0xEF00 + dest -> pc
+    INT,        // int dest         :: trigger [int]errupt; SEGMENT_IRQ_TABLE + dest -> pc
     HLT,        // hlt              :: [h]a[lt]s CPU execution
 
     INSTRUCTION_COUNT // Number of defined instructions
@@ -151,5 +170,7 @@ extern const int cpu_instruction_argument_count[INSTRUCTION_COUNT];
 extern const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT];
 
 extern const int cpu_instruction_is_jump[INSTRUCTION_COUNT];
+
+extern const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT];
 
 #endif

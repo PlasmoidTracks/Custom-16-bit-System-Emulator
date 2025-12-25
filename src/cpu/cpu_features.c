@@ -8,6 +8,7 @@ const char* cpu_feature_flag_name[16] = {
     "CFF_INT_ARITH_EXT", 
     "CFF_INT_CARRY_EXT", 
     "CFF_LOGIC_EXT", 
+    "CFF_REL_JUMP", 
     "CFF_CMOV_EXT", 
     "CFF_BYTE_EXT", 
     "CFF_FLOAT16", 

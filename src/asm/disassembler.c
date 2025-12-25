@@ -545,11 +545,17 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             char** words = split(assembly_code.code[i], "\t, []", "");
             // Now for every instruction, check if its a jump through a dedicated table plus has an argument. Then compare strings
             int found_jump_instruction = 0;
+            int is_relative_jump = 0;
             for (int instruction_index = 0; instruction_index < INSTRUCTION_COUNT; instruction_index++) {
                 if (cpu_instruction_is_jump[instruction_index] == 1 && cpu_instruction_argument_count[instruction_index] == 1) {
                     if (strcmp(words[0], cpu_instruction_string[instruction_index]) == 0) {
                         //log_msg(LP_CRITICAL, "jump op: \"%s\"", cpu_instruction_string[instruction_index]);
                         found_jump_instruction = 1;
+                        is_relative_jump = cpu_instruction_is_relative_jump[instruction_index];
+
+                        // FOR SAFETY, AS ITS NOT FULLY IMPLEMETNED YET: 
+                        if (cpu_instruction_is_relative_jump[instruction_index]) {found_jump_instruction = 0;}
+
                         break;
                     }
                 }
@@ -585,11 +591,20 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             // check if a preexisting label exists that points to the destination
             int found_match = 0;
             for (int j = assembly_lines - 1; j >= 0; j--) {
-                if (assembly_code.is_label[j] && assembly_code.binary_index[j] == destination) {
-                    //log_msg(LP_INFO, "Found a matching label \"%s\"", assembly_code.code[j]);
-                    sprintf(assembly_code.code[i], "%s %s", words[0], assembly_code.code[j]);
-                    found_match = 1;
-                    break;
+                if (!is_relative_jump) {
+                    if (assembly_code.is_label[j] && assembly_code.binary_index[j] == destination) {
+                        //log_msg(LP_INFO, "Found a matching label for jump to \"%s\"", assembly_code.code[j]);
+                        sprintf(assembly_code.code[i], "%s %s", words[0], assembly_code.code[j]);
+                        found_match = 1;
+                        break;
+                    }
+                } else {
+                    if (assembly_code.is_label[j] && assembly_code.binary_index[i] + (int16_t) destination == assembly_code.binary_index[j]) {
+                        //log_msg(LP_INFO, "Found a matching label for relative jump to \"%s\"", assembly_code.code[j]);
+                        sprintf(assembly_code.code[i], "%s %s", words[0], assembly_code.code[j]);
+                        found_match = 1;
+                        break;
+                    }
                 }
             }
             if (found_match) {
@@ -603,7 +618,13 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
 
             // look for instruction or data that starts at that destination. Choose last byte, so its after all control instrucitons like .code etc.
             for (int j = assembly_lines - 1; j >= 0; j--) {
-                if (assembly_code.binary_index[j] == destination) {
+                int condition = 0;
+                if (is_relative_jump) {
+                    condition = assembly_code.binary_index[i] + (int16_t) destination == assembly_code.binary_index[j];
+                } else {
+                    condition = assembly_code.binary_index[j] == destination;
+                }
+                if (condition) {
                     //log_msg(LP_CRITICAL, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
                     // first, increase capacity
                     for (long x = assembly_lines * 2 ; x < assembly_code.lines; x++) {

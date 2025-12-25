@@ -9,7 +9,7 @@
 
 Terminal_t* terminal_create(void) {
     Terminal_t* ticker = malloc(sizeof(Terminal_t));
-    ticker->device = device_create(DT_TERMINAL, 0, 1, SEGMENT_MMIO + 2, SEGMENT_MMIO + 3);
+    ticker->device = device_create(DT_TERMINAL, 0, 1, SEGMENT_MMIO + 2, SEGMENT_MMIO + 2);
     ticker->device.device_state = DS_IDLE;
 
     return ticker;

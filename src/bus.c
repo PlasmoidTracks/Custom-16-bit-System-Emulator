@@ -106,9 +106,9 @@ void bus_clock(BUS_t* bus) {
                     // Check the reading address, if its below 0xF000, then its addressing ram
                     Device_t* device_mmio = bus_find_readable_device_by_mmio_address(bus, device->address);
                     if (!device_mmio) {
-                        log_msg(LP_ERROR, "BUS %d: No MMIO device attached to the BUS, that is responding on reads from address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
                         device->processed = 1;
                         device->device_state = DS_IDLE;
+                        //log_msg(LP_DEBUG, "BUS %d: No MMIO device attached to the BUS, that is responding on reads from address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
                         // what do now?
                         break;
                     }
@@ -136,7 +136,7 @@ void bus_clock(BUS_t* bus) {
                     if (!device_mmio) {
                         device->processed = 1;
                         device->device_state = DS_IDLE;
-                        log_msg(LP_DEBUG, "BUS %d: No MMIO device attached to the BUS, that is responding on writes to address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
+                        //log_msg(LP_DEBUG, "BUS %d: No MMIO device attached to the BUS, that is responding on writes to address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
                         // what do now?
                         break;
                     }

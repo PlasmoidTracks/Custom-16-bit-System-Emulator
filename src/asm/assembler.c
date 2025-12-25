@@ -940,7 +940,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].byte_aligned = 1;
 
             if (expression[expression_index].tokens[0].type == TT_LABEL) {
-                    
+
                 strcpy(jump_label[jump_label_index].name, expression[expression_index].tokens[0].raw);
                 int address = 0;
 
@@ -984,6 +984,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 }
                 
                 expression_index ++;
+                instruction_index ++;
                 continue;
             } else if (expression[expression_index].type == EXPR_SEGMENT_CODE) {
                 instruction_index ++;

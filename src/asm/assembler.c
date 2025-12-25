@@ -453,8 +453,8 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 token->type = TT_STRING;
                 token->raw = read_file(tokens[token_index].raw, NULL);
                 expression[expression_index].tokens[0] = tokens[token_index];
-                expression[expression_index].token_count = 1;
-                token_index += 1;
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
@@ -464,9 +464,10 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 1].type == TT_STRING) {
 
                 expression[expression_index].type = EXPR_INCBIN;
-                expression[expression_index].tokens[0] = tokens[token_index];
-                expression[expression_index].token_count = 1;
-                token_index += 1;
+                expression[expression_index].tokens[0] = tokens[token_index + 0];
+                expression[expression_index].tokens[1] = tokens[token_index + 1];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
@@ -1121,6 +1122,16 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 expression_index ++;
                 continue;
                 //exit(1);
+            } else if (expression[expression_index].type == EXPR_INCLUDE) {
+                instruction[instruction_index].expression[0] = expression[expression_index];
+                instruction[instruction_index].expression_count = 1;
+                expression_index ++;
+                instruction_index ++;
+            } else if (expression[expression_index].type == EXPR_INCBIN) {
+                instruction[instruction_index].expression[0] = expression[expression_index];
+                instruction[instruction_index].expression_count = 1;
+                expression_index ++;
+                instruction_index ++;
             } else if (expression[expression_index].type == EXPR_NONE) {
 
             } else {
@@ -1139,10 +1150,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
                 //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
             }
-        }
-        if (expression[expression_index].type == EXPR_INCLUDE) {
-            instruction[instruction_index].expression[0] = expression[expression_index];
-            instruction[instruction_index].expression_count = 1;
         }
     }
 
@@ -1363,6 +1370,33 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             continue;
         } 
         if (instruction[instruction_index].expression[0].tokens[0].type == TT_LABEL) {
+            instruction_index ++;
+            continue;
+        }
+        if (instruction[instruction_index].expression[0].type == EXPR_INCBIN) {
+            char* filename = calloc(strlen(instruction[instruction_index].expression[0].tokens[1].raw) - 1, 1);
+            memcpy(filename, instruction[instruction_index].expression[0].tokens[1].raw + 1, strlen(instruction[instruction_index].expression[0].tokens[1].raw + 1));
+            filename[strlen(filename) - 1] = '\0';
+            //log_msg(LP_INFO, "filename: %s", filename);
+            long filesize;
+            uint8_t* content = (uint8_t*) read_file(filename, &filesize);
+            for (long i = 0; i < filesize; i++) {
+                if (written[index]) {
+                    log_msg(LP_ERROR, "Parsing instruction: The inserted binary data is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
+                    log_msg(LP_INFO, "Parsing instruciton: Overlap occured at address 0x%.4x", index);
+                    return NULL;
+                }
+                written[index] = 1;
+                bin[index++] = content[i];
+                if (index > *binary_size) {
+                    *binary_size = index;
+                }
+            }
+            instruction_index ++;
+            continue;
+        }
+        if (instruction[instruction_index].expression[0].type == EXPR_INCLUDE) {
+            log_msg(LP_ERROR, "\".include\" has not been implemented yet");
             instruction_index ++;
             continue;
         }

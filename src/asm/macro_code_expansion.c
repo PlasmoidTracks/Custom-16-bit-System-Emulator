@@ -5225,6 +5225,12 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
                 output = append_to_output(output, &output_len, ".code");
             } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {
                 output = append_to_output(output, &output_len, ".data");
+            } else if (instr.expression[0].type == EXPR_INCLUDE) {
+                output = append_to_output(output, &output_len, ".include ");
+                output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
+            } else if (instr.expression[0].type == EXPR_INCBIN) {
+                output = append_to_output(output, &output_len, ".incbin ");
+                output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
             } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
                 //log_msg(LP_INFO, "Label found");
                 output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);

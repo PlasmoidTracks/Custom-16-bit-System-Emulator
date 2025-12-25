@@ -6,7 +6,7 @@
 
 RAM_t* ram_create(uint32_t capacity) {
     RAM_t* ram = malloc(sizeof(RAM_t));
-    ram->device = device_create(DT_RAM);
+    ram->device = device_create(DT_RAM, 1, 1, 0x0000, 0xefff);
     ram->capacity = capacity;
     //log_msg(LP_INFO, "setting ram cap to %.4x and is now %.4x\n", capacity, ram->capacity);
     ram->data = malloc(sizeof(uint8_t) * capacity);

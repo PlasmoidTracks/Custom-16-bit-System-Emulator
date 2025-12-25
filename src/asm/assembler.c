@@ -480,6 +480,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
     int expression_index = 0;
     int instruction_index = 0;
+    int byte_index = 0;
     //int is_label = 0;
 
     typedef enum {CODE, DATA} Mode_t;
@@ -555,6 +556,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     //printf("EXPR_ADDRESS: %s\n", string_value);
                     int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                     instruction[instruction_index].address = value;
+
+                    byte_index = value;
 
                     //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                     
@@ -916,6 +919,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     break;
             }
             instruction[instruction_index].argument_bytes = argument_bytes_used;
+            instruction[instruction_index].address = byte_index;
+
+            byte_index += 2 + argument_bytes_used;
 
             instruction_index ++;
 
@@ -934,7 +940,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].byte_aligned = 1;
 
             if (expression[expression_index].tokens[0].type == TT_LABEL) {
-                    
+
                 strcpy(jump_label[jump_label_index].name, expression[expression_index].tokens[0].raw);
                 int address = 0;
 
@@ -964,6 +970,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         continue;
                     } 
                     address += instruction[i].argument_bytes + 2;
+                    byte_index = address;
                 }
                 jump_label[jump_label_index].value = address;
                 if (current_byte_align == 1) {
@@ -977,6 +984,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 }
                 
                 expression_index ++;
+                instruction_index ++;
                 continue;
             } else if (expression[expression_index].type == EXPR_SEGMENT_CODE) {
                 instruction_index ++;
@@ -1010,6 +1018,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     log_msg(LP_ERROR, "No alignment specified in data segment! [%s:%d]", __FILE__, __LINE__);
                     exit(1);
                 }
+                byte_index += 2;
             } else if (expression[expression_index].type == EXPR_SEGMENT_DATA) {
                 instruction_index ++;
                 expression_index ++;
@@ -1021,6 +1030,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 //printf("%s\n", string_value);
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                 instruction[instruction_index].address = value;
+                byte_index = value;
 
                 //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                 
@@ -1070,6 +1080,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         instruction[instruction_index].is_raw_data = 1;
                         instruction[instruction_index].byte_aligned = 1;
                     }
+                    byte_index ++;
                 }
                 current_byte_align = 0;
                 expression_index ++;
@@ -1112,33 +1123,63 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
         for (int exp = expression_count - 1; exp >= 0; exp --) {
             switch (instruction[i].expression[exp].type) {
                 case EXPR_IMMEDIATE:
-                    // here the first two bytes are guaranteed to be the label destination
-                    if (instruction[i].expression[exp].tokens[0].type == TT_LABEL) {
-                        // find corresponding label
-                        int corresponding_label_found = -1;
-                        for (int j = 0; j < jump_label_index; j++) {
-                            if (strcmp(instruction[i].expression[exp].tokens[0].raw, jump_label[j].name) == 0) {
-                                if (corresponding_label_found == -1) {
-                                    corresponding_label_found = j;
-                                } else {
-                                    log_msg(LP_ERROR, "Label \"%s\" is not unique [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
-                                    exit(1);
-                                    break;
+                    if ((int) instruction[i].instruction != -1 && !cpu_instruction_is_relative_jump[instruction[i].instruction]) {
+                        // here the first two bytes are guaranteed to be the label destination
+                        if (instruction[i].expression[exp].tokens[0].type == TT_LABEL) {
+                            // find corresponding label
+                            int corresponding_label_found = -1;
+                            for (int j = 0; j < jump_label_index; j++) {
+                                if (strcmp(instruction[i].expression[exp].tokens[0].raw, jump_label[j].name) == 0) {
+                                    if (corresponding_label_found == -1) {
+                                        corresponding_label_found = j;
+                                    } else {
+                                        log_msg(LP_ERROR, "Label \"%s\" is not unique [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
+                                        exit(1);
+                                        break;
+                                    }
                                 }
                             }
+                            if (corresponding_label_found == -1) {
+                                log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
+                                exit(1);
+                                break;
+                            }
+                            //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
+                            instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
+                            instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
+                        } else {
+                            argument_byte_index += 2;
                         }
-                        if (corresponding_label_found == -1) {
-                            log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
-                            exit(1);
-                            break;
-                        }
-                        //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
-                        instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
-                        instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
+                        break;
                     } else {
-                        argument_byte_index += 2;
+                        // Immediate values are the only ones where we can directly calculate the relative equivalent address, otherwise it wouldnt work (i.e. for indirect accesses)
+                        if (instruction[i].expression[exp].tokens[0].type == TT_LABEL) {
+                            // find corresponding label
+                            int corresponding_label_found = -1;
+                            for (int j = 0; j < jump_label_index; j++) {
+                                if (strcmp(instruction[i].expression[exp].tokens[0].raw, jump_label[j].name) == 0) {
+                                    if (corresponding_label_found == -1) {
+                                        corresponding_label_found = j;
+                                    } else {
+                                        log_msg(LP_ERROR, "Label \"%s\" is not unique [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
+                                        exit(1);
+                                        break;
+                                    }
+                                }
+                            }
+                            if (corresponding_label_found == -1) {
+                                log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
+                                exit(1);
+                                break;
+                            }
+                            //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, (jump_label[corresponding_label_found].value - instruction[i].address - 4));
+                            instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0x00ff;
+                            instruction[i].arguments[argument_byte_index++] = ((jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0xff00) >> 8;
+                        } else {
+                            argument_byte_index += 2;
+                        }
+                        break;
                     }
-                    break;
                 
                 case EXPR_INDIRECT_IMMEDIATE:
                     // here the second and third bytes are guaranteed to be the label destination

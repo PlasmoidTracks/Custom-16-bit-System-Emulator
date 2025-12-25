@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "Log.h"
+
 #include "device.h"
 #include "bus.h"
 
@@ -39,6 +41,40 @@ Device_t* bus_find_device_by_type(BUS_t* bus, DEVICE_TYPE_t device_type) {
     return NULL;
 }
 
+Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address) {
+    Device_t* device = NULL;
+    for (int i = 0; i < bus->device_count; i++) {
+        if (!bus->device[i]->readable) continue;
+        if (address >= bus->device[i]->address_listener_low && address <= bus->device[i]->address_listener_high) {
+            if (device) {
+                log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d)", device->device_type);
+            }
+            device = bus->device[i];
+        }
+    }
+    if (device) {
+        //log_msg(LP_DEBUG, "BUS: Found readable mmio device %d", device->device_type);
+    }
+    return device;
+}
+
+Device_t* bus_find_writable_device_by_mmio_address(BUS_t* bus, uint16_t address) {
+    Device_t* device = NULL;
+    for (int i = 0; i < bus->device_count; i++) {
+        if (!bus->device[i]->writable) continue;
+        if (address >= bus->device[i]->address_listener_low && address <= bus->device[i]->address_listener_high) {
+            if (device) {
+                log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d)", device->device_type);
+            }
+            device = bus->device[i];
+        }
+    }
+    if (device) {
+        //log_msg(LP_DEBUG, "BUS: Found writable mmio device %d", device->device_type);
+    }
+    return device;
+}
+
 Device_t* bus_find_device_by_id(BUS_t* bus, DeviceID_t id) {
     for (int i = 0; i < bus->device_count; i++) {
         if (bus->device[i]->device_id == id) {
@@ -61,104 +97,62 @@ void bus_clock(BUS_t* bus) {
                     //log_msg(LP_DEBUG, "BUS %d: The CPU is idle", bus->clock);
                     break;
                 
-                case DS_FETCH:
+                case DS_FETCH: {
                     //log_msg(LP_DEBUG, "BUS %d: The CPU is fetching data", bus->clock);
                     if (device->processed == 1) {
                         //log_msg(LP_DEBUG, "BUS %d: The CPU has a fulfilled request pending", bus->clock);
                         break;
                     }
                     // Check the reading address, if its below 0xF000, then its addressing ram
-                    if (device->address < 0xf000) {
-                        // Ok, so lets find the RAM device, to route the request to it
-                        Device_t* device_ram = bus_find_device_by_type(bus, DT_RAM);
-                        if (!device_ram) {
-                            //log_msg(LP_ERROR, "BUS %d: No RAM device attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
-                            // what do now?
-                            break;
-                        }
-                        //log_msg(LP_DEBUG, "BUS %d: Found RAM device to fetch data from. Making request", bus->clock);
-                        // lets just straight up overwrite it and see what happens
-                        if (device_ram->device_state == DS_IDLE) {
-                            device_ram->address = device->address;
-                            device_ram->device_target_id = device->device_id;
-                            device_ram->device_state = DS_FETCH;
-                            device_ram->processed = 0;
-                        } else {
-                            //log_msg(LP_DEBUG, "BUS %d: RAM device is Idle, need to wait", bus->clock);
-                        }
-                    } else {
-                        //log_msg(LP_DEBUG, "BUS %d: Read request forwarding to Dummy MMIO at address $%.4X", bus->clock, device->address);
-                        // Since address is between 0xF000 and 0xFFFF, we are now addressing MMIO
-                        // Here we differentiate the devices we want to address
-                        // 0xF000 is unused
-                        // 0xF002 is terminal output (write only)
-                        // 0xF004 is terminal input
-                        // 0xF006 is a request to write to disk with the writing option flags set in 0xF008 and the filename being pointed to by r0?
-                        // 0xF008 is a request to read from disk with the same parameters
-
-                        // So far use dummy, as there are no writable devices as of now
+                    Device_t* device_mmio = bus_find_readable_device_by_mmio_address(bus, device->address);
+                    if (!device_mmio) {
                         device->processed = 1;
                         device->device_state = DS_IDLE;
+                        //log_msg(LP_DEBUG, "BUS %d: No MMIO device attached to the BUS, that is responding on reads from address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
+                        // what do now?
+                        break;
+                    }
+                    //log_msg(LP_DEBUG, "BUS %d: Found RAM device to fetch data from. Making request", bus->clock);
+                    // lets just straight up overwrite it and see what happens
+                    if (device_mmio->device_state == DS_IDLE) {
+                        device_mmio->address = device->address;
+                        device_mmio->device_target_id = device->device_id;
+                        device_mmio->device_state = DS_FETCH;
+                        device_mmio->processed = 0;
+                    } else {
+                        //log_msg(LP_DEBUG, "BUS %d: RAM device is Idle, need to wait", bus->clock);
                     }
                     break;
+                }
                 
-                case DS_STORE:
+                case DS_STORE: {
                     //log_msg(LP_DEBUG, "BUS %d: The CPU is storing data", bus->clock);
                     if (device->processed == 1) {
                         //log_msg(LP_SUCCESS, "BUS %d: The CPU has a fulfilled request pending", bus->clock);
                         break;
                     }
                     // Check the reading address, if its below 0xF000, then its addressing ram
-                    if (device->address < 0xf000) {
-                        // Ok, so lets find the RAM device, to route the request to it
-                        Device_t* device_ram = bus_find_device_by_type(bus, DT_RAM);
-                        if (!device_ram) {
-                            //log_msg(LP_ERROR, "BUS %d: No RAM device attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
-                            // what do now?
-                            break;
-                        }
-                        //log_msg(LP_DEBUG, "BUS %d: Found RAM device to store data to. Making request", bus->clock);
-                        // lets just straight up overwrite it and see what happens
-                        if (device_ram->device_state == DS_IDLE) {
-                            device_ram->address = device->address;
-                            device_ram->data = device->data;
-                            device_ram->device_target_id = device->device_id;
-                            device_ram->device_state = DS_STORE;
-                            device_ram->processed = 0;
-                        } else {
-                            //log_msg(LP_DEBUG, "BUS %d: RAM device is Idle, need to wait", bus->clock);
-                        }
+                    Device_t* device_mmio = bus_find_writable_device_by_mmio_address(bus, device->address);
+                    if (!device_mmio) {
+                        device->processed = 1;
+                        device->device_state = DS_IDLE;
+                        //log_msg(LP_DEBUG, "BUS %d: No MMIO device attached to the BUS, that is responding on writes to address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
+                        // what do now?
+                        break;
+                    }
+                    //log_msg(LP_DEBUG, "BUS %d: Found RAM device to store data to. Making request", bus->clock);
+                    // lets just straight up overwrite it and see what happens
+                    if (device_mmio->device_state == DS_IDLE) {
+                        device_mmio->address = device->address;
+                        device_mmio->data = device->data;
+                        device_mmio->device_target_id = device->device_id;
+                        device_mmio->device_state = DS_STORE;
+                        device_mmio->processed = 0;
                     } else {
-                        //log_msg(LP_DEBUG, "BUS %d: Write request forwarding to MMIO at address $%.4X with data ", bus->clock, device->address);
-                        // Since address is between 0xF000 and 0xFFFF, we are now addressing MMIO
-                        // Here we differentiate the devices we want to address
-                        // 0xF000 is unused
-                        // 0xF002 is terminal output
-                        // 0xF004 is terminal input (read only)
-                        if (device->address == 0xf002) {
-                            //log_msg(LP_DEBUG, "BUS %d: Addressing Terminal as MMIO target", bus->clock);
-                            Device_t* device_terminal = bus_find_device_by_type(bus, DT_TERMINAL);
-                            if (!device_terminal) {
-                                //log_msg(LP_ERROR, "BUS %d: No Terminal device attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
-                                // what do now?
-                                break;
-                            }
-                            if (device_terminal->device_state == DS_IDLE) {
-                                device_terminal->address = device->address;
-                                device_terminal->data = device->data;
-                                device_terminal->device_target_id = device->device_id;
-                                device_terminal->device_state = DS_STORE;
-                                device_terminal->processed = 0;
-                            }
-
-                        } else {
-                            //log_msg(LP_ERROR, "BUS %d: Addressing Dummy as MMIO target", bus->clock [%s:%d]", __FILE__, __LINE__);
-                            // For any other device, use dummy
-                            device->processed = 1;
-                            device->device_state = DS_IDLE;
-                        }
+                        //log_msg(LP_DEBUG, "BUS %d: RAM device is Idle, need to wait", bus->clock);
                     }
                     break;
+                }
                 
                 case DS_INTERRUPT:
                     // CPU will handle... I guess

@@ -53,7 +53,6 @@ const char* expression_type_string[] = {
     [EXPR_INDIRECT_SCALE_OFFSET]    = "indirect_scale_offset", 
     [EXPR_SEGMENT_DATA]             = "segment_data", 
     [EXPR_SEGMENT_CODE]             = "segment_code", 
-    [EXPR_INCLUDE]                  = "include", 
     [EXPR_INCBIN]                   = "incbin", 
     [EXPR_ADDRESS]                  = "address", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
@@ -440,21 +439,6 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression[expression_index].tokens[0] = tokens[token_index];
                 expression[expression_index].token_count = 1;
                 token_index += 1;
-                expression_index ++;
-        }
-
-        // .include
-        else if (token_index + 0 < token_count &&
-            tokens[token_index + 0].type == TT_INCLUDE &&
-            tokens[token_index + 1].type == TT_STRING) {
-
-                expression[expression_index].type = EXPR_INCLUDE;
-                Token_t* token = malloc(sizeof(Token_t));
-                token->type = TT_STRING;
-                token->raw = read_file(tokens[token_index].raw, NULL);
-                expression[expression_index].tokens[0] = tokens[token_index];
-                expression[expression_index].token_count = 2;
-                token_index += 2;
                 expression_index ++;
         }
 
@@ -1122,16 +1106,15 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 expression_index ++;
                 continue;
                 //exit(1);
-            } else if (expression[expression_index].type == EXPR_INCLUDE) {
-                instruction[instruction_index].expression[0] = expression[expression_index];
-                instruction[instruction_index].expression_count = 1;
-                expression_index ++;
-                instruction_index ++;
             } else if (expression[expression_index].type == EXPR_INCBIN) {
                 instruction[instruction_index].expression[0] = expression[expression_index];
                 instruction[instruction_index].expression_count = 1;
-                expression_index ++;
-                instruction_index ++;
+                instruction[instruction_index].address = byte_index;
+                //char* filename = calloc(strlen(instruction[instruction_index].expression[0].tokens[1].raw) - 1, 1);
+                //memcpy(filename, instruction[instruction_index].expression[0].tokens[1].raw + 1, strlen(instruction[instruction_index].expression[0].tokens[1].raw + 1));
+                //filename[strlen(filename) - 1] = '\0';
+                //byte_index += file_size(filename);
+                //free(filename);
             } else if (expression[expression_index].type == EXPR_NONE) {
 
             } else {
@@ -1328,7 +1311,6 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_ADDRESS:
                 case EXPR_SEGMENT_CODE:
                 case EXPR_SEGMENT_DATA:
-                case EXPR_INCLUDE:
                 case EXPR_INCBIN:
                 case EXPR_TEXT_DEFINITION:
                 // etc.
@@ -1392,11 +1374,6 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     *binary_size = index;
                 }
             }
-            instruction_index ++;
-            continue;
-        }
-        if (instruction[instruction_index].expression[0].type == EXPR_INCLUDE) {
-            log_msg(LP_ERROR, "\".include\" has not been implemented yet");
             instruction_index ++;
             continue;
         }
@@ -1509,7 +1486,13 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, segment, segment_count);
     for (int i = 0; i < instruction_count; i++) {
         /*if ((int) instruction[i].instruction >= 0) {
-            printf("Instruction %d: \"%s\"\n", i + 1, cpu_instruction_string[instruction[i].instruction]);
+            printf("Instruction %d: \"%s\" [pos: %d] - ", i + 1, cpu_instruction_string[instruction[i].instruction], instruction[i].address);
+            for (int e = 0; e < instruction[i].expression_count; e++) {
+                for (int t = 0; t < instruction[i].expression[e].token_count; t++) {
+                    printf("%s ", instruction[i].expression[e].tokens[t].raw);
+                }
+            }
+            printf("\n");
         } else {
             printf("Instruction %d: \"Not an instr.\"\n", i + 1);
         }*/

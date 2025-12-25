@@ -254,3 +254,32 @@ int file_exists(const char* const filename) {
     }
     return 0;
 }
+
+long file_size(const char* const filename) {
+    if (!filename) {
+        log_msg(LP_ERROR, "Null pointer [%s:%d]", __FILE__, __LINE__);
+        return -1;
+    }
+
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        log_msg(LP_ERROR, "Unable to open file \"%s\" [%s:%d]", filename, __FILE__, __LINE__);
+        return -1;
+    }
+
+    if (fseek(file, 0, SEEK_END) != 0) {
+        log_msg(LP_ERROR, "fseek failed [%s:%d]", __FILE__, __LINE__);
+        fclose(file);
+        return -1;
+    }
+
+    long fsize = ftell(file);
+    if (fsize == 0) {
+        log_msg(LP_ERROR, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_INFO, "File may be empty or too large for long");
+    }
+
+    fclose(file);
+    return fsize;
+}
+

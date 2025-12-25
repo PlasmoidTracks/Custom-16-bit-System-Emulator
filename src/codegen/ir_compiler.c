@@ -841,7 +841,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             case IR_PAR_CALL_LABEL: {
                 code_output = append_to_output(code_output, &code_output_len, "; call\n");
                 char tmp[256];
-                if (options & IRCO_USE_RELATIVE_JUMPS) {
+                if (options & IRCO_POSITION_INDEPENDENT_CODE) {
                     sprintf(tmp, "rcall %s\n", token->child[1]->token.raw);
                 } else {
                     sprintf(tmp, "call %s\n", token->child[1]->token.raw);
@@ -874,7 +874,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 IRParserToken_t* expr = parser_token[parser_token_index]->child[1];
                 code_output = append_to_output(code_output, &code_output_len, "; expression -> loading label\n");
                 char tmp[256];
-                if (options & IRCO_USE_RELATIVE_JUMPS) {
+                if (options & IRCO_POSITION_INDEPENDENT_CODE) {
                     sprintf(tmp, "rjmp %s\n", expr->token.raw);
                 } else {
                     sprintf(tmp, "jmp %s\n", expr->token.raw);

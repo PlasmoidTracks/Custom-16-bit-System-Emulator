@@ -23,4 +23,6 @@ extern int append_file_format(const char* const filename, const char* format, ..
 
 extern int file_exists(const char* const filename);
 
+extern long file_size(const char *filename);
+
 #endif

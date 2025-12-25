@@ -37,8 +37,8 @@ char* canonicalizer_compile(char* content) {
     // build instruction array
     int instruction_count = 0;
     Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, 0);
-    
 
+    
     // reconstruct asm file
     for (int i = 0; i < instruction_count; i++) {
         Instruction_t instr = instruction[i];
@@ -52,9 +52,6 @@ char* canonicalizer_compile(char* content) {
                 output = append_to_output(output, &output_len, ".code");
             } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {
                 output = append_to_output(output, &output_len, ".data");
-            } else if (instr.expression[0].type == EXPR_INCLUDE) {
-                output = append_to_output(output, &output_len, ".include ");
-                output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
             } else if (instr.expression[0].type == EXPR_INCBIN) {
                 output = append_to_output(output, &output_len, ".incbin ");
                 output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
@@ -217,22 +214,20 @@ char* canonicalizer_compile(char* content) {
                         output = append_to_output(output, &output_len, "; UNKNOWN\n");
                         log_msg(LP_ERROR, "Canonicalizer: Unknown configuration for scaled indirect register with offset [%s:%d]", __FILE__, __LINE__);
                     }
-                } else if (  (
-                    instr.admx == ADMX_IND16
-                    || instr.admx == ADMX_IMM16)
+                } else if (
+                    (
+                           instr.admx == ADMX_IND16
+                        || instr.admx == ADMX_IMM16
+                    )
                     && j == 2
                 ) {
                     // $xxxx
-                    if (
-                        instr.expression[j].tokens[0].type == TT_IMMEDIATE
-                    ) {
+                    if (instr.expression[j].tokens[0].type == TT_IMMEDIATE) {
                         uint16_t imm = parse_immediate(instr.expression[j].tokens[0].raw);
                         char tmp[16];
                         sprintf(tmp, "$%.4X", imm);
                         output = append_to_output(output, &output_len, tmp);
-                    } else if (
-                        instr.expression[j].tokens[0].type == TT_LABEL
-                    ) {
+                    } else if (instr.expression[j].tokens[0].type == TT_LABEL) {
                         output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
                     }
                     // [ $xxxx ]

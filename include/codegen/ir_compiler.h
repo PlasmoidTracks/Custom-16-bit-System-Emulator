@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 typedef enum {
-    IRCO_USE_RELATIVE_JUMPS = 0001, 
+    IRCO_POSITION_INDEPENDENT_CODE = 0001, 
     IRCO_ADD_PREAMBLE = 0002, 
     IRCO_KEEP_COMMENTS = 0100, 
     IRCO_ADD_VARNAMES = 0200, 

@@ -13,6 +13,8 @@
 #include "cpu/cpu_utils.h"
 
 
+#define RUN_EMULATION
+#undef RUN_EMULATION
 
 #define RUN_BINARY_DIRECTLY
 #undef RUN_BINARY_DIRECTLY
@@ -122,7 +124,7 @@ int main(int argc, char* argv[]) {
 
     // from ir to asm
     #ifdef COMPILE_IR
-        char* asm = ir_compile_from_filename(filename, ((IRCO_USE_RELATIVE_JUMPS) | (IRCO_ADD_PREAMBLE)));
+        char* asm = ir_compile_from_filename(filename, ((IRCO_POSITION_INDEPENDENT_CODE) | (IRCO_ADD_PREAMBLE)));
         if (!asm) {
             log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
@@ -202,17 +204,19 @@ int main(int argc, char* argv[]) {
     #endif
 
     // Execution step
-    for (long long int i = 0; i < 1000000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
-        #ifdef HW_WATCH
-            system_clock_debug(system);
-        #else
-            system_clock(system);
-        #endif
-    }
+    #ifdef RUN_EMULATION
+        for (long long int i = 0; i < 1000000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
+            #ifdef HW_WATCH
+                system_clock_debug(system);
+            #else
+                system_clock(system);
+            #endif
+        }
 
-    //cpu_print_cache(cpu);
-    cpu_print_state(system->cpu);
-    cpu_print_stack(system->cpu, system->ram, 20);
+        //cpu_print_cache(cpu);
+        cpu_print_state(system->cpu);
+        cpu_print_stack(system->cpu, system->ram, 20);
+    #endif // RUN_EMULATION
 
     free(bin);
 

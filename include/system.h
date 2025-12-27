@@ -24,14 +24,12 @@ typedef enum {
     HC_ALWAYS,          // triggers every clock
 } HookCondition_t;
 
-typedef struct System_t System_t;
-
 typedef struct Hook_t {
     void* target;
     int target_bytes;       // 2 for 16-bit values, 1 for 8-bit, etc.
     void* match;
     HookCondition_t condition;
-    void (*action)(System_t*);
+    void (*action)(void*);
 } Hook_t;
 
 typedef struct System_t {

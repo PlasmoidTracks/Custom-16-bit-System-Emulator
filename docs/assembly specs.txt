@@ -60,7 +60,11 @@ Labels
   - .data
   - .my_label
   - $1234
-  
+- When used with relative jumps, the label resolves to the correct relative value instead of the absolute value
+  - rjmp .label   ; here '.label' resolves to $0004
+  - jmp .label    ; here '.label' resolves to the absolute address
+  - .label
+
 Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed. 
 There is an exception for relative jump instructions using labels as an immediate 16-bit value (i.e. "rjmp .label"). 
 Here labels are not resolved to their absolute address representation, but instead to the relative address. 

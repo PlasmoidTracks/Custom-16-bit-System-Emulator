@@ -10,11 +10,10 @@
 #include "asm/assembler.h"
 
 #include "system.h"
-#include "cpu/cpu_utils.h"
 
 
 #define RUN_EMULATION
-#undef RUN_EMULATION
+//#undef RUN_EMULATION
 
 #define RUN_BINARY_DIRECTLY
 #undef RUN_BINARY_DIRECTLY
@@ -42,6 +41,10 @@
 #define HW_WATCH
 #undef HW_WATCH
 
+
+#ifdef RUN_EMULATION
+    #include "cpu/cpu_utils.h"
+#endif // RUN_EMULATION
 
 #ifdef COMPILE_IR
     #include "codegen/ir_compiler.h"

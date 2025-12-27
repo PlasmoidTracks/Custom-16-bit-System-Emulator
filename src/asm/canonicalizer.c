@@ -257,6 +257,21 @@ char* canonicalizer_compile(char* content) {
                                 }
                             }
                             output = append_to_output(output, &output_len, "]");
+                    } else if (instr.expression[j].token_count > 4 &&
+                        instr.expression[j].tokens[0].type == TT_BRACKET_OPEN &&
+                        instr.expression[j].tokens[1].type == TT_LABEL &&
+                        instr.expression[j].tokens[2].type == TT_PLUS &&
+                        instr.expression[j].tokens[3].type == TT_IMMEDIATE &&
+                        instr.expression[j].tokens[4].type == TT_BRACKET_CLOSE
+                    ) {
+                            output = append_to_output(output, &output_len, "[");
+                            for (int t = 1; t < instr.expression[j].token_count - 1; t++) {
+                                output = append_to_output(output, &output_len, instr.expression[j].tokens[t].raw);
+                                if (t < instr.expression[j].token_count - 2) {
+                                    output = append_to_output(output, &output_len, " ");
+                                }
+                            }
+                            output = append_to_output(output, &output_len, "]");
                     }
                 } else {
                     int tc = instr.expression[j].token_count;

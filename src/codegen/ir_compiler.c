@@ -8,8 +8,6 @@
 #include "utils/String.h"
 #include "utils/IO.h"
 
-#include "memory_layout.h"
-
 #include "asm/assembler.h"
 
 #include "codegen/ir_parser.h"
@@ -954,8 +952,9 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                             splits[index] = realloc(splits[index], 32);
                             sprintf(splits[index], "[$%.4X + r3]", ((int16_t) ident->stack_offset) & 0xffff);
                         } else {
-                            log_msg(LP_ERROR, "IR Compiler: resolving of static variable from symbolic expression within inline assembly is not possible [%s:%d]", __FILE__, __LINE__);
-                            return NULL;
+                            sprintf(splits[index], "[.__static_data + $%.4X]", ((int16_t) ident->stack_offset) & 0xffff);
+                            //log_msg(LP_ERROR, "IR Compiler: resolving of static variable from symbolic expression within inline assembly is not possible [%s:%d]", __FILE__, __LINE__);
+                            //return NULL;
                         }
                         break;
                     }

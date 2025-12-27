@@ -192,7 +192,22 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
     int token_index = 0;
     int expression_index = 0;
     while (token_index < token_count) {
-        // $xxxx
+        // .label + $ffff
+        if (token_index + 2 < token_count &&
+            tokens[token_index + 0].type == TT_LABEL &&
+            tokens[token_index + 1].type == TT_PLUS &&
+            tokens[token_index + 2].type == TT_IMMEDIATE) {
+
+                expression[expression_index].type = EXPR_IMMEDIATE;
+                for (int j = 0; j < 3; j++) {
+                    expression[expression_index].tokens[j] = tokens[token_index + j];
+                }
+                expression[expression_index].token_count = 3;
+                token_index += 3;
+                expression_index ++;
+        }
+
+        // $ffff
         if (token_index + 0 < token_count &&
             (tokens[token_index + 0].type == TT_IMMEDIATE || tokens[token_index + 0].type == TT_LABEL)) {
 
@@ -227,6 +242,23 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression[expression_index].token_count = 3;
                 expression_index ++;
                 token_index += 3;
+        }
+
+        // [ .label + $ffff ]
+        else if (token_index + 4 < token_count &&
+            tokens[token_index + 0].type == TT_BRACKET_OPEN &&
+            tokens[token_index + 1].type == TT_LABEL &&
+            tokens[token_index + 2].type == TT_PLUS &&
+            tokens[token_index + 3].type == TT_IMMEDIATE &&
+            tokens[token_index + 4].type == TT_BRACKET_CLOSE) {
+
+                expression[expression_index].type = EXPR_INDIRECT_IMMEDIATE;
+                for (int j = 0; j < 5; j++) {
+                    expression[expression_index].tokens[j] = tokens[token_index + j];
+                }
+                expression[expression_index].token_count = 5;
+                expression_index ++;
+                token_index += 5;
         }
 
         // [ reg ]
@@ -890,22 +922,40 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
                 case ADMX_IMM16:
                     {
-                        char* string_value = expression[admx_expression_index].tokens[0].raw;
-                        //printf("%s\n", string_value);
-                        int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                        instruction[instruction_index].arguments[0] = value & 0xff;
-                        instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
-                        argument_bytes_used = 2;
+                        if (expression[admx_expression_index].token_count > 1) {
+                            char* string_value = expression[admx_expression_index].tokens[2].raw;
+                            //printf("%s\n", string_value);
+                            int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            instruction[instruction_index].arguments[0] = value & 0xff;
+                            instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
+                            argument_bytes_used = 2;
+                        } else {
+                            char* string_value = expression[admx_expression_index].tokens[0].raw;
+                            //printf("%s\n", string_value);
+                            int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            instruction[instruction_index].arguments[0] = value & 0xff;
+                            instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
+                            argument_bytes_used = 2;
+                        }
                     }
                     break;
 
                 case ADMX_IND16:
                     {
-                        char* string_value = expression[admx_expression_index].tokens[1].raw;
-                        int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                        instruction[instruction_index].arguments[0] = value & 0xff;
-                        instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
-                        argument_bytes_used = 2;
+                        
+                        if (expression[admx_expression_index].token_count > 3) {
+                            char* string_value = expression[admx_expression_index].tokens[3].raw;
+                            int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            instruction[instruction_index].arguments[0] = value & 0xff;
+                            instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
+                            argument_bytes_used = 2;
+                        } else {
+                            char* string_value = expression[admx_expression_index].tokens[1].raw;
+                            int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            instruction[instruction_index].arguments[0] = value & 0xff;
+                            instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
+                            argument_bytes_used = 2;
+                        }
                     }
                     break;
 
@@ -1015,11 +1065,15 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 expression_index += 1;
                 continue;
             } else if (expression[expression_index].type == EXPR_IMMEDIATE) {
+                if (expression[expression_index].token_count > 1) {
+                    log_msg(LP_ERROR, "Parsing expressions: label offset immediate values are not allowed inside data segment [%s:%d]", __FILE__, __LINE__);
+                    return NULL;
+                }
                 char* string_value = expression[expression_index].tokens[0].raw;
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                 if (byte_alignment == 1) {
                     if (value > 0x00ff) {
-                        log_msg(LP_WARNING, "Due to the alignment, values above 0xff will be truncated! This also applies to floating point values! [%s:%d]", __FILE__, __LINE__);
+                        log_msg(LP_WARNING, "Parsing expressions: Due to the alignment, values above 0xff will be truncated! This also applies to floating point values! [%s:%d]", __FILE__, __LINE__);
                     }
                     if (current_byte_align == 0) {
                         instruction[instruction_index].raw_data = value & 0x00ff;
@@ -1035,7 +1089,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 } else if (byte_alignment == 2) {
                     instruction[instruction_index].raw_data = value;
                 } else {
-                    log_msg(LP_ERROR, "No alignment specified in data segment! [%s:%d]", __FILE__, __LINE__);
+                    log_msg(LP_ERROR, "Parsing expressions: No alignment specified in data segment! [%s:%d]", __FILE__, __LINE__);
                     exit(1);
                 }
                 byte_index += 2;
@@ -1174,8 +1228,16 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                                 break;
                             }
                             //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
-                            instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
-                            instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
+                            if (instruction[i].expression[exp].token_count > 1) {
+                                // here if expression has form [.label + imm]
+                                instruction[i].arguments[argument_byte_index] += jump_label[corresponding_label_found].value & 0x00ff;
+                                instruction[i].arguments[argument_byte_index + 1] += ((jump_label[corresponding_label_found].value & 0xff00) >> 8) + (instruction[i].arguments[argument_byte_index] >> 8);
+                                instruction[i].arguments[argument_byte_index] &= 0x00ff;
+                                argument_byte_index += 2;
+                            } else {
+                                instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
+                                instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
+                            }
                         } else {
                             argument_byte_index += 2;
                         }
@@ -1202,8 +1264,17 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                                 break;
                             }
                             //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, (jump_label[corresponding_label_found].value - instruction[i].address - 4));
-                            instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0x00ff;
-                            instruction[i].arguments[argument_byte_index++] = ((jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0xff00) >> 8;
+                            if (instruction[i].expression[exp].token_count > 1) {
+                                // here if expression has form [.label + imm]
+                                instruction[i].arguments[argument_byte_index] += (jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0x00ff;
+                                instruction[i].arguments[argument_byte_index + 1] += (((jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0xff00) >> 8) + (instruction[i].arguments[argument_byte_index] >> 8);
+                                instruction[i].arguments[argument_byte_index] &= 0x00ff;
+                                argument_byte_index += 2;
+                            } else {
+                                instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0x00ff;
+                                instruction[i].arguments[argument_byte_index++] = ((jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0xff00) >> 8;
+                            }
+                            
                         } else {
                             argument_byte_index += 2;
                         }
@@ -1227,8 +1298,16 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             break;
                         }
                         //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, jump_label[corresponding_label_found].value);
-                        instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
-                        instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
+                        if (instruction[i].expression[exp].token_count > 3) {
+                            // here if expression has form [.label + imm]
+                            instruction[i].arguments[argument_byte_index] += jump_label[corresponding_label_found].value & 0x00ff;
+                            instruction[i].arguments[argument_byte_index + 1] += ((jump_label[corresponding_label_found].value & 0xff00) >> 8) + (instruction[i].arguments[argument_byte_index] >> 8);
+                            instruction[i].arguments[argument_byte_index] &= 0x00ff;
+                            argument_byte_index += 2;
+                        } else {
+                            instruction[i].arguments[argument_byte_index++] = jump_label[corresponding_label_found].value & 0x00ff;
+                            instruction[i].arguments[argument_byte_index++] = (jump_label[corresponding_label_found].value & 0xff00) >> 8;
+                        }
                     } else {
                         argument_byte_index += 2;
                     }

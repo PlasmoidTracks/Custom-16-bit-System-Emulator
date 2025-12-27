@@ -1120,27 +1120,28 @@ char* optimizer_compile(char* content) {
     for (int i = 0; i < instruction_count; i++) {
         Instruction_t instr = instruction[i];
         int ec = instr.expression_count;
-        for (int j = 0; j < ec; j++) {
-            if (instr.is_address) {
-                char tmp[32];
-                sprintf(tmp, ".address $%.4x", instr.address);
-                output = append_to_output(output, &output_len, tmp);
-            } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {
-                output = append_to_output(output, &output_len, ".code");
-            } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {
-                output = append_to_output(output, &output_len, ".data");
-            } else if (instr.expression[0].type == EXPR_INCBIN) {
-                output = append_to_output(output, &output_len, ".incbin ");
-                output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
-            } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
-                //log_msg(LP_INFO, "Label found");
-                output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-                output = append_to_output(output, &output_len, " ");
-            } else {
+        if (instr.is_address) {
+            char tmp[32];
+            sprintf(tmp, ".address $%.4x", instr.address);
+            output = append_to_output(output, &output_len, tmp);
+        } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {
+            output = append_to_output(output, &output_len, ".code");
+        } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {
+            output = append_to_output(output, &output_len, ".data");
+        } else if (instr.expression[0].type == EXPR_INCBIN) {
+            output = append_to_output(output, &output_len, ".incbin ");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
+        } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
+            //log_msg(LP_INFO, "Label found");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
+            output = append_to_output(output, &output_len, " ");
+        } else {
+            for (int j = 0; j < ec; j++) {
                 int tc = instr.expression[j].token_count;
                 for (int k = 0; k < tc; k++) {
                     output = append_to_output(output, &output_len, instr.expression[j].tokens[k].raw);
-                    if (k > 0 && k < tc - 2) {
+                    if ((tc == 5 && (k > 0 && k < tc - 2))
+                        || (tc == 3 && k < 2)) {
                         output = append_to_output(output, &output_len, " ");
                     }
                 }

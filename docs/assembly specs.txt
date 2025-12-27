@@ -64,6 +64,9 @@ Labels
   - rjmp .label   ; here '.label' resolves to $0004
   - jmp .label    ; here '.label' resolves to the absolute address
   - .label
+- labels can also be offset inside an operand
+  - mov r0, .label + 1234
+  - mov r0, [.label + 1234]
 
 Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed. 
 There is an exception for relative jump instructions using labels as an immediate 16-bit value (i.e. "rjmp .label"). 

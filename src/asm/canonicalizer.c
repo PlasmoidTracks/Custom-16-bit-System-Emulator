@@ -215,10 +215,7 @@ char* canonicalizer_compile(char* content) {
                         log_msg(LP_ERROR, "Canonicalizer: Unknown configuration for scaled indirect register with offset [%s:%d]", __FILE__, __LINE__);
                     }
                 } else if (
-                    (
-                           instr.admx == ADMX_IND16
-                        || instr.admx == ADMX_IMM16
-                    )
+                    (instr.admx == ADMX_IND16 || instr.admx == ADMX_IMM16)
                     && j == 2
                 ) {
                     // $xxxx
@@ -228,7 +225,12 @@ char* canonicalizer_compile(char* content) {
                         sprintf(tmp, "$%.4X", imm);
                         output = append_to_output(output, &output_len, tmp);
                     } else if (instr.expression[j].tokens[0].type == TT_LABEL) {
-                        output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
+                        for (int t = 0; t < instr.expression[j].token_count; t++) {
+                            output = append_to_output(output, &output_len, instr.expression[j].tokens[t].raw);
+                            if (t < instr.expression[j].token_count - 1) {
+                                output = append_to_output(output, &output_len, " ");
+                            }
+                        }
                     }
                     // [ $xxxx ]
                     else if (instr.expression[j].token_count > 2 &&
@@ -248,7 +250,12 @@ char* canonicalizer_compile(char* content) {
                         instr.expression[j].tokens[2].type == TT_BRACKET_CLOSE
                     ) {
                             output = append_to_output(output, &output_len, "[");
-                            output = append_to_output(output, &output_len, instr.expression[j].tokens[1].raw);
+                            for (int t = 1; t < instr.expression[j].token_count - 1; t++) {
+                                output = append_to_output(output, &output_len, instr.expression[j].tokens[t].raw);
+                                if (t < instr.expression[j].token_count - 2) {
+                                    output = append_to_output(output, &output_len, " ");
+                                }
+                            }
                             output = append_to_output(output, &output_len, "]");
                     }
                 } else {

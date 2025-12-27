@@ -15,6 +15,9 @@
 #include "asm/assembler.h"
 
 
+#define OPT_DEBUG
+#undef OPT_DEBUG
+
 /*
 CRITICAL BUG: Labels inside .data segments are not present in the output!!!
 */
@@ -172,6 +175,9 @@ char* optimizer_compile(char* content) {
                     remove_instruction(instruction, &instruction_count, i);
                     i --;
                     changes_applied = 1;
+                    #ifdef OPT_DEBUG
+                        log_msg(LP_DEBUG, "Optimizer: applied {mov rN, rN} => {-} [%s:%d]", __FILE__, __LINE__);
+                    #endif // OPT_DEBUG
                 }
             }
             if (changes_applied) break;
@@ -187,6 +193,9 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {add rN, 0} => {-} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -203,6 +212,9 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mul rN, 1} => {-} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -219,6 +231,9 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mulf rN, 1} => {-} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -234,11 +249,16 @@ char* optimizer_compile(char* content) {
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == MOV) {
                     if (   cpu_reduced_addressing_mode_category[instruction[i].admr] == ADMC_REG
-                        && instruction[i].admr == instruction[i + 1].admr) {
+                        && instruction[i].admr == instruction[i + 1].admr
+                        && !is_same_indirect_adm(instruction[i + 1].admr, instruction[i + 1].admx)
+                    ) {
                         //log_msg(LP_DEBUG, "Optimizer: removed overshadowed mov instruction (line %d)", i);
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, x; mov rN, y} => {mov rN, y} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
                 if (instruction[i].instruction == LEA && instruction[i + 1].instruction == LEA) {
@@ -248,6 +268,9 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {lea rN, x; lea rN, y} => {-; lea rN, y} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -261,7 +284,7 @@ char* optimizer_compile(char* content) {
             // mov rN, rM
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == ADD) {
-                    if (instruction[i].admx == ADMX_IMM16) {
+                    if (instruction[i].admx == ADMX_IMM16 && instruction[i].expression[2].tokens[0].type != TT_LABEL) {
                         if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0) {
                             if (instruction[i].admr == instruction[i + 1].admr) {
                                 //log_msg(LP_DEBUG, "Optimizer: replaced additive identity from register with direct mov operation (line %d)", i);
@@ -270,6 +293,9 @@ char* optimizer_compile(char* content) {
                                 remove_instruction(instruction, &instruction_count, i);
                                 i --;
                                 changes_applied = 1;
+                                #ifdef OPT_DEBUG
+                                    log_msg(LP_DEBUG, "Optimizer: applied {mov rN, 0; add rN, rM} => {-; mov rN, rM} [%s:%d]", __FILE__, __LINE__);
+                                #endif // OPT_DEBUG
                             }
                         }
                     }
@@ -291,6 +317,9 @@ char* optimizer_compile(char* content) {
                                 //log_msg(LP_DEBUG, "Optimizer: removed additive identity from register operation (line %d)", i);
                                 remove_instruction(instruction, &instruction_count, i + 1);
                                 changes_applied = 1;
+                                #ifdef OPT_DEBUG
+                                    log_msg(LP_DEBUG, "Optimizer: applied {mov rN, 0; add x, r0} => {mov rN, 0; -} [%s:%d]", __FILE__, __LINE__);
+                                #endif // OPT_DEBUG
                             }
                         }
                     }
@@ -312,6 +341,9 @@ char* optimizer_compile(char* content) {
                         instruction[i].instruction = MOV;
                         remove_instruction(instruction, &instruction_count, i + 1);
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {lea rN, [x]; mov rN, [rN]} => {mov rN, [x]; -} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -380,6 +412,9 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, x; op rM, rN; mov rN, y} => {-; op rM, x; mov rN, y} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -459,6 +494,9 @@ char* optimizer_compile(char* content) {
                         instruction[i].admx = ADMX_IND_R0_OFFSET16 + instruction[i].admx - ADMX_R0;
                         remove_instruction(instruction, &instruction_count, i + 1);
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, rM; add rN, x} => {lea rN, [x + rM]; -} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -473,7 +511,10 @@ char* optimizer_compile(char* content) {
             // (removed) or "SEAO"
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && is_arithmetic_operation(instruction[i + 1].instruction)) {
-                    if (instruction[i].admr == instruction[i + 1].admr && instruction[i].admx == ADMX_IMM16 && instruction[i + 1].admx == ADMX_IMM16) {
+                    if (
+                        instruction[i].admr == instruction[i + 1].admr && instruction[i].admx == ADMX_IMM16 && instruction[i + 1].admx == ADMX_IMM16
+                        && instruction[i].expression[2].tokens[0].type != TT_LABEL
+                    ) {
                         //log_msg(LP_DEBUG, "Optimizer: combined arithmetic assign chain (line %d)", i);
                         
                         int16_t value = (int16_t) parse_immediate(instruction[i].expression[2].tokens[0].raw);
@@ -552,6 +593,9 @@ char* optimizer_compile(char* content) {
                             insert_instruction(&instruction, new_instruction, &instruction_count, i + 1);
                         }
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, x; add rN, y} => {mov rN, z; -} with z precomputed from x and y [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -578,7 +622,9 @@ char* optimizer_compile(char* content) {
                     instruction[i].expression[2].tokens[0] = instruction[i].expression[2].tokens[1];
                     instruction[i].expression[2].token_count = 1;
                     changes_applied = 1;
-                    break;
+                    #ifdef OPT_DEBUG
+                        log_msg(LP_DEBUG, "Optimizer: applied {lea rN, [x]} => {mov rN, x} [%s:%d]", __FILE__, __LINE__);
+                    #endif // OPT_DEBUG
                 }
             }
             if (changes_applied) break;
@@ -596,6 +642,9 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i -= 1;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {push rN, pop rN} => {-; -} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
@@ -613,6 +662,9 @@ char* optimizer_compile(char* content) {
                     remove_instruction(instruction, &instruction_count, i);
                     i -= 1;
                     changes_applied = 1;
+                    #ifdef OPT_DEBUG
+                        log_msg(LP_DEBUG, "Optimizer: applied {pushsr; popsr} => {-; -} [%s:%d]", __FILE__, __LINE__);
+                    #endif // OPT_DEBUG
                 }
             }
             if (changes_applied) break;
@@ -730,13 +782,16 @@ char* optimizer_compile(char* content) {
                         remove_instruction(instruction, &instruction_count, i);
                         i --;
                         changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, [rN]; op; mov [r0], rN} => {-; op; mov [r0], [rN]} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }
             if (changes_applied) break;
 
 
-/*
+            /*
             // mov rN, x
             // instruction that doesnt use or modify rN
             // mov ?, rN
@@ -847,6 +902,9 @@ char* optimizer_compile(char* content) {
                                     remove_instruction(instruction, &instruction_count, i);
                                     i --;
                                     changes_applied = 1;
+                                    #ifdef OPT_DEBUG
+                                        log_msg(LP_DEBUG, "Optimizer: applied {and x, $ffff} => {-} [%s:%d]", __FILE__, __LINE__);
+                                    #endif // OPT_DEBUG
                                 }
                             }
                         }
@@ -923,6 +981,9 @@ char* optimizer_compile(char* content) {
                                     remove_instruction(instruction, &instruction_count, i);
                                     i --;
                                     changes_applied = 1;
+                                    #ifdef OPT_DEBUG
+                                        log_msg(LP_DEBUG, "Optimizer: applied {or x, 0} => {-} [%s:%d]", __FILE__, __LINE__);
+                                    #endif // OPT_DEBUG
                                 }
                             }
                         }
@@ -954,6 +1015,9 @@ char* optimizer_compile(char* content) {
                     sprintf(instruction[i].expression[2].tokens[1].raw, "$%.4X", x + y);            // replacing "$x" with new precomputed z
                     remove_instruction(instruction, &instruction_count, i + 2);      // removing "mov rN, rM"
                     changes_applied = 1;
+                    #ifdef OPT_DEBUG
+                        log_msg(LP_DEBUG, "Optimizer: applied {lea rN, [x + rO]; lea rM, [y + rN]; mov rN, rM} => {lea rN, [z + rO]; lea rM, [$y + rN], -} where z is precomputed from x and y [%s:%d]", __FILE__, __LINE__);
+                    #endif // OPT_DEBUG
                 }
             }
             if (changes_applied) break;
@@ -1040,6 +1104,9 @@ char* optimizer_compile(char* content) {
                                 instruction[i].instruction = XOR;
                                 instruction[i].admx = ADMX_R0 + instruction[i].admr - ADMR_R0;
                                 changes_applied = 1;
+                                #ifdef OPT_DEBUG
+                                    log_msg(LP_DEBUG, "Optimizer: applied {mov rN, 0} => {xor rN, rN} [%s:%d]", __FILE__, __LINE__);
+                                #endif // OPT_DEBUG
                             }
                         }
                     }

@@ -24,7 +24,6 @@ IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 int ir_identifier_index[IR_MAX_DEPTH] = {0};   // this gets set to 0 after each "IR_LEX_RETURN", so we can start with a new scope
 int ir_identifier_scope_depth = 0;
 int static_identifier_count = 0;
-int data_segment_address = SEGMENT_STATIC_MEMORY;
 int identifier_offset[IR_MAX_DEPTH] = {0};
 
 int is_in_function_body = 0;
@@ -146,9 +145,8 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                     *output = append_to_output(*output, length, tmp);
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     *output = append_to_output(*output, length, "; expression -> loading static ir_identifier from data segment\n");
-                    int absolute_address = ident->absolute_address;
-                    char tmp[32];
-                    sprintf(tmp, "mov r1, [%d]", absolute_address);
+                    char tmp[64];
+                    sprintf(tmp, "mov r1, .__static_data\nadd r1, %d\nmov r1, [r1]", ident->static_offset);
                     *output = append_to_output(*output, length, tmp);
                     sprintf(tmp, "\t; %s\n", token.raw);
                     *output = append_to_output(*output, length, tmp);
@@ -184,8 +182,8 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                     break;
                 }
                 if (ident->type_modifier & IR_TM_STATIC) {
-                    char tmp[32];
-                    sprintf(tmp, "lea r1, [%d]", ident->absolute_address);
+                    char tmp[64];
+                    sprintf(tmp, "mov r1, .__static_data\nadd r1, %d\n", ident->static_offset);
                     *output = append_to_output(*output, length, tmp);
                     sprintf(tmp, "\t; %s", token1->child[0]->token.raw);
                     *output = append_to_output(*output, length, tmp);
@@ -485,9 +483,12 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 scopebegin_offset[scopebegin_count] = 0;
                 break;
         
-            case IR_PAR_VARIABLE_DECLARATION:
+            case IR_PAR_VARIABLE_DECLARATION: {
+                IRTypeModifier_t type_mod = vardec_get_type_modifier(parser_token[parser_token_index]->child[0]);
+                if (type_mod & IR_TM_STATIC) {break;}
                 scopebegin_offset[scopebegin_count] += 2;
                 break;
+            }
 
             default:
                 break;
@@ -513,7 +514,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
     }
     {char tmp[32];
     data_output = append_to_output(data_output, &data_output_len, "; data setup\n");
-    sprintf(tmp, ".data\n.address 0x%.4x\n", data_segment_address);
+    sprintf(tmp, ".data\n.__static_data\n");
     data_output = append_to_output(data_output, &data_output_len, tmp);}
 
     while (parser_token_index < parser_token_count) {
@@ -565,7 +566,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         memcpy(ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name, ident_name, strlen(ident_name));
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name[strlen(ident_name)] = '\0';
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].type_modifier = type_mod;
-                        ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].absolute_address = data_segment_address + (2 * static_identifier_count);
+                        ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].static_offset = (2 * static_identifier_count);
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].initialized = 0;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].identifier_index = static_identifier_count;
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].is_stack_variable = 0;
@@ -616,9 +617,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         code_output = append_to_output(code_output, &code_output_len, "; static variable assignment inside function body\n");
                         IRParserToken_t* expr = parser_token[parser_token_index]->child[2];
                         parser_evaluate_expression(&code_output, &code_output_len, expr);
-                        int absolute_address = ident->absolute_address;
                         char tmp[64];
-                        sprintf(tmp, "lea r0, [%d]", absolute_address);
+                        sprintf(tmp, "mov r0, .__static_data\nadd r0, %d", ident->static_offset);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[0]->token.raw);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
@@ -634,9 +634,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                             #endif
                             return NULL;
                         }
-                        int absolute_address = ident->absolute_address;
                         char tmp[64];
-                        sprintf(tmp, ".address $%.4x\n%s\n", absolute_address, expr->child[0]->token.raw);
+                        sprintf(tmp, "%s\n", expr->child[0]->token.raw);
                         data_output = append_to_output(data_output, &data_output_len, tmp);
                         parser_token_index ++;
                     }
@@ -669,9 +668,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     if (is_in_function_body) {
                         IRParserToken_t* expr = parser_token[parser_token_index]->child[3];
                         parser_evaluate_expression(&code_output, &code_output_len, expr);
-                        int absolute_address = ident->absolute_address;
                         char tmp[64];
-                        sprintf(tmp, "lea r0, [%d]", absolute_address);
+                        sprintf(tmp, "mov r0, .__static_data\nadd r0, %d\n", ident->static_offset);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[1]->token.raw);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
@@ -706,9 +704,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     // TODO: First solve expression, then save it in r1, the find ir_identifier, set r0 to the ident and mov indirectly?
                     if (is_in_function_body) {
-                        int absolute_address = ident->absolute_address;
                         char tmp[64];
-                        sprintf(tmp, "lea r0, [%d]\n", absolute_address);
+                        sprintf(tmp, "mov r0, .__static_data\nadd r0, %d\n", ident->static_offset);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         sprintf(tmp, "mov [r0], %s\n", parser_token[parser_token_index]->child[2]->token.raw);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
@@ -957,7 +954,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                             splits[index] = realloc(splits[index], 32);
                             sprintf(splits[index], "[$%.4X + r3]", ((int16_t) ident->stack_offset) & 0xffff);
                         } else {
-                            sprintf(splits[index], "[$%.4X]", ((int16_t) ident->absolute_address) & 0xffff);
+                            log_msg(LP_ERROR, "IR Compiler: resolving of static variable from symbolic expression within inline assembly is not possible [%s:%d]", __FILE__, __LINE__);
+                            return NULL;
                         }
                         break;
                     }

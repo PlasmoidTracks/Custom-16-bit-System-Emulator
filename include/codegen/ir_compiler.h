@@ -25,7 +25,7 @@ typedef struct IRIdentifier_t {
     int is_stack_variable;
     union {
         int stack_offset;
-        int absolute_address;
+        int static_offset;
     };
     int initialized;
     int identifier_index;

@@ -5,8 +5,8 @@
 
 /*
 Address space       Size    Device      Purpose/Info
-0x0000 - 0x7fff     32768B  RAM         code and stack lives from 0x0000 onwards and 0x3fff downwards respectively
-0x8000 - 0xeeff     28415B  RAM         static memory and heap resides in this spectrum
+0x0000 - 0x7fff     32768B  RAM         code, static memory and stack lives from 0x0000 onwards and 0x7fff downwards respectively
+0x8000 - 0xeeff     28415B  UNUSED      unused
 0xef00 - 0xefff     256B    RAM         IRQ vectors
 0xf000 - 0xffff     4096B   MMIO        different devices have their direct memory communication on these addresses
 

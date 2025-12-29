@@ -494,12 +494,90 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
         parser_token_index++;
     }
 
+    char* data_output = NULL;         // final data string
+    long data_output_len = 0;         // current length of data output
+    {
+        char tmp[32];
+        data_output = append_to_output(data_output, &data_output_len, "; data setup\n");
+        sprintf(tmp, ".data\n.__static_data\n");
+        data_output = append_to_output(data_output, &data_output_len, tmp);
+    }
+
+    //ToDo, another pre-pass, where we check for static variables and build the static initializer section
+    parser_token_index = 0;
+    while (parser_token_index < parser_token_count) {
+        IRParserToken_t* token = parser_token[parser_token_index];
+        switch ((int) token->token.type) {
+        
+            case IR_PAR_VARIABLE_DECLARATION: {
+                //log_msg(LP_DEBUG, "IR Compiler: Prepass 2 a: Found variable declaration outside body of %s", token->child[1]->token.raw);
+                IRTypeModifier_t type_mod = vardec_get_type_modifier(parser_token[parser_token_index]->child[0]);
+                if (!(type_mod & IR_TM_STATIC)) {break;}
+                // Now check if at any point that variable gets an assignment outside of a function body
+                int in_function_body = 0;
+                int parser_token_index_2 = 0;
+                int found_match = 0;
+                while (parser_token_index_2 < parser_token_count) {
+                    IRParserToken_t* token_2 = parser_token[parser_token_index_2];
+                    switch ((int) token_2->token.type) {
+
+                        case IR_LEX_SCOPEBEGIN:
+                        case IR_LEX_IRQBEGIN:
+                            in_function_body = 1;
+                            break;
+                        
+                        case IR_LEX_SCOPEEND:
+                        case IR_LEX_IRQEND:
+                            in_function_body = 0;
+                            break;
+                        
+                        case IR_PAR_VARIABLE_ASSIGNMENT:
+                            if (in_function_body) {break;}
+                            //log_msg(LP_DEBUG, "IR Compiler: Prepass 2 b: Found variable assignment outside body of %s", token_2->child[0]->token.raw);
+                            // check if the variable assignment outside a function body is the same as the found static one... 
+                            if (strcmp(token_2->child[0]->token.raw, token->child[1]->token.raw) == 0) {
+                                found_match = 1;
+                            }
+                            if (found_match) {
+                                // Here append the value to the data segment
+                                //log_msg(LP_DEBUG, "IR Compiler: Prepass 2 b1: Found matching static variable assignment for %s", token->child[1]->token.raw);
+                                data_output = append_to_output(data_output, &data_output_len, "; static variable assignment outside function body\n");
+                                IRParserToken_t* expr = token_2->child[2];
+                                if (expr->child[0]->token.type != IR_LEX_NUMBER) {
+                                    log_msg(LP_ERROR, "IR Compiler: static variables outside of function bodies cannot be assigned anything other than numeric values. Instead got %s [%s:%d]", ir_token_name[expr->child[0]->token.type], __FILE__, __LINE__);
+                                    #ifdef IR_COMPILER_DEBUG
+                                        ir_recursion(expr, 0);
+                                    #endif
+                                    return NULL;
+                                }
+                                char tmp[64];
+                                sprintf(tmp, "%s\n", expr->child[0]->token.raw);
+                                data_output = append_to_output(data_output, &data_output_len, tmp);
+                            }
+                            break;
+                    }
+                    if (found_match) {break;}
+                    parser_token_index_2++;
+                }
+                if (!found_match) {
+                    // Here append reserve to the data segment
+                    //log_msg(LP_DEBUG, "IR Compiler: Prepass 2 b2: Found static variable %s to be uninitialized", token->child[1]->token.raw);
+                    data_output = append_to_output(data_output, &data_output_len, "; uninitialized static variable placeholder\n");
+                    data_output = append_to_output(data_output, &data_output_len, ".reserve $0002\n");
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+        parser_token_index++;
+    }
+
     int scopebegin_index = 1;
 
     char* code_output = NULL;         // final assembly string
-    char* data_output = NULL;         // final data string
     long code_output_len = 0;         // current length of assembly output
-    long data_output_len = 0;         // current length of data output
 
     parser_token_index = 0;
 
@@ -510,10 +588,6 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
         code_output = append_to_output(code_output, &code_output_len, "; code setup\n");
         code_output = append_to_output(code_output, &code_output_len, ".address 0\n.code\ncall .main\nhlt\n");
     }
-    {char tmp[32];
-    data_output = append_to_output(data_output, &data_output_len, "; data setup\n");
-    sprintf(tmp, ".data\n.__static_data\n");
-    data_output = append_to_output(data_output, &data_output_len, tmp);}
 
     while (parser_token_index < parser_token_count) {
         IRParserToken_t* token = parser_token[parser_token_index];
@@ -621,22 +695,8 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[0]->token.raw);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         code_output = append_to_output(code_output, &code_output_len, "mov [r0], r1\n");
-                        parser_token_index ++;
-                    } else {
-                        data_output = append_to_output(data_output, &data_output_len, "; static variable assignment outside function body\n");
-                        IRParserToken_t* expr = parser_token[parser_token_index]->child[2];
-                        if (expr->child[0]->token.type != IR_LEX_NUMBER) {
-                            log_msg(LP_ERROR, "IR Compiler: static variables outside of function bodies cannot be assigned anything other than numeric values. Instead got %s [%s:%d]", ir_token_name[expr->child[0]->token.type], __FILE__, __LINE__);
-                            #ifdef IR_COMPILER_DEBUG
-                                ir_recursion(expr, 0);
-                            #endif
-                            return NULL;
-                        }
-                        char tmp[64];
-                        sprintf(tmp, "%s\n", expr->child[0]->token.raw);
-                        data_output = append_to_output(data_output, &data_output_len, tmp);
-                        parser_token_index ++;
-                    }
+                    } // other path was already handled in second prepass
+                    parser_token_index ++;
                 }
                 break;
             }
@@ -716,7 +776,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 break;
             }
             
-            case IR_PAR_VARIABLE_REF_STRING_ASSIGNMENT: {
+            /*case IR_PAR_VARIABLE_REF_STRING_ASSIGNMENT: {
                 code_output = append_to_output(code_output, &code_output_len, "; ref string assignment\n");
                 IRIdentifier_t* ident = ir_get_identifier_from_name(parser_token[parser_token_index]->child[0]->token.raw);
 
@@ -789,7 +849,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 }
                 parser_token_index ++;
                 break;
-            }
+            }*/
 
             case IR_LEX_SCOPEBEGIN: {
                 code_output = append_to_output(code_output, &code_output_len, "; scope begin\n");
@@ -952,6 +1012,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                             splits[index] = realloc(splits[index], 32);
                             sprintf(splits[index], "[$%.4X + r3]", ((int16_t) ident->stack_offset) & 0xffff);
                         } else {
+                            splits[index] = realloc(splits[index], 32);
                             sprintf(splits[index], "[.__static_data + $%.4X]", ((int16_t) ident->stack_offset) & 0xffff);
                             //log_msg(LP_ERROR, "IR Compiler: resolving of static variable from symbolic expression within inline assembly is not possible [%s:%d]", __FILE__, __LINE__);
                             //return NULL;
@@ -1021,6 +1082,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
     }
     
     code_output = append_to_output(code_output, &code_output_len, data_output);
+    //code_output = append_to_output(code_output, &code_output_len, ".__heap_data\n");
 
     return code_output;
 }

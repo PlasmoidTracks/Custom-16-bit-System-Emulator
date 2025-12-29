@@ -35,10 +35,10 @@ const char* token_type_string[] = {
     [TT_ADDRESS]                    = "address",
     [TT_SEGMENT_CODE]               = "segment_code",
     [TT_SEGMENT_DATA]               = "segment_data",
+    [TT_RESERVE]                    = "reserve",
     [TT_INCLUDE]                    = "include",
     [TT_INCBIN]                     = "incbin",
     [TT_TEXT]                       = "text",
-    [TT_CONST]                      = "const",
     [TT_STRING]                     = "string",
 };
 
@@ -53,6 +53,7 @@ const char* expression_type_string[] = {
     [EXPR_INDIRECT_SCALE_OFFSET]    = "indirect_scale_offset", 
     [EXPR_SEGMENT_DATA]             = "segment_data", 
     [EXPR_SEGMENT_CODE]             = "segment_code", 
+    [EXPR_RESERVE]                  = "reserve", 
     [EXPR_INCBIN]                   = "incbin", 
     [EXPR_ADDRESS]                  = "address", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
@@ -147,9 +148,9 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
                 token[i].type = TT_INCBIN;
             } else if (strcmp(&word[i][1], "text") == 0) {
                 token[i].type = TT_TEXT;
-            } else if (strcmp(&word[i][1], "const") == 0) {
-                token[i].type = TT_CONST;
-            }  else {
+            } else if (strcmp(&word[i][1], "reserve") == 0) {
+                token[i].type = TT_RESERVE;
+            } else {
                 token[i].type = TT_LABEL;
             }
         } else if (word[i][0] == '[') {
@@ -441,7 +442,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
         }
 
         // .address $1234
-        else if (token_index + 0 < token_count &&
+        else if (token_index + 1 < token_count &&
             tokens[token_index + 0].type == TT_ADDRESS &&
             tokens[token_index + 1].type == TT_IMMEDIATE) {
 
@@ -468,6 +469,18 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 0].type == TT_SEGMENT_CODE) {
 
                 expression[expression_index].type = EXPR_SEGMENT_CODE;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
+                expression_index ++;
+        }
+
+        // .reserve $ffff
+        else if (token_index + 1 < token_count &&
+            tokens[token_index + 0].type == TT_RESERVE &&
+            tokens[token_index + 1].type == TT_IMMEDIATE) {
+
+                expression[expression_index].type = EXPR_RESERVE;
                 expression[expression_index].tokens[0] = tokens[token_index];
                 expression[expression_index].token_count = 1;
                 token_index += 1;
@@ -610,6 +623,28 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     instruction[instruction_index].address = value;
 
                     byte_index = value;
+
+                    //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                    
+                    instruction_index ++;
+
+                    while (instruction_index >= allocated_instructions) {
+                        allocated_instructions *= 2;
+                        instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                        //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                    }
+                    
+                    expression_index += 2;
+                    continue;
+                } else if (expression[expression_index].type == EXPR_RESERVE) {
+                    instruction[instruction_index].is_address = 1;
+
+                    char* string_value = expression[expression_index + 1].tokens[0].raw;
+                    //printf("EXPR_RESERVE: %s\n", string_value);
+                    int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                    instruction[instruction_index].address = byte_index + value - 4;
+
+                    byte_index += value;
 
                     //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                     
@@ -1118,6 +1153,27 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 
                 expression_index += 2;
                 continue;
+            } else if (expression[expression_index].type == EXPR_RESERVE) {
+                instruction[instruction_index].is_address = 1;
+
+                char* string_value = expression[expression_index + 1].tokens[0].raw;
+                //printf("%s\n", string_value);
+                int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                instruction[instruction_index].address = byte_index + value - 4;
+                byte_index += value;
+
+                //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                
+                instruction_index ++;
+
+                while (instruction_index >= allocated_instructions) {
+                    allocated_instructions *= 2;
+                    instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                    //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                }
+                
+                expression_index += 2;
+                continue;
             } else if (expression[expression_index].type == EXPR_TEXT_DEFINITION) {
                 char* string_value = expression[expression_index].tokens[1].raw;
                 string_value[strlen(string_value) - 1] = '\0';  // this makes the output implicitly null terminated
@@ -1390,6 +1446,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_ADDRESS:
                 case EXPR_SEGMENT_CODE:
                 case EXPR_SEGMENT_DATA:
+                case EXPR_RESERVE:
                 case EXPR_INCBIN:
                 case EXPR_TEXT_DEFINITION:
                 // etc.

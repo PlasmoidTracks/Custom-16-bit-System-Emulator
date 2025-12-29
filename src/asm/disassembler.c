@@ -791,7 +791,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             // look for instruction or data that starts at that destination. Choose last byte, so its after all control instrucitons like .code etc.
             for (int j = assembly_lines - 1; j >= 0; j--) {
                 if (assembly_code.binary_index[j] == source) {
-                    log_msg(LP_INFO, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
+                    //log_msg(LP_INFO, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
                     // Check if its within a data segment
                     if (!assembly_code.is_data[j] && !(options & DO_ADD_LABEL_TO_CODE_SEGMENT)) {
                         break;
@@ -954,7 +954,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             // look for instruction or data that starts at that destination. Choose last byte, so its after all control instrucitons like .code etc.
             for (int j = assembly_lines - 1; j >= 0; j--) {
                 if (assembly_code.binary_index[j] == source) {
-                    log_msg(LP_INFO, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
+                    //log_msg(LP_INFO, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
                     // Check if its within a data segment
                     if (!assembly_code.is_data[j] && !(options & DO_ADD_LABEL_TO_CODE_SEGMENT)) {
                         break;

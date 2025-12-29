@@ -787,24 +787,6 @@ IRGrammarRule_t parser_ruleset[256] = {
         .description = "identifier = .label; -> variable_function_pointer_assignment",
     },
 
-    // Variable string ref assignment
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_IDENTIFIER,
-            (IRParserTokenType_t) IR_LEX_ASSIGN,
-            (IRParserTokenType_t) IR_LEX_REF,
-            (IRParserTokenType_t) IR_LEX_STRING,
-            (IRParserTokenType_t) IR_LEX_SEMICOLON,
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_VARIABLE_REF_STRING_ASSIGNMENT,
-        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
-        .invert_match = {0, 0, 0, 0, 0},
-        .context_length = 5,
-        .priority = 2000,
-        .description = "identifier = ref string; -> variable_ref_string_assignment",
-    },
-
     // Goto
     {
         .context = {

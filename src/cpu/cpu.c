@@ -6,9 +6,9 @@
 #include "utils/Log.h"
 #include "utils/ExtendedTypes.h"
 
-#include "cache.h"
-#include "device.h"
-#include "memory_layout.h"
+#include "modules/cache.h"
+#include "modules/device.h"
+#include "globals/memory_layout.h"
 
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"

@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#include "device.h"
-#include "ram.h"
-#include "cache.h"
+#include "modules/device.h"
+#include "modules/ram.h"
+#include "modules/cache.h"
 
 #include "cpu/cpu_instructions.h"
 

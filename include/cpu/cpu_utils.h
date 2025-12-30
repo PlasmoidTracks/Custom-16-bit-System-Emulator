@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "cpu/cpu.h"
-#include "ram.h"
+#include "modules/ram.h"
 
 
 extern void cpu_print_cache(CPU_t* cpu);

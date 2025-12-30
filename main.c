@@ -7,18 +7,18 @@
 #include "utils/String.h"
 #include "utils/Log.h"
 
-#include "transpile/ccan/ccan_lexer.h"
-#include "transpile/ccan/ccan_parser.h"
-#include "asm/assembler.h"
+#include "compiler/ccan/ccan_lexer.h"
+#include "compiler/ccan/ccan_parser.h"
+#include "compiler/asm/assembler.h"
 
 #include "cpu/cpu_utils.h"
-#include "codegen/ir_compiler.h"
-#include "asm/canonicalizer.h"
-#include "asm/optimizer.h"
-#include "asm/macro_code_expansion.h"
-#include "asm/disassembler.h"
+#include "compiler/ir/ir_compiler.h"
+#include "compiler/asm/canonicalizer.h"
+#include "compiler/asm/optimizer.h"
+#include "compiler/asm/macro_code_expansion.h"
+#include "compiler/asm/disassembler.h"
 
-#include "system.h"
+#include "modules/system.h"
 #include "CLI.h"
 
 

@@ -5,11 +5,11 @@
 #include "utils/ExtendedTypes.h"
 #include "utils/String.h"
 
-#include "memory_layout.h"
+#include "globals/memory_layout.h"
 
 #include "cpu/cpu.h"
 #include "cpu/cpu_instructions.h"
-#include "ram.h"
+#include "modules/ram.h"
 
 
 // Fancy function to print CPU Cache

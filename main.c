@@ -19,95 +19,39 @@
 #include "asm/disassembler.h"
 
 #include "system.h"
-
-
-/*
-TODO: 
-At most, I want to be able to compile from IR down to asm, (processing of can and exp are mandatory), activate optimizations, save the temps
-generate the binary output as a file with filename of my own choosing, generate the disassembly of said binary and execute it. 
-
-./main input.ir -run -O1 -o prog.bin -save-temps -d
-
-*/
-
-const char* CLI_USAGE = "\n\
-USAGE:\n\
-  ./main [options] <input>\n\
-\n\
-INPUT:\n\
-  <input>                 .ir | .asm | .bin\n\
-\n\
-MODES (one):\n\
-  -run                    Compile then execute (emulator)\n\
-\n\
-OPTIMIZATION:\n\
-  -O0                     No optimization\n\
-  -O1                     Basic optimization\n\
-\n\
-OUTPUT:\n\
-  -o <file>               Output file (default: prog.bin)\n\
-\n\
-INTERMEDIATES:\n\
-  -save-temps             Keep all intermediate files\n\
-\n\
-DEBUG / INSPECTION:\n\
-  -d                      Enable disassembly\n\
-\n\
-EXAMPLES:\n\
-  ./main input.ir -run -O1 -o prog.bin -save-temps -d\n\
-  ./main input.asm -run -O1 -s -save-temps -d\n\
-  ./main input.bin -d\n\
-";
-
-typedef enum CompileFileType_t {
-    CFT_BIN, 
-    CFT_ASM, 
-    CFT_IR, 
-    CFT_CCAN, 
-    CFT_C
-    // BIN < ASM < IR < CCAN < C
-} CompileFileType_t;
-
-typedef struct CompileOption_t {
-    char* input_filename;
-    char* binary_filename;
-    CompileFileType_t cft;
-    unsigned int run : 1;
-    unsigned int O : 1;
-    unsigned int o : 1;
-    unsigned int save_temps : 1;
-    unsigned int d : 1;
-} CompileOption_t;
-
+#include "CLI.h"
 
 
 #define HW_WATCH
 #undef HW_WATCH
 
 
-
-
-
 int main(int argc, char* argv[]) {
+
+    LOG_LEVEL = LP_MINPRIO;
 
     if (argc < 2) {
         log_msg(LP_ERROR, "Not enough arguments given [%s:%d]", __FILE__, __LINE__);
-        log_msg(LP_INFO, CLI_USAGE);
+        log_msg(LP_INFO, "Type \"./main help|h|?\" for CLI usage details");
         return 0;
     }
 
-    CompileOption_t co = {
-        .input_filename = "test.ir", 
-        .binary_filename = "prog.bin", 
-        .cft = CFT_IR, 
-        .run = 0, 
-        .O = 1, 
-        .o = 1, 
-        .save_temps = 0, 
-        .d = 1, 
-    };
+    if (
+        strcmp(argv[1], "help") == 0
+        || strcmp(argv[1], "h") == 0
+        || strcmp(argv[1], "?") == 0
+    ) {
+        puts(CLI_USAGE);
+        return 0;
+    }
 
-    LOG_LEVEL = LP_MINPRIO;
+    int error;
+    CompileOption_t co = cli_parse_arguments(argc, argv, &error);
+    if (error) {
+        log_msg(LP_ERROR, "Error parsing CLI arguments [%s:%d]", __FILE__, __LINE__);
+        return 0;
+    }
+    //log_msg(LP_DEBUG, "Compiling with option: file:%s, bin:%s, c:%d, cft:%d, run:%d, O1:%d, o:%d, save-temps:%d, d:%d", co.input_filename, co.binary_filename, co.c, co.cft, co.run, co.O, co.o, co.save_temps, co.d);
 
     if (co.cft >= CFT_CCAN)
     {
@@ -123,8 +67,9 @@ int main(int argc, char* argv[]) {
         }
         
         CCANParserToken_t** parser = ccan_parser_parse(lexer, lexer_token_count, &parser_root_count);
+        (void) parser;
 
-        log_msg(LP_ERROR, "CCAN compilation is not implemented");
+        log_msg(LP_ERROR, "CCAN compilation is not implemented [%s:%d]", __FILE__, __LINE__);
 
         return 0;
     }

@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     CompileOption_t co = {
         .input_filename = "test.ir", 
         .binary_filename = "prog.bin", 
-        .cft = CFT_BIN, 
+        .cft = CFT_IR, 
         .run = 0, 
         .O = 1, 
         .o = 1, 
@@ -108,14 +108,6 @@ int main(int argc, char* argv[]) {
     };
 
     LOG_LEVEL = LP_MINPRIO;
-    
-    // Hardware step
-    System_t* system = system_create(
-        1, 
-        64, 
-        1, 
-        1000.0
-    );
 
     if (co.cft >= CFT_CCAN)
     {
@@ -183,7 +175,7 @@ int main(int argc, char* argv[]) {
         }
 
         // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
-        char* expanded_asm = macro_code_expand_from_file(filename, system->cpu->feature_flag);
+        char* expanded_asm = macro_code_expand_from_file(filename, cpu_generate_feature_flag());
         if (!expanded_asm) {
             log_msg(LP_ERROR, "Macro expander: Returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
@@ -242,6 +234,14 @@ int main(int argc, char* argv[]) {
 
     
     if (co.run) {
+    
+        // Hardware setup
+        System_t* system = system_create(
+            1, 
+            64, 
+            1, 
+            1000.0
+        );
     
         #ifdef HW_WATCH
             uint16_t match = 0x10ee;

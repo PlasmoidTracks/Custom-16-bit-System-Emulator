@@ -155,6 +155,8 @@ typedef struct CPU_t {
 
 extern CPU_t* cpu_create(void);
 
+extern uint16_t cpu_generate_feature_flag(void);
+
 extern void cpu_delete(CPU_t** cpu);
 
 extern void cpu_mount_cache(CPU_t* cpu, Cache_t* cache);

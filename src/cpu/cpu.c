@@ -55,6 +55,58 @@ const char* cpu_state_name[CS_COUNT] = {
 };
 
 
+uint16_t cpu_generate_feature_flag(void) {
+    uint16_t feature_flag = 0;
+    #ifdef DCFF_CORE_BASE
+        feature_flag |= CFF_BASE;
+    #endif
+    #ifdef DCFF_INT_ARITH
+        feature_flag |= CFF_INT_ARITH;
+    #endif
+    #ifdef DCFF_INT_SIGNED_SAT_ARITH
+        feature_flag |= CFF_INT_SIGNED_SAT_ARITH;
+    #endif
+    #ifdef DCFF_INT_UNSIGNED_SAT_ARITH
+        feature_flag |= CFF_INT_UNSIGNED_SAT_ARITH;
+    #endif
+    #ifdef DCFF_INT_ARITH_EXT
+        feature_flag |= CFF_INT_ARITH_EXT;
+    #endif
+    #ifdef DCFF_INT_CARRY_EXT
+        feature_flag |= CFF_INT_CARRY_EXT;
+    #endif
+    #ifdef DCFF_LOGIC_EXT
+        feature_flag |= CFF_LOGIC_EXT;
+    #endif
+    #ifdef DCFF_REL_JUMP
+        feature_flag |= CFF_REL_JUMP;
+    #endif
+    #ifdef DCFF_CMOV_EXT
+        feature_flag |= CFF_CMOV_EXT;
+    #endif
+    #ifdef DCFF_BYTE_EXT
+        feature_flag |= CFF_BYTE_EXT;
+    #endif
+    #ifdef DCFF_FLOAT16
+        feature_flag |= CFF_FLOAT16;
+    #endif
+    #ifdef DCFF_BFLOAT16
+        feature_flag |= CFF_BFLOAT16;
+    #endif
+    #ifdef DCFF_FLOAT_CONVERT
+        feature_flag |= CFF_FLOAT_CONVERT;
+    #endif
+    #ifdef DCFF_CACHE_EXT
+        feature_flag |= CFF_CACHE_EXT;
+    #endif
+    #ifdef DCFF_HW_INFO
+        feature_flag |= CFF_HW_INFO;
+    #endif
+
+    return feature_flag;
+}
+
+
 CPU_t* cpu_create(void) {
     CPU_t* cpu = malloc(sizeof(CPU_t));
     if (!cpu) return NULL;  // Always check for malloc failure
@@ -74,52 +126,7 @@ CPU_t* cpu_create(void) {
 
     cpu->state = CS_FETCH_INSTRUCTION;
 
-    cpu->feature_flag = 0;
-    #ifdef DCFF_CORE_BASE
-        cpu->feature_flag |= CFF_BASE;
-    #endif
-    #ifdef DCFF_INT_ARITH
-        cpu->feature_flag |= CFF_INT_ARITH;
-    #endif
-    #ifdef DCFF_INT_SIGNED_SAT_ARITH
-        cpu->feature_flag |= CFF_INT_SIGNED_SAT_ARITH;
-    #endif
-    #ifdef DCFF_INT_UNSIGNED_SAT_ARITH
-        cpu->feature_flag |= CFF_INT_UNSIGNED_SAT_ARITH;
-    #endif
-    #ifdef DCFF_INT_ARITH_EXT
-        cpu->feature_flag |= CFF_INT_ARITH_EXT;
-    #endif
-    #ifdef DCFF_INT_CARRY_EXT
-        cpu->feature_flag |= CFF_INT_CARRY_EXT;
-    #endif
-    #ifdef DCFF_LOGIC_EXT
-        cpu->feature_flag |= CFF_LOGIC_EXT;
-    #endif
-    #ifdef DCFF_REL_JUMP
-        cpu->feature_flag |= CFF_REL_JUMP;
-    #endif
-    #ifdef DCFF_CMOV_EXT
-        cpu->feature_flag |= CFF_CMOV_EXT;
-    #endif
-    #ifdef DCFF_BYTE_EXT
-        cpu->feature_flag |= CFF_BYTE_EXT;
-    #endif
-    #ifdef DCFF_FLOAT16
-        cpu->feature_flag |= CFF_FLOAT16;
-    #endif
-    #ifdef DCFF_BFLOAT16
-        cpu->feature_flag |= CFF_BFLOAT16;
-    #endif
-    #ifdef DCFF_FLOAT_CONVERT
-        cpu->feature_flag |= CFF_FLOAT_CONVERT;
-    #endif
-    #ifdef DCFF_CACHE_EXT
-        cpu->feature_flag |= CFF_CACHE_EXT;
-    #endif
-    #ifdef DCFF_HW_INFO
-        cpu->feature_flag |= CFF_HW_INFO;
-    #endif
+    cpu->feature_flag = cpu_generate_feature_flag();
 
     return cpu;
 }

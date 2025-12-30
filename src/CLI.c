@@ -33,8 +33,8 @@ DEBUG / INSPECTION:\n\
   -d                      Enable disassembly\n\
 \n\
 EXAMPLES:\n\
-  ./main input.ir -run -O1 -o prog.bin -save-temps -d\n\
-  ./main input.asm -run -O1 -s -save-temps -d\n\
+  ./main input.ir -c=ir -run -O1 -o prog.bin -save-temps -d\n\
+  ./main input.asm -run -O1 -save-temps -d\n\
   ./main input.bin -d\n\
 ";
 

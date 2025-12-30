@@ -1121,9 +1121,15 @@ char* optimizer_compile(char* content) {
         Instruction_t instr = instruction[i];
         int ec = instr.expression_count;
         if (instr.is_address) {
-            char tmp[32];
-            sprintf(tmp, ".address $%.4x", instr.address);
-            output = append_to_output(output, &output_len, tmp);
+            if (instr.expression[0].type == EXPR_ADDRESS) {
+                char tmp[32];
+                sprintf(tmp, ".address $%.4x", instr.address);
+                output = append_to_output(output, &output_len, tmp);
+            } else if (instr.expression[0].type == EXPR_RESERVE) {
+                char tmp[32];
+                sprintf(tmp, ".reserve %s", instr.expression[0].tokens[1].raw);
+                output = append_to_output(output, &output_len, tmp);
+            }
         } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {
             output = append_to_output(output, &output_len, ".code");
         } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {

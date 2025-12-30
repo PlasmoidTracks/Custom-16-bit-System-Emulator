@@ -441,15 +441,16 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression_index ++;
         }
 
-        // .address $1234
+        // .address $ffff
         else if (token_index + 1 < token_count &&
             tokens[token_index + 0].type == TT_ADDRESS &&
             tokens[token_index + 1].type == TT_IMMEDIATE) {
 
                 expression[expression_index].type = EXPR_ADDRESS;
-                expression[expression_index].tokens[0] = tokens[token_index];
-                expression[expression_index].token_count = 1;
-                token_index += 1;
+                expression[expression_index].tokens[0] = tokens[token_index + 0];
+                expression[expression_index].tokens[1] = tokens[token_index + 1];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
@@ -481,13 +482,14 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 1].type == TT_IMMEDIATE) {
 
                 expression[expression_index].type = EXPR_RESERVE;
-                expression[expression_index].tokens[0] = tokens[token_index];
-                expression[expression_index].token_count = 1;
-                token_index += 1;
+                expression[expression_index].tokens[0] = tokens[token_index + 0];
+                expression[expression_index].tokens[1] = tokens[token_index + 1];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
-        // .incbin
+        // .incbin "..."
         else if (token_index + 0 < token_count &&
             tokens[token_index + 0].type == TT_INCBIN &&
             tokens[token_index + 1].type == TT_STRING) {
@@ -617,7 +619,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 } else if (expression[expression_index].type == EXPR_ADDRESS) {
                     instruction[instruction_index].is_address = 1;
 
-                    char* string_value = expression[expression_index + 1].tokens[0].raw;
+                    char* string_value = expression[expression_index].tokens[1].raw;
                     //printf("EXPR_ADDRESS: %s\n", string_value);
                     int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                     instruction[instruction_index].address = value;
@@ -634,15 +636,15 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                     }
                     
-                    expression_index += 2;
+                    expression_index ++;
                     continue;
                 } else if (expression[expression_index].type == EXPR_RESERVE) {
                     instruction[instruction_index].is_address = 1;
 
-                    char* string_value = expression[expression_index + 1].tokens[0].raw;
+                    char* string_value = expression[expression_index].tokens[1].raw;
                     //printf("EXPR_RESERVE: %s\n", string_value);
                     int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                    instruction[instruction_index].address = byte_index + value - 4;
+                    instruction[instruction_index].address = byte_index + value;
 
                     byte_index += value;
 
@@ -656,7 +658,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                     }
                     
-                    expression_index += 2;
+                    expression_index ++;
                     continue;
                 } else if (expression[expression_index].type == EXPR_SEGMENT_DATA) {
                     instruction_index ++;
@@ -1011,11 +1013,19 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 
                 case ADMR_IND16:
                     {
-                        char* string_value = expression[admr_expression_index].tokens[1].raw;
-                        int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                        instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
-                        instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
-                        argument_bytes_used += 2;
+                        if (expression[admr_expression_index].token_count > 3) {
+                            char* string_value = expression[admr_expression_index].tokens[3].raw;
+                            int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
+                            instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
+                            argument_bytes_used += 2;
+                        } else {
+                            char* string_value = expression[admr_expression_index].tokens[1].raw;
+                            int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
+                            instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
+                            argument_bytes_used += 2;
+                        }
                     }
                     break;
 
@@ -1135,7 +1145,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             } else if (expression[expression_index].type == EXPR_ADDRESS) {
                 instruction[instruction_index].is_address = 1;
 
-                char* string_value = expression[expression_index + 1].tokens[0].raw;
+                char* string_value = expression[expression_index].tokens[1].raw;
                 //printf("%s\n", string_value);
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                 instruction[instruction_index].address = value;
@@ -1151,15 +1161,15 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                 }
                 
-                expression_index += 2;
+                expression_index ++;
                 continue;
             } else if (expression[expression_index].type == EXPR_RESERVE) {
                 instruction[instruction_index].is_address = 1;
 
-                char* string_value = expression[expression_index + 1].tokens[0].raw;
+                char* string_value = expression[expression_index].tokens[1].raw;
                 //printf("%s\n", string_value);
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                instruction[instruction_index].address = byte_index + value - 4;
+                instruction[instruction_index].address = byte_index + value;
                 byte_index += value;
 
                 //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
@@ -1172,7 +1182,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
                 }
                 
-                expression_index += 2;
+                expression_index ++;
                 continue;
             } else if (expression[expression_index].type == EXPR_TEXT_DEFINITION) {
                 char* string_value = expression[expression_index].tokens[1].raw;
@@ -1322,8 +1332,8 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                             //log_msg(LP_INFO, "Solving label: Resolving \"%s\" to value 0x%.4x", jump_label[corresponding_label_found].name, (jump_label[corresponding_label_found].value - instruction[i].address - 4));
                             if (instruction[i].expression[exp].token_count > 1) {
                                 // here if expression has form [.label + imm]
-                                instruction[i].arguments[argument_byte_index] += (jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0x00ff;
-                                instruction[i].arguments[argument_byte_index + 1] += (((jump_label[corresponding_label_found].value - instruction[i].address - 4) & 0xff00) >> 8) + (instruction[i].arguments[argument_byte_index] >> 8);
+                                instruction[i].arguments[argument_byte_index] += (jump_label[corresponding_label_found].value - instruction[i].address) & 0x00ff;
+                                instruction[i].arguments[argument_byte_index + 1] += (((jump_label[corresponding_label_found].value - instruction[i].address) & 0xff00) >> 8) + (instruction[i].arguments[argument_byte_index] >> 8);
                                 instruction[i].arguments[argument_byte_index] &= 0x00ff;
                                 argument_byte_index += 2;
                             } else {

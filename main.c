@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    if (co.cft > CFT_BIN && co.o) {
+    if (co.cft > CFT_BIN) {
         int success = data_export(co.binary_filename, bin, binary_size);
         if (!success) {
             log_msg(LP_ERROR, "data_export returned with failure");

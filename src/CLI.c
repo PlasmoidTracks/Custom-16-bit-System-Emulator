@@ -95,6 +95,7 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
             char* type = &argv[arg_index][3];
             if (strcmp(type, "bin") == 0) {
                 co.cft = CFT_BIN;
+                co.binary_filename = argv[1];
             } else if (strcmp(type, "asm") == 0) {
                 co.cft = CFT_ASM;
             } else if (strcmp(type, "ir") == 0) {

@@ -465,7 +465,7 @@ extern CCANLexerToken_t* ccan_lexer_parse(char* source, long source_length, long
 
         log_msg(LP_ERROR, "CCAN Lexer: NO MATCH FOUND! [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "The following text contains the error: \n=====================\n%s\n=====================", &source[index]);
-        log_msg(LP_INFO, "More context: \n=====================\n%s\n=====================", &source[index - 16]);
+        //log_msg(LP_INFO, "More context: \n=====================\n%s\n=====================", &source[((index - 16) < 0) ? 0 : (index - 16)]);
         exit(1);
     }
 

@@ -30,6 +30,11 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     uint8_t addressing_mode = binary[(*binary_index) ++];
     if (valid_instruction) *valid_instruction = 1;
 
+    int no_cache = 0;
+
+    no_cache = (instruction & 0x80) != 0;
+    instruction &= 0x7f;
+
     if (instruction >= INSTRUCTION_COUNT) {
         //log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x] [%s:%d]", instruction, __FILE__, __LINE__);
         if (valid_instruction) *valid_instruction = 0;
@@ -37,6 +42,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     }
     if (instruction == NOP) {
         if (valid_instruction) *valid_instruction = 0;
+        if (no_cache) {return strdup("%nop");}
         return strdup("nop");  // makes it heap allocated
     }
 
@@ -104,19 +110,25 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     // should be plenty of space
     char* instruction_string = calloc(256, sizeof(char)); 
 
-    strcpy(instruction_string, cpu_instruction_string[instruction]);
+    char* instruction_string_pointer = instruction_string;
+    if (no_cache) {
+        instruction_string[0] = '%';
+        instruction_string_pointer = &instruction_string[1];
+    }
+
+    strcpy(instruction_string_pointer, cpu_instruction_string[instruction]);
     int instruction_string_index = strlen(cpu_instruction_string[instruction]);
 
     if (argument_count == 0) {
         //printf("instruction_string: %s\n", instruction_string);
         char* instruction_string_newline = calloc(256, sizeof(char)); 
-        sprintf(instruction_string_newline, "%s", instruction_string);
+        sprintf(instruction_string_newline, "%s", instruction_string_pointer);
         free(instruction_string);
 
         return instruction_string_newline;
     }
     
-    instruction_string[instruction_string_index++] = ' ';
+    instruction_string_pointer[instruction_string_index++] = ' ';
 
     char* reg = NULL;
 
@@ -131,8 +143,8 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
             case ADMR_R3: reg = "r3"; goto admr_write_register;
             case ADMR_SP: reg = "sp"; goto admr_write_register;
             admr_write_register:
-                instruction_string[instruction_string_index++] = reg[0];
-                instruction_string[instruction_string_index++] = reg[1];
+                instruction_string_pointer[instruction_string_index++] = reg[0];
+                instruction_string_pointer[instruction_string_index++] = reg[1];
                 break;
 
 
@@ -157,7 +169,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                     char str[16];
                     uint16_t value = disassembler_read_u16(data + argument_byte_offset);
                     sprintf(str, "[$%04X]", value);
-                    strcpy(&instruction_string[instruction_string_index], str);
+                    strcpy(&instruction_string_pointer[instruction_string_index], str);
                     instruction_string_index += strlen(str);
                 }
                 break;
@@ -171,13 +183,13 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                     str[2] = tolower(str[2]);
                     str[3] = ']';
                     str[4] = '\0';
-                    strcpy(&instruction_string[instruction_string_index], str);
+                    strcpy(&instruction_string_pointer[instruction_string_index], str);
                     instruction_string_index += 4;
                 }
                 break;
             
             case ADMR_NONE:
-                strcpy(&instruction_string[instruction_string_index], "_");
+                strcpy(&instruction_string_pointer[instruction_string_index], "_");
                 instruction_string_index += 1;
                 if (valid_instruction) *valid_instruction = 0;
                 break;
@@ -190,8 +202,8 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     } 
     if (argument_count == 2 || (argument_count == 1 && !cpu_instruction_single_operand_writeback[instruction])) {
         if (argument_count == 2) {
-            instruction_string[instruction_string_index++] = ',';
-            instruction_string[instruction_string_index++] = ' ';
+            instruction_string_pointer[instruction_string_index++] = ',';
+            instruction_string_pointer[instruction_string_index++] = ' ';
         }
         // next up: admx
         switch (admx) {
@@ -202,8 +214,8 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
             case ADMX_SP: reg = "sp"; goto admx_write_register;
             case ADMX_PC: reg = "pc"; goto admx_write_register;
             admx_write_register:
-                instruction_string[instruction_string_index++] = reg[0];
-                instruction_string[instruction_string_index++] = reg[1];
+                instruction_string_pointer[instruction_string_index++] = reg[0];
+                instruction_string_pointer[instruction_string_index++] = reg[1];
                 break;
             
             
@@ -223,14 +235,14 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                         {
                             char buf[64];
                             sprintf(buf, "f%f", float_from_f16(value));
-                            sprintf(&instruction_string[instruction_string_index], "%s", buf);
+                            sprintf(&instruction_string_pointer[instruction_string_index], "%s", buf);
                             instruction_string_index += strlen(buf);
                         } else {
-                            sprintf(&instruction_string[instruction_string_index], "$%.4X", data[0] | (data[1] << 8));
+                            sprintf(&instruction_string_pointer[instruction_string_index], "$%.4X", data[0] | (data[1] << 8));
                             instruction_string_index += 5;
                         }
                     } else {
-                        sprintf(&instruction_string[instruction_string_index], "$%.4X", data[0] | (data[1] << 8));
+                        sprintf(&instruction_string_pointer[instruction_string_index], "$%.4X", data[0] | (data[1] << 8));
                         instruction_string_index += 5;
                     }
                 }
@@ -238,7 +250,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
 
             case ADMX_IND16:
                 {
-                    sprintf(&instruction_string[instruction_string_index], "[$%.4X]", data[0] | (data[1] << 8));
+                    sprintf(&instruction_string_pointer[instruction_string_index], "[$%.4X]", data[0] | (data[1] << 8));
                     instruction_string_index += 7;
                 }
                 break;
@@ -250,7 +262,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
             case ADMX_IND_SP: reg = "sp"; goto admx_write_indirect_reg;
             case ADMX_IND_PC: reg = "pc"; goto admx_write_indirect_reg;
             admx_write_indirect_reg:
-                sprintf(&instruction_string[instruction_string_index], "[%c%c]", reg[0], reg[1]);
+                sprintf(&instruction_string_pointer[instruction_string_index], "[%c%c]", reg[0], reg[1]);
                 instruction_string_index += 4;
                 break;
             
@@ -264,7 +276,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 uint16_t offset = disassembler_read_u16(data);
                 char str[32];
                 sprintf(str, "[$%.4X + %s]", offset, reg);
-                strcpy(&instruction_string[instruction_string_index], str);
+                strcpy(&instruction_string_pointer[instruction_string_index], str);
                 instruction_string_index += strlen(str);
                 break;
             }
@@ -280,13 +292,13 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 uint8_t scale = data[2];
                 char str[32];
                 sprintf(str, "[$%04X + $%02X * %s]", base, scale, reg);
-                strcpy(&instruction_string[instruction_string_index], str);
+                strcpy(&instruction_string_pointer[instruction_string_index], str);
                 instruction_string_index += strlen(str);
                 break;
             }
             
             case ADMX_NONE:
-                strcpy(&instruction_string[instruction_string_index], "_");
+                strcpy(&instruction_string_pointer[instruction_string_index], "_");
                 instruction_string_index += 1;
                 if (valid_instruction) *valid_instruction = 0;
                 break;

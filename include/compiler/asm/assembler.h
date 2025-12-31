@@ -30,6 +30,7 @@ typedef enum TokenType_t {
     TT_INCBIN, 
     TT_TEXT, 
     TT_STRING, 
+    TT_NOCACHE, 
 } TokenType_t;
 
 typedef enum {
@@ -77,6 +78,8 @@ typedef struct Instruction_t {
 
     int is_address;
     int address;
+
+    int no_cache;
 } Instruction_t;
 
 typedef struct Label_t {

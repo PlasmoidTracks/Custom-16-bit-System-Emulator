@@ -5239,19 +5239,25 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
             output = append_to_output(output, &output_len, " ");
         } else {
             for (int j = 0; j < ec; j++) {
-                int tc = instr.expression[j].token_count;
-                for (int k = 0; k < tc; k++) {
-                    output = append_to_output(output, &output_len, instr.expression[j].tokens[k].raw);
-                    if ((tc == 5 && (k > 0 && k < tc - 2))
-                        || (tc == 3 && k < 2)) {
+                if (instr.expression[j].type == EXPR_INSTRUCTION && instr.expression[j].token_count > 1 && instr.expression[j].tokens[1].type == TT_NOCACHE) {
+                    output = append_to_output(output, &output_len, "%");
+                    output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
+                    output = append_to_output(output, &output_len, " ");
+                } else {
+                    int tc = instr.expression[j].token_count;
+                    for (int k = 0; k < tc; k++) {
+                        output = append_to_output(output, &output_len, instr.expression[j].tokens[k].raw);
+                        if ((tc == 5 && (k > 0 && k < tc - 2))
+                            || (tc == 3 && k < 2)) {
+                            output = append_to_output(output, &output_len, " ");
+                        }
+                    }
+                    if (j == 1 && ec > 2) {
+                        output = append_to_output(output, &output_len, ",");
+                    }
+                    if (j < ec-1) {
                         output = append_to_output(output, &output_len, " ");
                     }
-                }
-                if (j == 1 && ec > 2) {
-                    output = append_to_output(output, &output_len, ",");
-                }
-                if (j < ec-1) {
-                    output = append_to_output(output, &output_len, " ");
                 }
             }
         }

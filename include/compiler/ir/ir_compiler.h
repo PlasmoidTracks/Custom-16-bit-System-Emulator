@@ -17,6 +17,7 @@ typedef enum {
     IR_TM_STATIC = 1, 
     IR_TM_ANON = 2, 
     IR_TM_CONST = 4, 
+    IR_TM_VOLATILE = 8, 
 } IRTypeModifier_t;
 
 typedef struct IRIdentifier_t {

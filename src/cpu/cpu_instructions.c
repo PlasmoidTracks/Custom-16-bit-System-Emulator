@@ -36,7 +36,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
 
     // Status Bit Manipulation
     "clz", "sez", "clfz", "sefz", "cll", "sel", "clul", "seul", "clfl", "sefl", 
-    "clbl", "sebl", "clao", "seao","clsrc", "sesrc", "clswc", "seswc", "clmi", "semi", 
+    "clbl", "sebl", "clao", "seao", "clmi", "semi", 
 
     // Conditional Operations
     "cmovz", "cmovnz", "cmovfz", "cmovnfz", "cmovl", "cmovnl", "cmovul", "cmovnul", "cmovfl", "cmovnfl", "cmovbl", "cmovnbl", 
@@ -77,7 +77,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     2, 1, 
     // Status Bit Manipulation
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 
     // Conditional Operations
     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
     // Cache Operations
@@ -114,7 +114,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     0, 0, 
     // Status Bit Manipulation
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 
     // Conditional Operations
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
@@ -152,7 +152,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     0, 0, 
     // Status Bit Manipulation
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 
     // Conditional Operations
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
@@ -190,7 +190,7 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     0, 0, 
     // Status Bit Manipulation
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 
     // Conditional Operations
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations

@@ -90,28 +90,30 @@ int main(int argc, char* argv[]) {
         free(asm);
     }
 
-    // canonicalizes the assembly code to a standard format
     if (co.cft >= CFT_ASM) {
-        char* canon_asm = canonicalizer_compile_from_file(filename);
-        if (!canon_asm) {
-            log_msg(LP_ERROR, "Canonicalizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
-            return 1;
+        if (!co.no_c) {
+            // canonicalizes the assembly code to a standard format
+            char* canon_asm = canonicalizer_compile_from_file(filename);
+            if (!canon_asm) {
+                log_msg(LP_ERROR, "Canonicalizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
+                return 1;
+            }
+            if (co.cft >= CFT_IR && !co.save_temps) {
+                remove(filename);
+            }
+            filename = append_filename(filename, ".can");
+            data_export(filename, canon_asm, strlen(canon_asm));
+            free(canon_asm);
         }
-        if (co.cft >= CFT_IR && !co.save_temps) {
-            remove(filename);
-        }
-        filename = append_filename(filename, ".can");
-        data_export(filename, canon_asm, strlen(canon_asm));
-        free(canon_asm);
 
-        // optimizing asm to asm
         if (co.O) {
+            // optimizing asm to asm
             char* optimized_asm = optimizer_compile_from_file(filename);
             if (!optimized_asm) {
                 log_msg(LP_ERROR, "Optimizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
-            if (!co.save_temps) {
+            if (!co.save_temps && !co.no_c) {
                 remove(filename);
             }
             filename = append_filename(filename, ".opt");
@@ -119,18 +121,20 @@ int main(int argc, char* argv[]) {
             free(optimized_asm);
         }
 
-        // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
-        char* expanded_asm = macro_code_expand_from_file(filename, cpu_generate_feature_flag());
-        if (!expanded_asm) {
-            log_msg(LP_ERROR, "Macro expander: Returned NULL [%s:%d]", __FILE__, __LINE__);
-            return 1;
+        if (!co.no_m) {
+            // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
+            char* expanded_asm = macro_code_expand_from_file(filename, cpu_generate_feature_flag());
+            if (!expanded_asm) {
+                log_msg(LP_ERROR, "Macro expander: Returned NULL [%s:%d]", __FILE__, __LINE__);
+                return 1;
+            }
+            if (!co.save_temps) {
+                remove(filename);
+            }
+            filename = append_filename(filename, ".exp");
+            data_export(filename, expanded_asm, strlen(expanded_asm));
+            free(expanded_asm);
         }
-        if (!co.save_temps) {
-            remove(filename);
-        }
-        filename = append_filename(filename, ".exp");
-        data_export(filename, expanded_asm, strlen(expanded_asm));
-        free(expanded_asm);
     }
 
 
@@ -142,7 +146,7 @@ int main(int argc, char* argv[]) {
     if (co.cft > CFT_BIN) {
         bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count);
 
-        if (!co.save_temps && co.cft > CFT_BIN) {
+        if (!co.save_temps && co.cft > CFT_BIN && (!co.no_c || co.O || !co.no_m)) {
             remove(filename);
         }
         
@@ -215,9 +219,9 @@ int main(int argc, char* argv[]) {
             #endif
         }
 
-        //cpu_print_cache(cpu);
         cpu_print_state(system->cpu);
-        cpu_print_stack(system->cpu, system->ram, 20);
+        //cpu_print_stack(system->cpu, system->ram, 20);
+        cpu_print_cache(system->cpu);
 
 
         system_delete(&system);

@@ -16,6 +16,7 @@ typedef enum {
     IR_LEX_CONST,                  // const
     IR_LEX_STATIC,                 // static
     IR_LEX_ANON,                   // anon
+    IR_LEX_VOLATILE,               // volatile
     IR_LEX_CALLPUSHARG,            // callpusharg
     IR_LEX_CALLFREEARG,            // callfreearg
     IR_LEX_CALL,                   // call

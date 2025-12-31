@@ -23,6 +23,9 @@ Ticker_t* ticker_create(float frequency) {
     ticker->device = device_create(DT_CLOCK, 0, 0, 0, 0);
     ticker->device.device_state = DS_IDLE;
 
+    ticker->clock = 0ULL;
+    ticker->interrupts = 0ULL;
+
     return ticker;
 }
 
@@ -48,4 +51,7 @@ void ticker_clock(Ticker_t* ticker) {
             ticker->time -= ticker->intervall;
         }
     }
+
+    ticker->clock ++;
+    ticker->interrupts ++;
 }

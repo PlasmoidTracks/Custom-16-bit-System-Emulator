@@ -8,11 +8,13 @@
 #include "modules/terminal.h"
 
 Terminal_t* terminal_create(void) {
-    Terminal_t* ticker = malloc(sizeof(Terminal_t));
-    ticker->device = device_create(DT_TERMINAL, 0, 1, SEGMENT_MMIO + 2, SEGMENT_MMIO + 2);
-    ticker->device.device_state = DS_IDLE;
+    Terminal_t* terminal = malloc(sizeof(Terminal_t));
+    terminal->device = device_create(DT_TERMINAL, 0, 1, SEGMENT_MMIO + 2, SEGMENT_MMIO + 2);
+    terminal->device.device_state = DS_IDLE;
 
-    return ticker;
+    terminal->clock = 0ULL;
+
+    return terminal;
 }
 
 void terminal_delete(Terminal_t** terminal) {

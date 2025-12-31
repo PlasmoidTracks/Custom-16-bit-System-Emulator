@@ -16,6 +16,8 @@ typedef struct Ticker_t {
     double last_time;
     double intervall;
     Device_t device;
+    uint64_t clock;
+    uint64_t interrupts;
 } Ticker_t;
 
 

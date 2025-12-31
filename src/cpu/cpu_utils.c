@@ -99,9 +99,9 @@ void cpu_print_state(CPU_t* cpu) {
 
     // Individual Flags
     printf(" \033[1;32mZ/E\033[0m [%d] \033[1;32mFZ\033[0m  [%d]  \033[1;32mN/L\033[0m [%d]  \033[1;32mUL\033[0m  [%d]  \033[1;32mFL\033[0m  [%d]\n"
-          " \033[1;32mBL\033[0m  [%d] \033[1;32mAO\033[0m  [%d]  \033[1;32mSRC\033[0m [%d]  \033[1;32mSWC\033[0m [%d]  \033[1;32mMI\033[0m  [%d]\n",
+          " \033[1;32mBL\033[0m  [%d] \033[1;32mAO\033[0m  [%d]  \033[1;32mNC\033[0m [%d]  \033[1;32mMI\033[0m  [%d]\n",
         cpu->regs.sr.Z, cpu->regs.sr.FZ, cpu->regs.sr.L, cpu->regs.sr.UL, cpu->regs.sr.FL, 
-        cpu->regs.sr.BL, cpu->regs.sr.AO, cpu->regs.sr.SRC, cpu->regs.sr.SWC, cpu->regs.sr.MI);
+        cpu->regs.sr.BL, cpu->regs.sr.AO, cpu->regs.sr.NC, cpu->regs.sr.MI);
 
     // Feature Flags
     printf("\n\033[1;33m Features\033[0m\n");

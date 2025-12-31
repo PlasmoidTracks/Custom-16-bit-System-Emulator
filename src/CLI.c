@@ -31,6 +31,8 @@ INTERMEDIATES:\n\
 \n\
 DEBUG / INSPECTION:\n\
   -d                      Enable disassembly\n\
+  -no-c                   Skip canonicalizer\n\
+  -no-m                   Skip macro expander\n\
 \n\
 EXAMPLES:\n\
   ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d\n\
@@ -47,6 +49,8 @@ const CompileOption_t CO_DEFAULT = {
     .o = 0, 
     .save_temps = 0, 
     .d = 0, 
+    .no_c = 0, 
+    .no_m = 0, 
 };
 
 CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
@@ -89,6 +93,16 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         if (strcmp(argv[arg_index], "-d") == 0) {
             co.d = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-no-c") == 0) {
+            co.no_c = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-no-m") == 0) {
+            co.no_m = 1;
             arg_index ++;
             continue;
         }

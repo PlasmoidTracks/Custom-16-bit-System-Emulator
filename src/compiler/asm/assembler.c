@@ -40,6 +40,7 @@ const char* token_type_string[] = {
     [TT_INCBIN]                     = "incbin",
     [TT_TEXT]                       = "text",
     [TT_STRING]                     = "string",
+    [TT_NOCACHE]                    = "nocache"
 };
 
 const char* expression_type_string[] = {
@@ -92,7 +93,7 @@ char** assembler_split_to_words(char* lines[], int* token_count) {
     int count = 0;
     int index = 0;
     while (lines[index]) {
-        char** line_token_string = split(lines[index], "\t, []", "[]");
+        char** line_token_string = split(lines[index], "\t, []%", "[]%");
         free(lines[index]);
         int index2 = 0;
         while (line_token_string[index2]) {
@@ -173,6 +174,8 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
             token[i].type = TT_REGISTER;
         } else if (string_is_string(word[i])) {
             token[i].type = TT_STRING;
+        } else if (word[i][0] == '%') {
+            token[i].type = TT_NOCACHE;
         } else {
             token[i].type = TT_INSTRUCTION; // TODO: check if its really part of the mnemonic vocab
         }
@@ -430,6 +433,20 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 token_index += 7;
         }
 
+        // no-cache instruction
+        else if (token_index + 1 < token_count &&
+            tokens[token_index + 0].type == TT_NOCACHE &&
+            tokens[token_index + 1].type == TT_INSTRUCTION) {
+
+                expression[expression_index].type = EXPR_INSTRUCTION;
+                // here no-cache modifier is token AFTER instruction
+                expression[expression_index].tokens[0] = tokens[token_index + 1];
+                expression[expression_index].tokens[1] = tokens[token_index + 0];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
+                expression_index ++;
+        }
+
         // instruction
         else if (token_index + 0 < token_count &&
             tokens[token_index + 0].type == TT_INSTRUCTION) {
@@ -570,6 +587,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].expression_count = 1;
             instruction[instruction_index].is_address = 0;
             instruction[instruction_index].is_raw_data = 0;
+            instruction[instruction_index].no_cache = 0;
 
             // verify its an instruction
             if (expression[expression_index].type != EXPR_INSTRUCTION) {
@@ -691,6 +709,11 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 return NULL;
             }
 
+            // Do a check for no-cache modifier
+            if (expression[expression_index].token_count > 1 && expression[expression_index].tokens[1].type == TT_NOCACHE) {
+                instruction[instruction_index].no_cache = 1;
+            } 
+
             // 2. get instruction argument count
             int argument_count = cpu_instruction_argument_count[instruction[instruction_index].instruction];
             //log_msg(LP_INFO, "Parsing expressions: instruction \"%s\" takes %d arguments", cpu_instruction_string[instruction[instruction_index].instruction], argument_count);
@@ -764,7 +787,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         printf("%s ", expression[expression_index].tokens[t].raw);
                     }
                     printf("...\n");
-                    exit(1);
+                    return NULL;
+                    //exit(1);
                 }
                 instruction[instruction_index].admr = admr;
                 expression_index ++;
@@ -1553,7 +1577,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             return NULL;
         }
         written[index] = 1;
-        bin[index++] = instruction[instruction_index].instruction;
+        bin[index++] = instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7);
         written[index] = 1;
         bin[index++] = instruction[instruction_index].admr | (instruction[instruction_index].admx << 3);
         for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {

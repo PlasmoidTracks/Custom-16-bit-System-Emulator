@@ -152,7 +152,7 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     //log_msg(LP_DEBUG, "CPU %d: Attempting to request memory at address 0x%.4x", cpu->clock, address);
     
     //log_msg(LP_DEBUG, "CPU %d: Checking cache first", cpu->clock);
-    int success = cache_read(cpu->cache, address, data, cpu->regs.sr.SRC);
+    int success = cache_read(cpu->cache, address, data, cpu->regs.sr.NC);
     if (success) return 1;
     //log_msg(LP_DEBUG, "CPU %d: \tCache miss", cpu->clock);
 
@@ -171,7 +171,7 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
         cpu->device.device_state = DS_IDLE;
 
         //log_msg(LP_DEBUG, "CPU %d: Requesting write to cache", cpu->clock);
-        cache_write(cpu->cache, cpu->device.address, (uint8_t*) &response, sizeof(response), cpu->regs.sr.SWC);
+        cache_write(cpu->cache, cpu->device.address, (uint8_t*) &response, sizeof(response), cpu->regs.sr.NC);
 
         *data = (uint8_t) response;
         //log_msg(LP_DEBUG, "CPU %d: Data %.2x from Address %.4x found in reply in device", cpu->clock, *data, cpu->device.address);
@@ -212,7 +212,7 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
     cpu->device.processed = 0;
     cpu->device.device_state = DS_STORE;
 
-    int accept_dirty_write = cache_write(cpu->cache, cpu->device.address, (uint8_t*) &data, 1, cpu->regs.sr.SWC);
+    int accept_dirty_write = cache_write(cpu->cache, cpu->device.address, (uint8_t*) &data, 1, cpu->regs.sr.NC);
     return accept_dirty_write;
 }
 
@@ -257,7 +257,8 @@ void cpu_clock(CPU_t* cpu) {
                 int success = cpu_read_memory(cpu, address, &data);
                 if (success) {
                     // ok, we got the data for the instruction, saving it intermediatly
-                    cpu->intermediate.instruction = data;
+                    cpu->regs.sr.NC = (data & 0x80) != 0;
+                    cpu->intermediate.instruction = data & 0x7F;
                     //log_msg(LP_INFO, "CPU %d: Fetch was successful, loaded instruction %s", cpu->clock, cpu_instruction_string[data]);
                     cpu->intermediate.argument_count = cpu_instruction_argument_count[cpu->intermediate.instruction];
 
@@ -265,11 +266,12 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->last_instruction = (CPU_INSTRUCTION_MNEMONIC_t) cpu->intermediate.instruction;
                         #ifdef _CPU_DEBUG_
                         if (cpu->intermediate.argument_count == 0) {
-                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s - nc: %d - sp: %.4x", 
                                 cpu->clock, 
                                 cpu->instruction, 
                                 cpu->regs.pc, 
                                 cpu_instruction_string[cpu->intermediate.instruction], 
+                                cpu->regs.sr.NC, 
                                 cpu->regs.sp
                             );
                         }
@@ -311,13 +313,14 @@ void cpu_clock(CPU_t* cpu) {
 
                     if (cpu->intermediate.argument_count == 2) {
                         #ifdef _CPU_DEBUG_
-                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s, %s - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s, %s - nc: %d - sp: %.4x", 
                                 cpu->clock, 
                                 cpu->instruction, 
                                 cpu->regs.pc - 1, 
                                 cpu_instruction_string[cpu->intermediate.instruction], 
                                 cpu_reduced_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_reduced], 
                                 cpu_extended_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_extended], 
+                                cpu->regs.sr.NC, 
                                 cpu->regs.sp
                             );
                         #endif
@@ -328,12 +331,13 @@ void cpu_clock(CPU_t* cpu) {
                     } else {
                         if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, 
                                     cpu->instruction, 
                                     cpu->regs.pc - 1, 
                                     cpu_instruction_string[cpu->intermediate.instruction], 
                                     cpu_reduced_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_reduced], 
+                                    cpu->regs.sr.NC, 
                                     cpu->regs.sp
                                 );
                             #endif
@@ -343,12 +347,13 @@ void cpu_clock(CPU_t* cpu) {
                             }
                         } else {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, 
                                     cpu->instruction, 
                                     cpu->regs.pc - 1, 
                                     cpu_instruction_string[cpu->intermediate.instruction], 
                                     cpu_extended_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_extended], 
+                                    cpu->regs.sr.NC, 
                                     cpu->regs.sp
                                 );
                             #endif
@@ -1491,34 +1496,6 @@ void cpu_clock(CPU_t* cpu) {
     
                         case SEAO:
                             cpu->regs.sr.AO = 1;
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                            break;
-    
-                        case CLSRC:
-                            cpu->regs.sr.SRC = 0;
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                            break;
-    
-                        case SESRC:
-                            cpu->regs.sr.SRC = 1;
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                            break;
-    
-                        case CLSWC:
-                            cpu->regs.sr.SWC = 0;
-                            cpu->instruction ++;
-                            cpu->state = CS_FETCH_INSTRUCTION;
-                            goto CS_FETCH_INSTRUCTION;
-                            break;
-    
-                        case SESWC:
-                            cpu->regs.sr.SWC = 1;
                             cpu->instruction ++;
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;

@@ -22,6 +22,8 @@ typedef struct CompileOption_t {
     unsigned int o : 1;
     unsigned int save_temps : 1;
     unsigned int d : 1;
+    unsigned int no_c : 1;
+    unsigned int no_m : 1;
 } CompileOption_t;
 
 extern const CompileOption_t CO_DEFAULT;

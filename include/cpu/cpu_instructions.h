@@ -123,10 +123,6 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     SEBL,       // set BL bit
     CLAO,       // clear AO bit
     SEAO,       // set AO bit
-    CLSRC,      // clear SRC bit (enable cache read)
-    SESRC,      // set SRC bit (skip cache read)
-    CLSWC,      // clear SWC bit (enable cache write)
-    SESWC,      // set SWC bit (skip cache write)
     CLMI,       // clear MI bit
     SEMI,       // set MI bit
 

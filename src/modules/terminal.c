@@ -9,7 +9,11 @@
 
 Terminal_t* terminal_create(void) {
     Terminal_t* terminal = malloc(sizeof(Terminal_t));
-    terminal->device = device_create(DT_TERMINAL, 0, 1, SEGMENT_MMIO + 2, SEGMENT_MMIO + 2);
+    terminal->device = device_create(DT_TERMINAL);
+    device_add_listening_region(
+        &terminal->device, 
+        listening_region_create(SEGMENT_MMIO + 2, SEGMENT_MMIO + 2, 0, 1)
+    );
     terminal->device.device_state = DS_IDLE;
 
     terminal->clock = 0ULL;

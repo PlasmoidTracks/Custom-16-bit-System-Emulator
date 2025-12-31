@@ -44,12 +44,17 @@ Device_t* bus_find_device_by_type(BUS_t* bus, DEVICE_TYPE_t device_type) {
 Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address) {
     Device_t* device = NULL;
     for (int i = 0; i < bus->device_count; i++) {
-        if (!bus->device[i]->readable) continue;
-        if (address >= bus->device[i]->address_listener_low && address <= bus->device[i]->address_listener_high) {
-            if (device) {
-                log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d)", device->device_type);
+        for (int l = 0; l < bus->device[i]->listening_region_count; l++) {
+            if (!bus->device[i]->listening_region[l].readable) {continue;}
+            if (
+                address >= bus->device[i]->listening_region[l].address_listener_low && 
+                address <= bus->device[i]->listening_region[l].address_listener_high
+            ) {
+                if (device) {
+                    log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d)", device->device_type);
+                }
+                device = bus->device[i];
             }
-            device = bus->device[i];
         }
     }
     if (device) {
@@ -61,12 +66,17 @@ Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address)
 Device_t* bus_find_writable_device_by_mmio_address(BUS_t* bus, uint16_t address) {
     Device_t* device = NULL;
     for (int i = 0; i < bus->device_count; i++) {
-        if (!bus->device[i]->writable) continue;
-        if (address >= bus->device[i]->address_listener_low && address <= bus->device[i]->address_listener_high) {
-            if (device) {
-                log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d)", device->device_type);
+        for (int l = 0; l < bus->device[i]->listening_region_count; l++) {
+            if (!bus->device[i]->listening_region[l].writable) {continue;}
+            if (
+                address >= bus->device[i]->listening_region[l].address_listener_low && 
+                address <= bus->device[i]->listening_region[l].address_listener_high
+            ) {
+                if (device) {
+                    log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d)", device->device_type);
+                }
+                device = bus->device[i];
             }
-            device = bus->device[i];
         }
     }
     if (device) {

@@ -10,9 +10,10 @@ typedef enum {
     DT_RAM,             // Random Access Memory
     DT_CLOCK, 
     DT_TERMINAL, 
+    DT_MEMORY_BANK,     // swappable memory region
     DT_STORAGE,         // Storage, like hard drives
     DT_DISPLAY,         // Visual display
-    DT_KEYBOARD         // User input device
+    DT_KEYBOARD,        // User input device
 } DEVICE_TYPE_t;
 
 typedef enum {
@@ -31,6 +32,13 @@ ram recieves write request  [STORE]
 ram is providing data       [REPLY]
 */
 
+typedef struct ListeningRegion_t {
+    int readable;                           // whether the device is readable
+    int writable;                           // whether the device is writable
+    uint16_t address_listener_low;          // the lowest memory address this device is listening to
+    uint16_t address_listener_high;         // the highest memory address this device is listening to
+} ListeningRegion_t;
+
 typedef struct Device_t {
     DeviceID_t device_id;                   // self identifier
     DeviceID_t device_target_id;            // identifier of the target
@@ -40,13 +48,16 @@ typedef struct Device_t {
     uint64_t address;                       // the request body, like address
     uint64_t data;                          // the response to the request
 
-    int readable;                           // whether the device is readable
-    int writable;                           // whether the device is writable
-    uint16_t address_listener_low;          // the lowest memory address this device is listening to
-    uint16_t address_listener_high;         // the highest memory address this device is listening to
+    int listening_region_count;
+    ListeningRegion_t* listening_region;
 } Device_t;
 
-extern Device_t device_create(DEVICE_TYPE_t type, int readable, int writable, uint16_t address_listener_low, uint16_t address_listener_high);
+extern Device_t device_create(DEVICE_TYPE_t type);
+
+extern ListeningRegion_t listening_region_create(uint16_t address_listener_low, uint16_t address_listener_high, int readable, int writable);
+
+// adds a listening region to the device
+extern void device_add_listening_region(Device_t* device, ListeningRegion_t listening_region);
 
 // sets the device back to idle and set processed to 0
 extern void device_reset(Device_t* device);

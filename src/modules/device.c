@@ -2,7 +2,7 @@
 
 #include "modules/device.h"
 
-Device_t device_create(DEVICE_TYPE_t type, int readable, int writable, uint16_t address_listener_low, uint16_t address_listener_high) {
+Device_t device_create(DEVICE_TYPE_t type) {
     return (Device_t) {
         .device_id = (DeviceID_t) rand64(),
         .device_type = type,
@@ -11,11 +11,23 @@ Device_t device_create(DEVICE_TYPE_t type, int readable, int writable, uint16_t 
         .address = 0,
         .data = 0,
         .device_target_id = 0, 
+        .listening_region = NULL, 
+        .listening_region_count = 0, 
+    };
+}
+
+ListeningRegion_t listening_region_create(uint16_t address_listener_low, uint16_t address_listener_high, int readable, int writable) {
+    return (ListeningRegion_t) {
+        .address_listener_high = address_listener_high, 
+        .address_listener_low = address_listener_low, 
         .readable = readable, 
         .writable = writable, 
-        .address_listener_low = address_listener_low, 
-        .address_listener_high = address_listener_high, 
     };
+}
+
+void device_add_listening_region(Device_t* device, ListeningRegion_t listening_region) {
+    device->listening_region = realloc(device->listening_region, sizeof(ListeningRegion_t) * (device->listening_region_count + 1));
+    device->listening_region[device->listening_region_count++] = listening_region;
 }
 
 // sets the device back to idle and set processed to 0

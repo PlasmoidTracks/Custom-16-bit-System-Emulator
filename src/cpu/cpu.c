@@ -111,7 +111,7 @@ CPU_t* cpu_create(void) {
     CPU_t* cpu = malloc(sizeof(CPU_t));
     if (!cpu) return NULL;  // Always check for malloc failure
 
-    cpu->device = device_create(DT_CPU, 0, 0, 0, 0);
+    cpu->device = device_create(DT_CPU);
 
     // Zero out the entire CPU structure
     memset(cpu, 0, sizeof(CPU_t));

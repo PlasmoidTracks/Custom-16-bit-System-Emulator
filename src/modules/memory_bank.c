@@ -10,7 +10,15 @@
 
 MemoryBank_t* memory_bank_create(void) {
     MemoryBank_t* memory_bank = malloc(sizeof(MemoryBank_t));
-    memory_bank->device = device_create(DT_TERMINAL, 0, 1, SEGMENT_MMIO + 2, SEGMENT_MMIO + 2);
+    memory_bank->device = device_create(DT_MEMORY_BANK);
+    device_add_listening_region(
+        &memory_bank->device, 
+        listening_region_create(SEGMENT_MMIO + 4, SEGMENT_MMIO + 4, 0, 1)
+    );
+    device_add_listening_region(
+        &memory_bank->device, 
+        listening_region_create(0x8000, 0x9fff, 0, 1)
+    );
     memory_bank->device.device_state = DS_IDLE;
 
     memory_bank->ram = ram_create(0xffff);

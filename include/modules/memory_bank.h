@@ -13,10 +13,13 @@ The Banks can be swapped out such that the same address space shows new data.
 
 typedef struct MemoryBank_t {
     RAM_t* ram;
+    int bank_index;
     uint64_t clock;
     Device_t device;
 } MemoryBank_t;
 
+extern const uint16_t MMIO_REGISTER_ADDRESS;
+extern const uint16_t MMIO_BANK_WIDTH;
 
 extern MemoryBank_t* memory_bank_create(void);
 

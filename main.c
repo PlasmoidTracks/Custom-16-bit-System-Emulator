@@ -220,9 +220,8 @@ int main(int argc, char* argv[]) {
         }
 
         cpu_print_state(system->cpu);
-        //cpu_print_stack(system->cpu, system->ram, 20);
-        cpu_print_cache(system->cpu);
-
+        cpu_print_stack(system->cpu, system->ram, 20);
+        //cpu_print_cache(system->cpu);
 
         system_delete(&system);
     }

@@ -1,11 +1,12 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
-#include "bus.h"
 #include "cpu/cpu.h"
-#include "ram.h"
-#include "terminal.h"
-#include "ticker.h"
+#include "modules/bus.h"
+#include "modules/memory_bank.h"
+#include "modules/ram.h"
+#include "modules/terminal.h"
+#include "modules/ticker.h"
 
 extern int VERBOSE;
 
@@ -15,6 +16,7 @@ typedef enum {
     SCD_BUS, 
     SCD_TICKER, 
     SCD_TERMINAL, 
+    SCD_MEMORY_BANK, 
 } SystemClockDevice_t;
 
 typedef enum {
@@ -38,6 +40,7 @@ typedef struct System_t {
     RAM_t* ram;
     Ticker_t* ticker;
     Terminal_t* terminal;
+    MemoryBank_t* memory_bank;
     int clock_order_size;
     SystemClockDevice_t* clock_order;
     Hook_t* hook;

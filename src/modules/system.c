@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "modules/memory_bank.h"
 #include "utils/Log.h"
 
 #include "modules/bus.h"
@@ -25,6 +26,7 @@ System_t* system_create(
     system->cpu = cpu_create();
     system->ram = ram_create(1 << 16);
     system->terminal = terminal_create();
+    system->memory_bank = memory_bank_create();
 
     if (cache_active) {
         cpu_mount_cache(system->cpu, cache_create(cache_capacity));
@@ -33,6 +35,7 @@ System_t* system_create(
     bus_add_device(system->bus, &system->cpu->device);
     bus_add_device(system->bus, &system->ram->device);
     bus_add_device(system->bus, &system->terminal->device);
+    bus_add_device(system->bus, &system->memory_bank->device);
 
     if (ticker_active) {
         system->ticker = ticker_create(ticker_frequency);
@@ -50,6 +53,8 @@ System_t* system_create(
         system->clock_order[system->clock_order_size++] = SCD_BUS;
         system->clock_order[system->clock_order_size++] = SCD_TICKER;
     }
+    system->clock_order[system->clock_order_size++] = SCD_BUS;
+    system->clock_order[system->clock_order_size++] = SCD_MEMORY_BANK;
     system->clock_order[system->clock_order_size++] = SCD_BUS;
 
     system->hook = NULL;
@@ -90,6 +95,9 @@ void system_clock(System_t *system) {
                 break;
             case SCD_TERMINAL:
                 terminal_clock(system->terminal);
+                break;
+            case SCD_MEMORY_BANK:
+                memory_bank_clock(system->memory_bank);
                 break;
             default:
                 log_msg(LP_ERROR, "System: Unknown SCD clock [%s:%d]", __FILE__, __LINE__);

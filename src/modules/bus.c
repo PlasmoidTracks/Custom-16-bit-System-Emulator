@@ -43,9 +43,14 @@ Device_t* bus_find_device_by_type(BUS_t* bus, DEVICE_TYPE_t device_type) {
 
 Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address) {
     Device_t* device = NULL;
+    //log_msg(LP_DEBUG, "read, address %.4x", address);
     for (int i = 0; i < bus->device_count; i++) {
         for (int l = 0; l < bus->device[i]->listening_region_count; l++) {
-            if (!bus->device[i]->listening_region[l].readable) {continue;}
+            if (!bus->device[i]->listening_region[l].readable) {
+                //log_msg(LP_DEBUG, "read, device %d was not readable", bus->device[i]->device_type);
+                continue;
+            }
+            //log_msg(LP_DEBUG, "read, device %d check region %.4x - %.4x", bus->device[i]->device_type, bus->device[i]->listening_region[l].address_listener_low, bus->device[i]->listening_region[l].address_listener_high);
             if (
                 address >= bus->device[i]->listening_region[l].address_listener_low && 
                 address <= bus->device[i]->listening_region[l].address_listener_high
@@ -65,9 +70,14 @@ Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address)
 
 Device_t* bus_find_writable_device_by_mmio_address(BUS_t* bus, uint16_t address) {
     Device_t* device = NULL;
+    //log_msg(LP_DEBUG, "write, address %.4x", address);
     for (int i = 0; i < bus->device_count; i++) {
         for (int l = 0; l < bus->device[i]->listening_region_count; l++) {
-            if (!bus->device[i]->listening_region[l].writable) {continue;}
+            if (!bus->device[i]->listening_region[l].writable) {
+                //log_msg(LP_DEBUG, "write, device %d was not readable", bus->device[i]->device_type);
+                continue;
+            }
+            //log_msg(LP_DEBUG, "write, device %d check region %.4x - %.4x", bus->device[i]->device_type, bus->device[i]->listening_region[l].address_listener_low, bus->device[i]->listening_region[l].address_listener_high);
             if (
                 address >= bus->device[i]->listening_region[l].address_listener_low && 
                 address <= bus->device[i]->listening_region[l].address_listener_high
@@ -303,6 +313,59 @@ void bus_clock(BUS_t* bus) {
 
         default:
             //log_msg(LP_WARNING, "BUS %d: Attending to an unknown device %d / %llu [%s:%d]", bus->clock, device_type, device->device_id, __FILE__, __LINE__);
+            break;
+        
+
+
+
+        case DT_MEMORY_BANK:
+            //log_msg(LP_DEBUG, "BUS %d: Attending to a MEMORY_BANK", bus->clock);
+            
+            // figure out what the CPU wants
+            switch (device_state) {
+                case DS_IDLE:
+                    //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is idle", bus->clock);
+                    break;
+                
+                case DS_FETCH: {
+                    //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is retrieving data", bus->clock);
+                    if (device->processed == 0) {
+                        //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is not done with the request yet", bus->clock);
+                        break;
+                    }
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
+                        break;
+                    }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Target device to send data to", bus->clock);
+                    device_target->data = device->data;
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
+                    break;
+                }
+                
+                case DS_STORE: {
+                    //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is storing data", bus->clock);
+                    if (device->processed == 0) {
+                        //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is not done with the request yet", bus->clock);
+                        break;
+                    }
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
+                        break;
+                    }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Target device to validate", bus->clock);
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
+                    break;
+                }
+                
+                default:
+                    //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is in an unknown state %d", bus->clock, device_state);
+                    break;
+            }
             break;
     }
 

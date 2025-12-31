@@ -7,6 +7,7 @@
 #include "modules/ram.h"
 #include "modules/cache.h"
 
+#include "cpu/cpu_features.h"
 #include "cpu/cpu_instructions.h"
 
 /*
@@ -118,7 +119,7 @@ typedef struct CPU_t {
     uint64_t instruction;       // keeps track of the number of executed instructions
     CPU_INSTRUCTION_MNEMONIC_t last_instruction; // the last executed/pending instruction of the cpu
 
-    uint16_t feature_flag;
+    CpuFeatureFlag_t feature_flag;
 
     Cache_t* cache;
 
@@ -155,7 +156,7 @@ typedef struct CPU_t {
 
 extern CPU_t* cpu_create(void);
 
-extern uint16_t cpu_generate_feature_flag(void);
+extern CpuFeatureFlag_t cpu_generate_feature_flag(void);
 
 extern void cpu_delete(CPU_t** cpu);
 

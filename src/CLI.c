@@ -33,8 +33,8 @@ DEBUG / INSPECTION:\n\
   -d                      Enable disassembly\n\
 \n\
 EXAMPLES:\n\
-  ./main input.ir -c=ir -run -O1 -o prog.bin -save-temps -d\n\
-  ./main input.asm -run -O1 -save-temps -d\n\
+  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d\n\
+  ./main input.asm -run -save-temps -d\n\
   ./main input.bin -d\n\
 ";
 
@@ -57,6 +57,11 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
     while (arg_index < argc) {
         if (strcmp(argv[arg_index], "-run") == 0) {
             co.run = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-O0") == 0) {
+            co.O = 0;
             arg_index ++;
             continue;
         }

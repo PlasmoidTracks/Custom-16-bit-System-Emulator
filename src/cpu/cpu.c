@@ -55,8 +55,8 @@ const char* cpu_state_name[CS_COUNT] = {
 };
 
 
-uint16_t cpu_generate_feature_flag(void) {
-    uint16_t feature_flag = 0;
+CpuFeatureFlag_t cpu_generate_feature_flag(void) {
+    CpuFeatureFlag_t feature_flag = 0;
     #ifdef DCFF_CORE_BASE
         feature_flag |= CFF_BASE;
     #endif

@@ -18,12 +18,20 @@ These values can be used as operands anywhere immediates are accepted:
 
 Syntax
 ------
-instructions and their operands can be written in any format, as long as they are separated by a space or a newline. 
+Instructions and their operands can be written in any format, as long as they are separated by a space or a newline. 
 This would make the following code legal:
 - "mov r0 1 mov r1 2 hlt"
 - "mov \n\n\n      r0 \n\n\n      1"
 Comments can be written after a semicolon character ';', that extend up until the end of a line
 - "mov r0, r1 ; THIS HERE IS A COMMENT AND WILL BE IGNORED"
+
+
+No-Cache Modifier
+------
+Instructions can have a no-cache modifier, simply by prepending a '%' to the instruction, like this:
+- "%mov r0, [$1234]"
+This has the effect, that the memory fetching and writing does read or write to cache. 
+This is useful for addresses that may change during consecutive reads from the same address, like external registers. 
 
 
 Addressing Modes

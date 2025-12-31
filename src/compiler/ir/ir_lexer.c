@@ -22,6 +22,7 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     "const",          // IR_LEX_CONST
     "static",        // IR_LEX_STATIC
     "anon",          // IR_LEX_ANON
+    "volatile",      // IR_LEX_VOLATILE
     "callpusharg",   // IR_LEX_CALLPUSHARG
     "callfreearg",   // IR_LEX_CALLFREEARG
     "call",          // IR_LEX_CALL
@@ -114,6 +115,9 @@ const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
     1,  // IR_LEX_RETURN
     1,  // IR_LEX_ARG
     1,  // IR_LEX_CONST
+    1,  // IR_LEX_STATIC
+    1,  // IR_LEX_ANON
+    1,  // IR_LEX_VOLATILE
     1,  // IR_LEX_CALLPUSHARG
     1,  // IR_LEX_CALLFREEARG
     1,  // IR_LEX_CALL

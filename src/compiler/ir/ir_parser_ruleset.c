@@ -134,6 +134,18 @@ IRGrammarRule_t parser_ruleset[256] = {
     },
     {
         .context = {
+            (IRParserTokenType_t) IR_LEX_VOLATILE,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_TYPE_DEFINITION,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100, 
+        .description = "volatile -> type definition",
+    },
+    {
+        .context = {
             (IRParserTokenType_t) IR_PAR_TYPE_DEFINITION,
             (IRParserTokenType_t) IR_PAR_TYPE_DEFINITION,
             IR_PAR_RULE_END

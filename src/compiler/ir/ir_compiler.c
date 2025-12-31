@@ -86,6 +86,10 @@ IRTypeModifier_t vardec_get_type_modifier(IRParserToken_t* parser_token) {
                 tm |= IR_TM_ANON;
                 break;
             
+            case IR_LEX_VOLATILE:
+                tm |= IR_TM_VOLATILE;
+                break;
+            
             case IR_LEX_VAR:
                 break;
             
@@ -138,13 +142,24 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                     int stack_offset = ident->stack_offset;
                     char tmp[32];
                     sprintf(tmp, "mov r1, [r3 + %d]", stack_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        *output = append_to_output(*output, length, "%");
+                    }
                     *output = append_to_output(*output, length, tmp);
                     sprintf(tmp, "\t; %s\n", token.raw);
                     *output = append_to_output(*output, length, tmp);
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     *output = append_to_output(*output, length, "; expression -> loading static ir_identifier from data segment\n");
                     char tmp[64];
-                    sprintf(tmp, "mov r1, .__static_data\nadd r1, %d\nmov r1, [r1]", ident->static_offset);
+                    sprintf(tmp, "mov r1, .__static_data\nadd r1, %d\n", ident->static_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        *output = append_to_output(*output, length, "%");
+                    }
+                    *output = append_to_output(*output, length, tmp);
+                    sprintf(tmp, "mov r1, [r1]");
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        *output = append_to_output(*output, length, "%");
+                    }
                     *output = append_to_output(*output, length, tmp);
                     sprintf(tmp, "\t; %s\n", token.raw);
                     *output = append_to_output(*output, length, tmp);
@@ -182,6 +197,9 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 if (ident->type_modifier & IR_TM_STATIC) {
                     char tmp[64];
                     sprintf(tmp, "mov r1, .__static_data\nadd r1, %d\n", ident->static_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        *output = append_to_output(*output, length, "%");
+                    }
                     *output = append_to_output(*output, length, tmp);
                     sprintf(tmp, "\t; %s", token1->child[0]->token.raw);
                     *output = append_to_output(*output, length, tmp);
@@ -189,6 +207,9 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 } else {
                     char tmp[32];
                     sprintf(tmp, "lea r1, [r3 + %d]", ident->stack_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        *output = append_to_output(*output, length, "%");
+                    }
                     *output = append_to_output(*output, length, tmp);
                     sprintf(tmp, "\t; %s", token1->child[0]->token.raw);
                     *output = append_to_output(*output, length, tmp);
@@ -679,9 +700,15 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     if (stack_offset == 0) {return NULL;}
                     char tmp[64];
                     sprintf(tmp, "lea r0, [r3 + %d]", stack_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        code_output = append_to_output(code_output, &code_output_len, "%");
+                    }
                     code_output = append_to_output(code_output, &code_output_len, tmp);
                     sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[0]->token.raw);
                     code_output = append_to_output(code_output, &code_output_len, tmp);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        code_output = append_to_output(code_output, &code_output_len, "%");
+                    }
                     code_output = append_to_output(code_output, &code_output_len, "mov [r0], r1\n");
                     parser_token_index ++;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
@@ -694,6 +721,9 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[0]->token.raw);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
+                        if (ident->type_modifier & IR_TM_VOLATILE) {
+                            code_output = append_to_output(code_output, &code_output_len, "%");
+                        }
                         code_output = append_to_output(code_output, &code_output_len, "mov [r0], r1\n");
                     } // other path was already handled in second prepass
                     parser_token_index ++;
@@ -717,10 +747,17 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     if (stack_offset == 0) {return NULL;}
                     char tmp[64];
                     sprintf(tmp, "lea r0, [r3 + %d]", stack_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        code_output = append_to_output(code_output, &code_output_len, "%");
+                    }
                     code_output = append_to_output(code_output, &code_output_len, tmp);
                     sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[1]->token.raw);
                     code_output = append_to_output(code_output, &code_output_len, tmp);
-                    code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        code_output = append_to_output(code_output, &code_output_len, "%mov r0, [r0]\n%mov [r0], r1\n");
+                    } else {
+                        code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
+                    }
                     parser_token_index ++;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
                     if (is_in_function_body) {
@@ -731,7 +768,11 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         sprintf(tmp, "\t; %s\n", parser_token[parser_token_index]->child[1]->token.raw);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
-                        code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
+                        if (ident->type_modifier & IR_TM_VOLATILE) {
+                            code_output = append_to_output(code_output, &code_output_len, "%mov r0, [r0]\n%mov [r0], r1\n");
+                        } else {
+                            code_output = append_to_output(code_output, &code_output_len, "mov r0, [r0]\nmov [r0], r1\n");
+                        }
                         parser_token_index ++;
                     } else {
                         log_msg(LP_ERROR, "IR Compiler: Deref variable assignment of static variable may not occure outside of function bodies");
@@ -755,8 +796,14 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     if (stack_offset == 0) {return NULL;}
                     char tmp[64];
                     sprintf(tmp, "lea r0, [r3 + %d]\n", stack_offset);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        code_output = append_to_output(code_output, &code_output_len, "%");
+                    }
                     code_output = append_to_output(code_output, &code_output_len, tmp);
                     sprintf(tmp, "mov [r0], %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                    if (ident->type_modifier & IR_TM_VOLATILE) {
+                        code_output = append_to_output(code_output, &code_output_len, "%");
+                    }
                     code_output = append_to_output(code_output, &code_output_len, tmp);
                     parser_token_index ++;
                 } else if (ident->type_modifier & IR_TM_STATIC) {
@@ -766,6 +813,9 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         sprintf(tmp, "mov r0, .__static_data\nadd r0, %d\n", ident->static_offset);
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         sprintf(tmp, "mov [r0], %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                        if (ident->type_modifier & IR_TM_VOLATILE) {
+                            code_output = append_to_output(code_output, &code_output_len, "%");
+                        }
                         code_output = append_to_output(code_output, &code_output_len, tmp);
                         parser_token_index ++;
                     } else {

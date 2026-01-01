@@ -905,11 +905,11 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         log_msg(LP_ERROR, "Parsing expressions: Unknown admx \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                         log_msg(LP_INFO, "Parsing expressions: Here is a breakdown of all the expressions:");
                         for (int i = ((expression_index - 8 > 0) ? (expression_index - 8) : 0); i < ((expression_index + 8 < expression_count) ? (expression_index + 8) : expression_count); i++) {
-                            log_msg_inline(LP_INFO, "Parsing expressions: Expression %d :: \"%s\", [", i + 1, expression_type_string[expression[i].type]);
+                            log_msg_inline(LP_INFO, "Parsing expressions: Expression %d :: \"%s\", {", i + 1, expression_type_string[expression[i].type]);
                             for (int j = 0; j < expression[i].token_count; j++) {
                                 printf("%s", expression[i].tokens[j].raw);
                                 if (j < expression[i].token_count - 1) {printf(", ");}
-                            } printf("]\n");
+                            } printf("}\n");
                             if (i == expression_index) {
                                 log_msg(LP_NOTICE, "Parsing expressions: ^^^ The sequence of tokens, starting with the upper one, is unknown ^^^");
                             }

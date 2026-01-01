@@ -982,12 +982,11 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             
             case IR_PAR_INLINE_ASM: {
                 code_output = append_to_output(code_output, &code_output_len, "; inline assembly\n");
-                // TODO: First solve expression, then save it in r1, the find ir_identifier, set r0 to the ident and mov indirectly?
                 const char* asm = parser_token[parser_token_index]->child[1]->token.raw;
                 char inline_asm[strlen(asm) + 16];
                 strncpy(inline_asm, asm + 1, strlen(asm) - 2);
                 inline_asm[strlen(asm) - 2] = '\0';
-                char** splits = split(inline_asm, " ,\t", "");
+                char** splits = split(inline_asm, " ,\t%", "%");
                 int index = 0;
                 int found_ident = 0;
                 while (splits[index]) {
@@ -1000,8 +999,6 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         } else {
                             splits[index] = realloc(splits[index], 32);
                             sprintf(splits[index], "[.__static_data + $%.4X]", ((int16_t) ident->stack_offset) & 0xffff);
-                            //log_msg(LP_ERROR, "IR Compiler: resolving of static variable from symbolic expression within inline assembly is not possible [%s:%d]", __FILE__, __LINE__);
-                            //return NULL;
                         }
                         break;
                     }
@@ -1010,13 +1007,19 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 // merge splits into one
                 int offset = 0;
                 index = 0;
+                int no_cache = 0;
+                if (splits[index] && splits[index][0] == '%') {
+                    no_cache = 1;
+                }
                 while (splits[index]) {
                     char tmp[32];
-                    if (splits[index + 1] == NULL || index == 2) {
+                    if (splits[index + 1] == NULL || index == (2 + no_cache)) {
                         sprintf(tmp, "%s", splits[index]);
-                    } else if (index == 0) {
+                    } else if (index == (-1 + no_cache)) {
+                        sprintf(tmp, "%s", splits[index]);
+                    } else if (index == (0 + no_cache)) {
                         sprintf(tmp, "%s ", splits[index]);
-                    } else if (index == 1) {
+                    } else if (index == (1 + no_cache)) {
                         sprintf(tmp, "%s, ", splits[index]);
                     }
                     sprintf(&inline_asm[offset], "%s", tmp);
@@ -1027,7 +1030,15 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 if (!found_ident) {
                     int token_count = 0;
                     Token_t* tokens = assembler_parse_words(splits, index, &token_count);
+                    if (!tokens) {
+                        log_msg(LP_ERROR, "IR Compiler: Inline assembly failed lexer [%s:%d]", __FILE__, __LINE__);
+                        return NULL;
+                    }
                     Expression_t* expr = assembler_parse_token(tokens, token_count, NULL);
+                    if (!expr) {
+                        log_msg(LP_ERROR, "IR Compiler: Inline assembly failed parser [%s:%d]", __FILE__, __LINE__);
+                        return NULL;
+                    }
                     if (!expr || expr->type == EXPR_INSTRUCTION) {
                         // check if valid instruction
                         int is_valid_instruction = 0;

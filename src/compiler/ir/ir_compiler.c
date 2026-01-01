@@ -23,6 +23,7 @@ int ir_identifier_index[IR_MAX_DEPTH] = {0};   // this gets set to 0 after each 
 int ir_identifier_scope_depth = 0;
 int static_identifier_count = 0;
 int identifier_offset[IR_MAX_DEPTH] = {0};
+IRTypeModifier_t identifier_type_modifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 
 int is_in_function_body = 0;
 
@@ -221,7 +222,16 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
             case IR_LEX_DEREF:
                 parser_evaluate_expression(output, length, token1);
                 *output = append_to_output(*output, length, "; unary operation -> deref\n");
-                *output = append_to_output(*output, length, "mov r0, [r1]\nmov r1, r0\n");
+
+                IRIdentifier_t* ident = ir_get_identifier_from_name(token1->child[0]->token.raw);
+                IRTypeModifier_t tm = identifier_type_modifier[ir_identifier_scope_depth][ident->identifier_index];
+
+                if (tm & IR_TM_VOLATILE) {
+                    *output = append_to_output(*output, length, "%");
+                }
+                *output = append_to_output(*output, length, "mov r0, [r1]\t; ");
+                *output = append_to_output(*output, length, token1->child[0]->token.raw);
+                *output = append_to_output(*output, length, "\nmov r1, r0\n");
                 break;
 
             case IR_LEX_CIF:
@@ -642,6 +652,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 IRIdentifier_t* ident = ir_get_identifier_from_name(ident_name);
 
                 IRTypeModifier_t type_mod = vardec_get_type_modifier(parser_token[parser_token_index]->child[0]);
+                identifier_type_modifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]] = type_mod;
                 //log_msg(LP_NOTICE, "type modifier: %.2o", type_mod);
                 if (ident && !(type_mod & IR_TM_ANON)) {
                     log_msg(LP_ERROR, "IR Compiler: Redeclaration of already existing variable \"%s\" [%s:%d]", ident_name, __FILE__, __LINE__);

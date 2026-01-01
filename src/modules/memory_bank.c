@@ -20,7 +20,7 @@ MemoryBank_t* memory_bank_create(void) {
     );
     device_add_listening_region(
         &memory_bank->device, 
-        listening_region_create(0x8000, 0x8000 + MMIO_BANK_WIDTH - 1, 1, 1)
+        listening_region_create(SEGMENT_MEMORY_BANK, SEGMENT_MEMORY_BANK + MMIO_BANK_WIDTH - 1, 1, 1)
     );
     memory_bank->device.device_state = DS_IDLE;
     memory_bank->bank_index = 0;

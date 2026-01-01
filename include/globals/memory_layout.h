@@ -19,6 +19,8 @@ ppu memory (aka. VRAM) for future ppu device. May as well be part of the MMIO se
 typedef enum {
     SEGMENT_CODE          = 0x0000,
     SEGMENT_STACK         = 0x7FFF,
+    SEGMENT_MEMORY_BANK   = 0x8000,
+    SEGMENT_UNUSED        = 0xa000,
     SEGMENT_IRQ_TABLE     = 0xEF00,
     SEGMENT_MMIO          = 0xF000,
 } MemoryLayout_t;

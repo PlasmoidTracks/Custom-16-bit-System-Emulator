@@ -223,12 +223,14 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 parser_evaluate_expression(output, length, token1);
                 *output = append_to_output(*output, length, "; unary operation -> deref\n");
 
+                IRTypeModifier_t tm = 0;
                 IRIdentifier_t* ident = ir_get_identifier_from_name(token1->child[0]->token.raw);
-                IRTypeModifier_t tm = identifier_type_modifier[ir_identifier_scope_depth][ident->identifier_index];
-
-                if (tm & IR_TM_VOLATILE) {
-                    *output = append_to_output(*output, length, "%");
+                if (ident) {
+                    if (identifier_type_modifier[ir_identifier_scope_depth][ident->identifier_index] & IR_TM_VOLATILE) {
+                        *output = append_to_output(*output, length, "%");
+                    }
                 }
+
                 *output = append_to_output(*output, length, "mov r0, [r1]\t; ");
                 *output = append_to_output(*output, length, token1->child[0]->token.raw);
                 *output = append_to_output(*output, length, "\nmov r1, r0\n");

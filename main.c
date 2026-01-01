@@ -77,10 +77,10 @@ int main(int argc, char* argv[]) {
 
     char* filename = malloc(128);
     sprintf(filename, "%s", co.input_filename);
-
+    
     // from ir to asm
     if (co.cft >= CFT_IR) {
-        char* asm = ir_compile_from_filename(co.input_filename, ((IRCO_POSITION_INDEPENDENT_CODE) | (IRCO_ADD_PREAMBLE)));
+        char* asm = ir_compile_from_filename(co.input_filename, ((IRCO_POSITION_INDEPENDENT_CODE * co.pic) | (IRCO_ADD_PREAMBLE * (1 - co.no_preamble))));
         if (!asm) {
             log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;

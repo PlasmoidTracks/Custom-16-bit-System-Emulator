@@ -19,6 +19,10 @@ TYPE: \n\
 MODES (one):\n\
   -run                    execute final binary in emulator\n\
 \n\
+OTHER :\n\
+  -pic                    compile as position independent code\n\
+  -no-preamble            omit main call preamble in executable\n\
+\n\
 OPTIMIZATION:\n\
   -O0                     No optimization\n\
   -O1                     Basic optimization (default: O1)\n\
@@ -35,7 +39,7 @@ DEBUG / INSPECTION:\n\
   -no-m                   Skip macro expander\n\
 \n\
 EXAMPLES:\n\
-  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d\n\
+  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d -pic -no-preamble\n\
   ./main input.asm -run -save-temps -d\n\
   ./main input.bin -d\n\
 ";
@@ -51,6 +55,8 @@ const CompileOption_t CO_DEFAULT = {
     .d = 0, 
     .no_c = 0, 
     .no_m = 0, 
+    .pic = 0, 
+    .no_preamble = 0, 
 };
 
 CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
@@ -103,6 +109,16 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         if (strcmp(argv[arg_index], "-no-m") == 0) {
             co.no_m = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-pic") == 0) {
+            co.pic = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-no-preamble") == 0) {
+            co.no_preamble = 1;
             arg_index ++;
             continue;
         }

@@ -22,6 +22,10 @@ RAM_t* ram_create(uint32_t capacity) {
         ram->data[i] = 0x00; //rand8();
     }
     ram->clock = 0ULL;
+
+    ram->reads = 0;
+    ram->writes = 0;
+
     return ram;
 }
 
@@ -37,6 +41,7 @@ uint8_t ram_read(RAM_t* ram, uint16_t address) {
         //log_msg(LP_CRITICAL, "RAM %d: capacity is zero!", ram->clock);
         return 0x00;
     }
+    ram->reads += 1ULL;
     return ram->data[address % ram->capacity];
 }
 
@@ -45,6 +50,7 @@ void ram_write(RAM_t* ram, uint16_t address, uint8_t data) {
         //log_msg(LP_CRITICAL, "RAM %d: capacity is zero!", ram->clock);
         return;
     }
+    ram->writes += 1ULL;
     ram->data[address % ram->capacity] = data;
 }
 

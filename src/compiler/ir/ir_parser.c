@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "compiler/ir/ir_parser_warning_ruleset.h"
 #include "utils/Log.h"
 
 #include "compiler/ir/ir_lexer.h"
@@ -23,6 +24,16 @@
         }
     }
 #endif // IR_PARSER_DEBUG
+
+static void ir_recursion_print(IRParserToken_t* parser_token, int depth) {
+    //if (depth > 0) return;
+    if (parser_token->child_count == 0) {
+        printf("%s ", parser_token->token.raw);
+    }
+    for (int i = 0; i < parser_token->child_count; i++) {
+        ir_recursion_print(parser_token->child[i], depth + 1);
+    }
+}
 
 void ir_print_token(IRParserToken_t* parser_token) {
     if (parser_token->child_count == 0) {
@@ -126,19 +137,19 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
         for (int start = 0; start < lexer_token_count; start++) {
             // 4) For each position, try every rule
             for (int rule = 0; rule < 256; rule++) {
-                if (parser_ruleset[rule].context[0] == IR_PAR_RULE_END)
+                if (ir_parser_ruleset[rule].context[0] == IR_PAR_RULE_END)
                     break; // No more rules
 
-                int context_len = parser_ruleset[rule].context_length;
+                int context_len = ir_parser_ruleset[rule].context_length;
                 if (start + context_len > lexer_token_count) 
                     continue; // Not enough tokens for this rule
 
                 // Check match (including invert_match)
                 int match = 1;
                 for (int c = 0; c < context_len; c++) {
-                    IRParserTokenType_t expected = parser_ruleset[rule].context[c];
+                    IRParserTokenType_t expected = ir_parser_ruleset[rule].context[c];
                     IRParserTokenType_t actual   = (IRParserTokenType_t) parser_token[start + c]->token.type;
-                    int invert = parser_ruleset[rule].invert_match[c];
+                    int invert = ir_parser_ruleset[rule].invert_match[c];
 
                     if ((actual == expected && invert) || (actual != expected && !invert)) {
                         match = 0;
@@ -150,7 +161,7 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
                     continue;
 
                 // If we get here, we have a match.
-                int this_priority = parser_ruleset[rule].priority;
+                int this_priority = ir_parser_ruleset[rule].priority;
                 if (this_priority > best_rule_priority) {
                     best_rule_priority = this_priority;
                     best_rule_index    = rule;
@@ -171,8 +182,8 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
             IRParserToken_t* new_token = malloc(sizeof(IRParserToken_t));
             *new_token = (IRParserToken_t){
                 .token = {
-                    .type      = (IRLexerTokenType_t) parser_ruleset[best_rule_index].output,
-                    .raw       = parser_ruleset[best_rule_index].description,
+                    .type      = (IRLexerTokenType_t) ir_parser_ruleset[best_rule_index].output,
+                    .raw       = ir_parser_ruleset[best_rule_index].description,
                     .line      = -1,
                     .column    = -1,
                     .index     = -1,
@@ -183,9 +194,9 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
             };
 
             // Fill the children according to IR_CR_REPLACE / IR_CR_DISCARD / IR_CR_KEEP
-            int context_len = parser_ruleset[best_rule_index].context_length;
+            int context_len = ir_parser_ruleset[best_rule_index].context_length;
             for (int c = 0; c < context_len; c++) {
-                IRContextRule_t mode = parser_ruleset[best_rule_index].context_rule[c];
+                IRContextRule_t mode = ir_parser_ruleset[best_rule_index].context_rule[c];
                 // Only attach them if it's REPLACE or DISCARD 
                 // (That's how you've been building partial subtrees.)
                 if (mode == IR_CR_REPLACE || mode == IR_CR_DISCARD) {
@@ -205,7 +216,7 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
 
             // Insert: for each token in the matched range
             for (int c = 0; c < context_len; c++) {
-                IRContextRule_t mode = parser_ruleset[best_rule_index].context_rule[c];
+                IRContextRule_t mode = ir_parser_ruleset[best_rule_index].context_rule[c];
                 if (mode == IR_CR_REPLACE) {
                     // Insert the new token node just once
                     new_token_list[new_count++] = new_token;
@@ -227,6 +238,46 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
         }
         else {
             // No rule found => no more matches
+            // Check for matching warning ruleset
+            for (int start = 0; start < lexer_token_count; start++) {
+                // 4) For each position, try every rule
+                for (int rule = 0; rule < 256; rule++) {
+                    if (ir_parser_warning_ruleset[rule].context[0] == IR_PAR_RULE_END)
+                        break; // No more rules
+
+                    int context_len = ir_parser_warning_ruleset[rule].context_length;
+                    if (start + context_len > lexer_token_count) 
+                        continue; // Not enough tokens for this rule
+
+                    // Check match (including invert_match)
+                    int match = 1;
+                    for (int c = 0; c < context_len; c++) {
+                        IRParserTokenType_t expected = ir_parser_warning_ruleset[rule].context[c];
+                        IRParserTokenType_t actual   = (IRParserTokenType_t) parser_token[start + c]->token.type;
+                        int invert = ir_parser_warning_ruleset[rule].invert_match[c];
+
+                        if ((actual == expected && invert) || (actual != expected && !invert)) {
+                            match = 0;
+                            break;
+                        }
+                    }
+
+                    if (!match) 
+                        continue;
+
+                    // If we get here, we have a match.
+                    log_msg(LP_ERROR, "IR Parser: Matching warning at line %d:%d", parser_token[start]->token.line, parser_token[start]->token.column);
+                    log_msg(LP_INFO, ir_parser_warning_ruleset[rule].description);
+                    for (int i = start; i < ((start + context_len >= lexer_token_count) ? (lexer_token_count - 1) : (start + context_len - 1)); i++) {
+                        if (i == start) {
+                            printf("%-4d : \"", parser_token[i]->token.line);
+                        }
+                        ir_recursion_print(parser_token[i], 0);
+                    }
+                    printf("\"\n");
+                    return NULL;
+                }
+            }
             break;
         }
     }

@@ -4,7 +4,7 @@
 
 #define IR_PAR_RULE_END ((IRParserTokenType_t)(-1))
 
-IRGrammarRule_t parser_ruleset[256] = {
+IRGrammarRule_t ir_parser_ruleset[256] = {
     // Expressions
     {
         .context = {

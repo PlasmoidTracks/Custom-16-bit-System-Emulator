@@ -153,6 +153,19 @@ IRGrammarRule_t ir_parser_warning_ruleset[256] = {
         .description = "missing semicolon in function call",
     }, 
 
+    // "callpusharg expr;" missing the semicolon
+    {
+        .context = { 
+            (IRParserTokenType_t) IR_LEX_CALLPUSHARG,
+            (IRParserTokenType_t) IR_PAR_EXPRESSION,
+            (IRParserTokenType_t) IR_LEX_SEMICOLON,
+            IR_PAR_RULE_END 
+        },
+        .invert_match = {0, 0, 1},
+        .context_length = 3,
+        .description = "missing semicolon in callpusharg",
+    }, 
+
     // "call .label;" missing the semicolon
     {
         .context = { 

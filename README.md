@@ -41,6 +41,13 @@ The main executable is `main`:
 ./main <input_file> [options]
 ```
 
+Try directly: 
+```bash
+./main ir_scripts/fibonacci.ir -run
+```
+and observe the result of calculating the 16th fibonacci number in register r0, 
+as well as the time it took in milliseconds in register r1, plus the number of recursive function call in register r2. 
+
 Examples:
 
 ```bash

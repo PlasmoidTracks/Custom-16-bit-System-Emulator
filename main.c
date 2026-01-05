@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     LOG_LEVEL = LP_MINPRIO;
 
     if (argc < 2) {
-        log_msg(LP_ERROR, "Not enough arguments given [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_ERROR, "Main: Not enough arguments given [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "Type \"./main help|h|?\" for CLI usage details");
         return 0;
     }
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     int error;
     CompileOption_t co = cli_parse_arguments(argc, argv, &error);
     if (error) {
-        log_msg(LP_ERROR, "Error parsing CLI arguments [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_ERROR, "Main: Error parsing CLI arguments [%s:%d]", __FILE__, __LINE__);
         return 0;
     }
     //log_msg(LP_DEBUG, "Compiling with option: file:%s, bin:%s, c:%d, cft:%d, run:%d, O1:%d, o:%d, save-temps:%d, d:%d", co.input_filename, co.binary_filename, co.c, co.cft, co.run, co.O, co.o, co.save_temps, co.d);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         CCANParserToken_t** parser = ccan_parser_parse(lexer, lexer_token_count, &parser_root_count);
         (void) parser;
 
-        log_msg(LP_ERROR, "CCAN compilation is not implemented [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_ERROR, "Main: CCAN compilation is not implemented [%s:%d]", __FILE__, __LINE__);
 
         return 0;
     }
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     if (co.cft >= CFT_IR) {
         char* asm = ir_compile_from_filename(co.input_filename, ((IRCO_POSITION_INDEPENDENT_CODE * co.pic) | (IRCO_ADD_PREAMBLE * (1 - co.no_preamble))));
         if (!asm) {
-            log_msg(LP_ERROR, "IR: Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
+            log_msg(LP_ERROR, "Main: IR Compiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 1;
         }
         filename = append_filename(filename, ".asm");
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
             // canonicalizes the assembly code to a standard format
             char* canon_asm = canonicalizer_compile_from_file(filename);
             if (!canon_asm) {
-                log_msg(LP_ERROR, "Canonicalizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
+                log_msg(LP_ERROR, "Main: Canonicalizer returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
             if (co.cft >= CFT_IR && !co.save_temps) {
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
             // optimizing asm to asm
             char* optimized_asm = optimizer_compile_from_file(filename);
             if (!optimized_asm) {
-                log_msg(LP_ERROR, "Optimizer: Returned NULL [%s:%d]", __FILE__, __LINE__);
+                log_msg(LP_ERROR, "Main: Optimizer returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
             if (!co.save_temps && !co.no_c) {
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
             // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
             char* expanded_asm = macro_code_expand_from_file(filename, cpu_generate_feature_flag());
             if (!expanded_asm) {
-                log_msg(LP_ERROR, "Macro expander: Returned NULL [%s:%d]", __FILE__, __LINE__);
+                log_msg(LP_ERROR, "Main: Macro expander returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
             if (!co.save_temps) {
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
         }
         
         if (!bin) {
-            log_msg(LP_ERROR, "Assembler: Returned NULL [%s:%d]", __FILE__, __LINE__);
+            log_msg(LP_ERROR, "Main: Assembler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 0;
         }
         
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
         bin = (uint8_t*) read_file(co.binary_filename, &binary_size);
 
         if (!bin) {
-            log_msg(LP_ERROR, "read_file for \"%s\" Returned NULL [%s:%d]", co.binary_filename, __FILE__, __LINE__);
+            log_msg(LP_ERROR, "Main: read_file for \"%s\" Returned NULL [%s:%d]", co.binary_filename, __FILE__, __LINE__);
             return 0;
         }
     }
@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
     if (co.cft > CFT_BIN) {
         int success = data_export(co.binary_filename, bin, binary_size);
         if (!success) {
-            log_msg(LP_ERROR, "data_export returned with failure");
+            log_msg(LP_ERROR, "Main: data_export returned with failure");
             return 0;
         }
     }
@@ -219,6 +219,8 @@ int main(int argc, char* argv[]) {
             #endif
         }
 
+        log_msg(LP_DEBUG, "r/w : %d/%d", system->ram->reads, system->ram->writes);  
+
         cpu_print_state(system->cpu);
         cpu_print_stack(system->cpu, system->ram, 20);
         //cpu_print_cache(system->cpu);
@@ -227,7 +229,7 @@ int main(int argc, char* argv[]) {
     }
 
     free(bin);
-    
+
 
     return 0;
 }

@@ -12,6 +12,9 @@ typedef struct RAM_t {
     uint8_t *data;
 
     Device_t device;
+
+    uint64_t reads;
+    uint64_t writes;
 } RAM_t;
 
 

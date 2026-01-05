@@ -23,6 +23,6 @@ typedef struct IRGrammarRule_t {
     const char* description;
 } IRGrammarRule_t;
 
-extern IRGrammarRule_t parser_ruleset[256];
+extern IRGrammarRule_t ir_parser_ruleset[256];
 
 #endif

@@ -15,9 +15,6 @@
 #include "compiler/ir/ir_lexer.h"
 #include "compiler/ir/ir_compiler.h"
 
-#define IR_COMPILER_DEBUG
-#undef IR_COMPILER_DEBUG
-
 IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 int ir_identifier_index[IR_MAX_DEPTH] = {0};   // this gets set to 0 after each "IR_LEX_RETURN", so we can start with a new scope
 int ir_identifier_scope_depth = 0;
@@ -27,18 +24,16 @@ IRTypeModifier_t identifier_type_modifier[IR_MAX_DEPTH][IR_MAX_IDENT];
 
 int is_in_function_body = 0;
 
-#ifdef IR_COMPILER_DEBUG
-    static void ir_recursion(IRParserToken_t* parser_token, int depth) {
-        //if (depth > 0) return;
-        for (int i = 0; i < depth; i++) {
-            printf("    ");
-        }
-        printf("%s, \"%s\"\n", ir_token_name[parser_token->token.type], parser_token->token.raw);
-        for (int i = 0; i < parser_token->child_count; i++) {
-            ir_recursion(parser_token->child[i], depth + 1);
-        }
+static void ir_recursion(IRParserToken_t* parser_token, int depth) {
+    //if (depth > 0) return;
+    for (int i = 0; i < depth; i++) {
+        printf("    ");
     }
-#endif //IR_COMPILER_DEBUG
+    printf("%s, \"%s\"\n", ir_token_name[parser_token->token.type], parser_token->token.raw);
+    for (int i = 0; i < parser_token->child_count; i++) {
+        ir_recursion(parser_token->child[i], depth + 1);
+    }
+}
 
 int ir_identifier_get_stack_offset(const char* ident_name) {
     //log_msg(LP_DEBUG, "IR Compiler: Looking for ident \"%s\"", ident_name);
@@ -223,7 +218,6 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 parser_evaluate_expression(output, length, token1);
                 *output = append_to_output(*output, length, "; unary operation -> deref\n");
 
-                IRTypeModifier_t tm = 0;
                 IRIdentifier_t* ident = ir_get_identifier_from_name(token1->child[0]->token.raw);
                 if (ident) {
                     if (identifier_type_modifier[ir_identifier_scope_depth][ident->identifier_index] & IR_TM_VOLATILE) {
@@ -1069,11 +1063,9 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 sprintf(tmp, "; UNKNOWN TOKEN: %s\n", ir_token_name[token->token.type]);
                 code_output = append_to_output(code_output, &code_output_len, tmp);
                 log_msg(LP_ERROR, "IR Compiler: Unknown token: %s - \"%s\" [%s:%d]", ir_token_name[token->token.type], token->token.raw, __FILE__, __LINE__);
-                #ifdef IR_COMPILER_DEBUG
-                    for (int i = parser_token_index; i < ((parser_token_index + 8) >= parser_token_count ? parser_token_count : parser_token_index + 8); i++) {
-                        ir_recursion(parser_token[i], 0);
-                    }
-                #endif //IR_COMPILER_DEBUG
+                for (int i = parser_token_index; i < ((parser_token_index + 4) >= parser_token_count ? parser_token_count : parser_token_index + 4); i++) {
+                    ir_recursion(parser_token[i], 0);
+                }                
                 parser_token_index++;
                 break;
             }

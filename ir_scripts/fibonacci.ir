@@ -12,7 +12,7 @@ static var time;
     funcptr = .irq_handler;
     deref address = funcptr;
 
-    N = 23;
+    N = 16;
 
     // create the output variable and set to -1
     var result;

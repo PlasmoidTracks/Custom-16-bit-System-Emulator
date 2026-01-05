@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "utils/Log.h"
@@ -224,6 +225,8 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
 
     long line = 1;
     long column = 1;
+    int error = 0;
+    int error_line = -1;
 
     long index = 0;
     while (index < source_length) {
@@ -314,7 +317,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
                     .raw = word, 
                 };
                 lexer_token_list = ir_lexer_add_token(lexer_token_list, token_count, token);
-                column += ws_index - index + 1;
+                column += ws_index - index;
                 index = ws_index;
                 found_token = 1;
             }
@@ -465,12 +468,47 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
             continue;
         }}
 
-        log_msg(LP_ERROR, "IR Lexer: NO MATCH FOUND! [%s:%d]", __FILE__, __LINE__);
-        log_msg(LP_INFO, "The following text contains the error: \n=====================\n%s\n=====================", &source[index]);
-        //log_msg(LP_INFO, "More context: \n=====================\n%s\n=====================", &source[((index - 16) < 0) ? 0 : (index - 16)]);
-        exit(1);
+        if (line != error_line) {
+            if (!error) {
+                log_msg(LP_ERROR, "IR Lexer: NO MATCH FOUND! [%s:%d]", __FILE__, __LINE__);
+                log_msg_inline(LP_INFO, "The following line(s) contain errors: \nline\n");
+            }
+            int newlines = 0;
+            int max_index = (index + 256) >= source_length ? source_length : (index + 256);
+            while (index > 0 && source[index - 1] != '\n') {
+                index --;
+            }
+            printf("%-4ld:%-3ld | ", line, column);
+            while (newlines < 1 && index < max_index) {
+                char c = source[index++];
+                if (c == '\n') {
+                    newlines++;
+                    line ++;
+                }
+                printf("%c", c);
+            }
+            error_line = line;
+            printf("         | ");
+            for (int i = 0; i < column - 4; i++) {
+                printf(" ");
+            }
+            if (column - 3 < 0) {
+                for (int i = 0; i < column - 1; i++) {
+                    printf("~");
+                }
+            } else {
+                printf("~~~");
+            }
+            printf("^~~~\n");
+        }
+        //return NULL;
+        error = 1;
+        index ++;
     }
 
+    if (error) {
+        return NULL;
+    }
 
     return lexer_token_list;
 }

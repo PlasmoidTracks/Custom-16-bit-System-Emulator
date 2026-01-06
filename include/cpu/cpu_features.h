@@ -8,7 +8,6 @@
 #define DCFF_INT_ARITH              // ADD, SUB, NEG, ABS, INC, DEC
 #define DCFF_INT_SIGNED_SAT_ARITH   // SAD, SSB, SML
 #define DCFF_INT_UNSIGNED_SAT_ARITH // USD, USS, USM
-#define DCFF_INT_SAT_ARITH          // SAD, SSB, SML
 #define DCFF_INT_ARITH_EXT          // MUL, DIV
 #define DCFF_INT_CARRY_EXT          // ADC, SBC
 #define DCFF_LOGIC_EXT              // JL/JNL, all flags, CL*/SE* ops

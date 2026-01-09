@@ -35,6 +35,7 @@ Cache_t* cache_create(uint16_t capacity) {
 
 void cache_delete(Cache_t** cache) {
     if (!cache) {return;}
+    if (!*cache) {return;}
     free((*cache)->data);
     free((*cache)->address);
     free((*cache)->state);

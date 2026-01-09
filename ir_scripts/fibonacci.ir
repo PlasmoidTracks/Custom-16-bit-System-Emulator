@@ -1,6 +1,9 @@
 static var N;
+N = 0;
 static var recursive_function_calls;
+recursive_function_calls = 0;
 static var time;
+time = 0;
 
 .main
     scopebegin;

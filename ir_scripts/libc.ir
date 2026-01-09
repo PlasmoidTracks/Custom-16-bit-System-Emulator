@@ -1,0 +1,761 @@
+// This script contains some utility functions
+
+static var _time;
+static var _malloc_address;
+_malloc_address = 0xa000;
+
+.main
+    scopebegin;
+
+    // setting up interrupt address for INT_CLOCK vector
+    var address;
+    address = 0xef02;
+    var funcptr;
+    funcptr = .irq_ticker;
+    deref address = funcptr;
+
+    var result;
+    var presult;
+    presult = ref result;
+    callpusharg f0.5;
+    callpusharg f2;
+    callpusharg presult;
+    call .powerf;
+    callfreearg 6;
+    asm "mov r2, result";
+
+    scopeend;
+    return;
+
+
+.malloc
+    scopebegin;
+
+    var psize;
+    psize = arg i+ 2;
+    var size;
+    size = deref psize;
+
+    var ppout;
+    ppout = arg i+ 0;
+
+    var pout;
+    pout = deref ppout;
+
+    deref _malloc_address = size;
+    _malloc_address = _malloc_address i+ 2;
+
+    deref pout = _malloc_address;
+    _malloc_address = _malloc_address i+ size;
+
+    scopeend;
+    return;
+
+
+.factorial
+    scopebegin
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+
+    var pout;
+    pout = deref ppout;
+
+    var i;
+    i = 2;
+
+    var value;
+    value = 1;
+
+    .factorial_L
+    var condition;
+    condition = i i> x;
+    if condition .factorial_end;
+    value = value i* i;
+    i = i i+ 1;
+    goto .factorial_L;
+
+    .factorial_end
+
+    deref pout = value;
+
+    scopeend
+    return;
+
+
+.factorialf
+    scopebegin
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+
+    var pout;
+    pout = deref ppout;
+
+    var i;
+    i = f2;
+
+    var value;
+    value = f1;
+
+    .factorialf_L
+    var condition;
+    condition = i f> x;
+    if condition .factorialf_end;
+    value = value f* i;
+    i = i f+ f1;
+    goto .factorialf_L;
+
+    .factorialf_end
+
+    deref pout = value;
+
+    scopeend
+    return;
+
+
+.factorialbf
+    scopebegin
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+
+    var pout;
+    pout = deref ppout;
+
+    var i;
+    i = bf2;
+
+    var value;
+    value = bf1;
+
+    .factorialbf_L
+    var condition;
+    condition = i bf> x;
+    if condition .factorialbf_end;
+    value = value bf* i;
+    i = i bf+ bf1;
+    goto .factorialbf_L;
+
+    .factorialbf_end
+
+    deref pout = value;
+
+    scopeend
+    return;
+
+
+.sinf
+    scopebegin;
+
+    // for values between 0 and pi/2, we can approximate sin(x) with the following polynomial:
+    // sin(x) = ((24 - 4pi) / pi²)x + ((12pi - 48) / pi³)x²
+
+    scopeend;
+    return;
+
+
+.expf
+    scopebegin
+
+    // sum from n = 0 to n = 5 (x^n) / (n!)
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    var i;
+    i = 0;
+
+    var result;
+    result = f0;
+
+    var k;  // the integer part of x
+    k = x;
+    k = cfi k;
+    k = cif k;
+
+    var l;  // the fractional part
+    var condition;
+    condition = x f> f0;
+    if condition .expf_L4;
+    var tmp;
+    tmp = f0 f- x;
+    l = tmp f+ k;
+    l = f0 f- l;
+    goto .expf_L5;
+    .expf_L4;
+    l = x f- k;
+    .expf_L5;
+
+    .expf_L
+    condition = i i>= 16;
+    if condition .expf_end;
+
+    var top_term;
+    var ptop_term;
+    ptop_term = ref top_term;
+    var float_i;
+    float_i = cif i;
+    callpusharg float_i;
+    callpusharg l;
+    callpusharg ptop_term;
+    call .ipowerf;
+    callfreearg 6;
+
+    var inf_condition;
+    inf_condition = top_term == 0x7C00 ;
+    if inf_condition .expf_end;
+
+    var bottom_term;
+    var pbottom_term;
+    pbottom_term = ref bottom_term;
+    callpusharg float_i;
+    callpusharg pbottom_term;
+    call .factorialf;
+    callfreearg 4;
+
+    var term;
+    term = top_term f/ bottom_term;
+    result = result f+ term;
+
+    i = i i+ 1;
+    goto .expf_L;
+
+    .expf_end
+
+    // now multiply result by e k times
+    .expf_L2
+    condition = k f<= f0;
+    if condition .expf_L3;
+    result = result f* f2.718281828459;
+    k = k f- f1;
+    goto .expf_L2;
+
+    // and divide result by e -k times
+    .expf_L3
+    condition = k f>= f0;
+    if condition .expf_end2;
+    result = result f/ f2.718281828459;
+    k = k f+ f1;
+    goto .expf_L3;
+
+    .expf_end2
+    deref pout = result;
+
+    scopeend
+    return;
+
+
+.expbf
+    scopebegin
+
+    // sum from n = 0 to n = 5 (x^n) / (n!)
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    var i;
+    i = 0;
+
+    var result;
+    result = bf0;
+
+    var k;  // the integer part of x
+    k = x;
+    k = cbi k;
+    k = cib k;
+
+    var l;  // the fractional part
+    var condition;
+    condition = x bf> bf0;
+    if condition .expbf_L4;
+    var tmp;
+    tmp = bf0 bf- x;
+    l = tmp bf+ k;
+    l = bf0 bf- l;
+    goto .expbf_L5;
+    .expbf_L4;
+    l = x bf- k;
+    .expbf_L5;
+
+    .expbf_L
+    condition = i i>= 16;
+    if condition .expbf_end;
+
+    var top_term;
+    var ptop_term;
+    ptop_term = ref top_term;
+    var bfloat_i;
+    bfloat_i = cib i;
+    callpusharg bfloat_i;
+    callpusharg l;
+    callpusharg ptop_term;
+    call .ipowerbf;
+    callfreearg 6;
+
+    var inf_condition;
+    inf_condition = top_term == 0x7F80 ;
+    if inf_condition .expbf_end;
+
+    var bottom_term;
+    var pbottom_term;
+    pbottom_term = ref bottom_term;
+    callpusharg bfloat_i;
+    callpusharg pbottom_term;
+    call .factorialbf;
+    callfreearg 4;
+
+    var term;
+    term = top_term bf/ bottom_term;
+    result = result bf+ term;
+
+    i = i i+ 1;
+    goto .expbf_L;
+
+    .expbf_end
+
+    // now multiply result by e k times
+    .expbf_L2
+    condition = k bf<= bf0;
+    if condition .expbf_L3;
+    result = result bf* bf2.718281828459;
+    k = k bf- bf1;
+    goto .expbf_L2;
+
+    // and divide result by e -k times
+    .expbf_L3
+    condition = k bf>= bf0;
+    if condition .expbf_end2;
+    result = result bf/ bf2.718281828459;
+    k = k bf+ bf1;
+    goto .expbf_L3;
+
+    .expbf_end2
+    deref pout = result;
+
+    scopeend
+    return;
+
+
+.ipowerf
+    scopebegin;
+
+    var pn;
+    pn = arg i+ 4;
+    var n;
+    n = deref pn;
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    // currently only handling integer values despite float argument
+    // rouding n to nearest integer form
+
+    var result;
+    result = f1;
+
+    //while (n > 0) {result *= x; n--}
+    var condition;
+    .ipowerf_L
+    condition = n f<= f0;
+    if condition .ipowerf_end;
+
+    result = result f* x;
+    n = n f- f1;
+
+    goto .ipowerf_L;
+
+    .ipowerf_end
+
+    deref pout = result;
+
+    scopeend;
+    return;
+
+
+.ipowerbf
+    scopebegin;
+
+    var pn;
+    pn = arg i+ 4;
+    var n;
+    n = deref pn;
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    // currently only handling integer values despite float argument
+    // rouding n to nearest integer form
+
+    var result;
+    result = bf1;
+
+    //while (n > 0) {result *= x; n--}
+    var condition;
+    .ipowerbf_L
+    condition = n bf<= bf0;
+    if condition .ipowerbf_end;
+
+    result = result bf* x;
+    n = n bf- bf1;
+
+    goto .ipowerbf_L;
+
+    .ipowerbf_end
+
+    deref pout = result;
+
+    scopeend;
+    return;
+
+
+.lnf
+    scopebegin;
+
+    // ln(x) = sum[n=1 to inf](-1^(n-1) * (x-1)^n / n) [works only for 0 < x < 2]
+    // and ln(n * e^k) = ln(n) + ln(e^k) = ln(n) + k
+    // so divide x by e until x is lower than 2.0
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    // if x <= 0 return inf
+
+    var condition;
+    condition = x f> f0;
+    if condition .lnf_continue;
+    deref pout = 0x7c00; // inf in float16
+    goto .lnf_end;
+    .lnf_continue
+
+    var k;
+    k = f0;
+
+    // while (x > 2.0) {k += 1.0; x /= 2.718281828459;}
+    .lnf_L1
+    condition = x f<= f2;
+    if condition .lnf_L1end;
+    k = k f+ f1;
+    x = x f/ f2.718281828459;
+    goto .lnf_L1;
+    .lnf_L1end
+
+    // ln(x') = k * sum[n=1 to inf](-1^(n-1) * (x'-1)^n / n)
+    var n;
+    n = f1;
+    var alternating;
+    alternating = f1;
+    var result;
+    result = f0;
+
+    .lnf_Lsum
+    condition = n f>= f10;
+    if condition .lnf_Lsum_end;
+
+    var x_minus_1;
+    x_minus_1 = x f- f1;
+    var pow;
+    var ppow;
+    ppow = ref pow;
+    callpusharg n;
+    callpusharg x_minus_1;
+    callpusharg ppow;
+    call .ipowerf;
+    callfreearg 6;
+
+    var intermediate;
+    intermediate = alternating f* pow;
+    intermediate = intermediate f/ n;
+    result = result f+ intermediate;
+
+    alternating = alternating f* 0xbc00;    // -1.0
+    n = n f+ f1;
+    goto .lnf_Lsum;
+
+    .lnf_Lsum_end
+
+    result = result f+ k;
+
+    deref pout = result;
+
+    .lnf_end
+    scopeend;
+    return;
+
+
+.lnbf
+    scopebegin;
+
+    // ln(x) = sum[n=1 to inf](-1^(n-1) * (x-1)^n / n) [works only for 0 < x < 2]
+    // and ln(n * e^k) = ln(n) + ln(e^k) = ln(n) + k
+    // so divide x by e until x is lower than 2.0
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    // if x <= 0 return inf
+
+    var condition;
+    condition = x bf> bf0;
+    if condition .lnbf_continue;
+    deref pout = 0x7f80; // inf in bfloat16
+    goto .lnbf_end;
+    .lnbf_continue
+
+    var k;
+    k = bf0;
+
+    // while (x > 2.0) {k += 1.0; x /= 2.718281828459;}
+    .lnbf_L1
+    condition = x bf<= bf2;
+    if condition .lnbf_L1end;
+    k = k bf+ bf1;
+    x = x bf/ bf2.718281828459;
+    goto .lnbf_L1;
+    .lnbf_L1end
+
+    // ln(x') = k * sum[n=1 to inf](-1^(n-1) * (x'-1)^n / n)
+    var n;
+    n = bf1;
+    var alternating;
+    alternating = bf1;
+    var result;
+    result = bf0;
+
+    .lnbf_Lsum
+    condition = n bf>= bf10;
+    if condition .lnbf_Lsum_end;
+
+    var x_minus_1;
+    x_minus_1 = x bf- bf1;
+    var pow;
+    var ppow;
+    ppow = ref pow;
+    callpusharg n;
+    callpusharg x_minus_1;
+    callpusharg ppow;
+    call .ipowerbf;
+    callfreearg 6;
+
+    var intermediate;
+    intermediate = alternating bf* pow;
+    intermediate = intermediate bf/ n;
+    result = result bf+ intermediate;
+
+    alternating = alternating bf* 0xbf80;    // -1.0
+    n = n bf+ bf1;
+    goto .lnbf_Lsum;
+
+    .lnbf_Lsum_end
+
+    result = result bf+ k;
+
+    deref pout = result;
+
+    .lnbf_end
+    scopeend;
+    return;
+
+
+.powerf
+    scopebegin;
+
+    // x^n = e^(ln(x) * n)
+
+    var pn;
+    pn = arg i+ 4;
+    var n;
+    n = deref pn;
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;    
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+    
+    var k;  // the integer part of x
+    k = n;
+    k = cfi k;
+    k = cif k;
+
+    var condition;
+    condition = n != k;
+    if condition .powerf_skip;
+
+    callpusharg k;
+    callpusharg x;
+    callpusharg pout;
+    call .ipowerf;
+    callfreearg 6;
+    goto .powerf_end;
+    .powerf_skip
+
+    var lnx;
+    var plnx;
+    plnx = ref lnx;
+
+    callpusharg x;
+    callpusharg plnx;
+    call .lnf;
+    callfreearg 4;
+
+    lnx = lnx f* n;
+
+    callpusharg lnx;
+    callpusharg plnx;
+    call .expf;
+    callfreearg 4;
+
+    deref pout = lnx;
+
+    .powerf_end
+
+    scopeend;
+    return;
+
+
+.powerbf
+    scopebegin;
+
+    // x^n = e^(ln(x) * n)
+
+    var pn;
+    pn = arg i+ 4;
+    var n;
+    n = deref pn;
+
+    var px;
+    px = arg i+ 2;
+    var x;
+    x = deref px;
+
+    var ppout;
+    ppout = arg i+ 0;
+    var pout;
+    pout = deref ppout;
+
+    var k;  // the integer part of x
+    k = n;
+    k = cbi k;
+    k = cib k;
+
+    var condition;
+    condition = n != k;
+    if condition .powerbf_skip;
+
+    callpusharg k;
+    callpusharg x;
+    callpusharg pout;
+    call .ipowerbf;
+    callfreearg 6;
+    goto .powerbf_end;
+    .powerbf_skip
+
+    var lnx;
+    var plnx;
+    plnx = ref lnx;
+
+    callpusharg x;
+    callpusharg plnx;
+    call .lnbf;
+    callfreearg 4;
+
+    lnx = lnx bf* n;
+
+    callpusharg lnx;
+    callpusharg plnx;
+    call .expbf;
+    callfreearg 4;
+
+    deref pout = lnx;
+
+    .powerbf_end
+
+    scopeend;
+    return;
+
+
+.sleep
+    scopebegin;
+
+    var dt;
+    dt = deref arg;
+
+    var target_time;
+    target_time = _time i+ dt;
+
+    .sleep_L
+    var condition;
+    condition = _time i< target_time;
+    if condition .sleep_L;
+
+    scopeend;
+    return;
+
+
+.irq_ticker
+    irqbegin
+    _time = _time i+ 1;
+    irqend
+    return;
+
+

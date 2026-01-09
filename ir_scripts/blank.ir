@@ -1,4 +1,5 @@
 static var time;
+time = 0;
 
 .main
     scopebegin;

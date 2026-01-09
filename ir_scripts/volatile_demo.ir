@@ -1,0 +1,117 @@
+// This program shows how important the volatile keyword is, when cache is active in the CPU. 
+// At address 0x8000 - 0xa000 there is a swappable bank. 
+// Writing to address 0xf004 allows for bank switching, mirroring values from 0-15. 
+// The two functions defined below do the exact same thing, write 0x1234 to bank 0, write 0x5678 to bank 1 and read back the content of bank 0 (which should be 0x1234). 
+// The read from the bank with volatile keyword used is written to r0, the read from the bank without volatile is written to r1. 
+// Results: 
+// r0: 0x1234 (correct, with volatile)
+// r1: 0x5678 (incorrect, without volatile. Expected 0x1234)
+// This means that without the volatile keyword, the stale data from cache was reused, despite the bank swapping indices. 
+// NOTE: r1 shows 0x1234 if the cache is disabled. 
+
+static var time;
+time = 0x0000;
+
+.main
+    scopebegin;
+
+    // setting up interrupt reoutine
+    var address;
+    address = 0xef02;
+    var funcptr;
+    funcptr = .irq_handler;
+    deref address = funcptr;
+
+
+    var result_with_volatile;
+    var result_without_volatile;
+
+
+    // setup
+    var p_result_with_volatile;
+    p_result_with_volatile = ref result_with_volatile;
+
+    var p_result_without_volatile;
+    p_result_without_volatile = ref result_without_volatile;
+
+    callpusharg p_result_with_volatile;
+    call .function_with_volatile;
+    callfreearg 2;
+
+    callpusharg p_result_without_volatile;
+    call .function_without_volatile;
+    callfreearg 2;
+
+    asm "mov r0, result_with_volatile";
+    asm "mov r1, result_without_volatile";
+    asm "mov r2, time";
+
+    scopeend;
+    return;
+
+
+.function_with_volatile
+    scopebegin
+
+    var pp_result;
+    pp_result = arg i+ 0;
+
+    var p_result;
+    p_result = deref pp_result;
+
+    volatile var ptr;
+    ptr = 0x8000;
+    
+    var ptr_bank_register;
+    ptr_bank_register = 0xf004;
+
+    deref ptr_bank_register = 0;
+    deref ptr = 0x1234;
+    deref ptr_bank_register = 1;
+    deref ptr = 0x5678;
+    deref ptr_bank_register = 0;
+
+    var value;
+    value = deref ptr;
+
+    deref p_result = value;
+
+    scopeend
+    return;
+
+.function_without_volatile
+    scopebegin
+
+    var pp_result;
+    pp_result = arg i+ 0;
+
+    var p_result;
+    p_result = deref pp_result;
+
+    var ptr;
+    ptr = 0x8000;
+    
+    var ptr_bank_register;
+    ptr_bank_register = 0xf004;
+
+    deref ptr_bank_register = 0;
+    deref ptr = 0x1234;
+    deref ptr_bank_register = 1;
+    deref ptr = 0x5678;
+    deref ptr_bank_register = 0;
+
+    var value;
+    value = deref ptr;
+
+    deref p_result = value;
+
+    scopeend
+    return;
+
+
+.irq_handler
+    irqbegin
+    time = time i+ 1;
+    irqend
+    return;
+

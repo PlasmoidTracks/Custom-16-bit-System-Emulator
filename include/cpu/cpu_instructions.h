@@ -139,6 +139,10 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CMOVNFL,    // cmovXX dest, src    :: if FL=0 {src -> dest}
     CMOVBL,     // cmovXX dest, src    :: if BL=1 {src -> dest}
     CMOVNBL,    // cmovXX dest, src    :: if BL=0 {src -> dest}
+    CMOVAO,     // cmovXX dest, src    :: if AO=0 {src -> dest}
+    CMOVNAO,    // cmovXX dest, src    :: if AO=1 {src -> dest}
+    CMOVMI,     // cmovXX dest, src    :: if MI=0 {src -> dest}
+    CMOVNMI,    // cmovXX dest, src    :: if MI=1 {src -> dest}
 
     // Cache Operations
     INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid
@@ -150,10 +154,11 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     HWFFLAG,    // returns the [h]ard[w]are [f]eature [flag]
 
     // Other
-    INT,        // int dest         :: trigger [int]errupt; SEGMENT_IRQ_TABLE + dest -> pc
+    INT,        // int dest         :: trigger [int]errupt; mem[SEGMENT_IRQ_TABLE + dest] -> pc
     HLT,        // hlt              :: [h]a[lt]s CPU execution
 
-    INSTRUCTION_COUNT // Number of defined instructions
+    // Number of defined instructions
+    INSTRUCTION_COUNT, 
 } CPU_INSTRUCTION_MNEMONIC_t;
 
 

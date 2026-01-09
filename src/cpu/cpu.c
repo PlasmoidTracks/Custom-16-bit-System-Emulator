@@ -1802,6 +1802,58 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;
                             break;
+
+                        case CMOVAO:
+                            if (cpu->regs.sr.AO) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNAO:
+                            if (!cpu->regs.sr.AO) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVMI:
+                            if (cpu->regs.sr.MI) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
+
+                        case CMOVNMI:
+                            if (!cpu->regs.sr.MI) {
+                                cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                                cpu->state = CS_WRITEBACK_LOW;
+                                goto CS_WRITEBACK_LOW;
+                                break;
+                            }
+                            cpu->instruction ++;
+                            cpu->state = CS_FETCH_INSTRUCTION;
+                            goto CS_FETCH_INSTRUCTION;
+                            break;
                     #endif // DCFF_CMOV_EXT
 
                     #ifdef DCFF_BYTE_EXT

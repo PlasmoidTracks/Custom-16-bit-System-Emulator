@@ -35,11 +35,12 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "cmp", "tst",
 
     // Status Bit Manipulation
-    "clz", "sez", "clfz", "sefz", "cll", "sel", "clul", "seul", "clfl", "sefl", 
-    "clbl", "sebl", "clao", "seao", "clmi", "semi", 
+    "clz", "sez", "clfz", "sefz", "cll", "sel", "clul", "seul", 
+    "clfl", "sefl", "clbl", "sebl", "clao", "seao", "clmi", "semi", 
 
     // Conditional Operations
-    "cmovz", "cmovnz", "cmovfz", "cmovnfz", "cmovl", "cmovnl", "cmovul", "cmovnul", "cmovfl", "cmovnfl", "cmovbl", "cmovnbl", 
+    "cmovz", "cmovnz", "cmovfz", "cmovnfz", "cmovl", "cmovnl", "cmovul", "cmovnul", 
+    "cmovfl", "cmovnfl", "cmovbl", "cmovnbl", "cmovao", "cmovnao", "cmovmi", "cmovnmi", 
 
     // Cache Operations
     "inv", "ftc",
@@ -76,10 +77,11 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Tests
     2, 1, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Conditional Operations
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+    2, 2, 2, 2, 2, 2, 2, 2, 
+    2, 2, 2, 2, 2, 2, 2, 2, 
     // Cache Operations
     0, 1, 
     // Self Identification and HW-Info Operations
@@ -113,10 +115,11 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Tests
     0, 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
@@ -151,10 +154,11 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Tests
     0, 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
@@ -189,10 +193,11 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     // Tests
     0, 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations

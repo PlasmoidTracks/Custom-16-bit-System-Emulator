@@ -266,7 +266,7 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->last_instruction = (CPU_INSTRUCTION_MNEMONIC_t) cpu->intermediate.instruction;
                         #ifdef _CPU_DEBUG_
                         if (cpu->intermediate.argument_count == 0) {
-                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s - nc: %d - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction (ac:0): %s - nc: %d - sp: %.4x", 
                                 cpu->clock, 
                                 cpu->instruction, 
                                 cpu->regs.pc, 
@@ -313,7 +313,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     if (cpu->intermediate.argument_count == 2) {
                         #ifdef _CPU_DEBUG_
-                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s, %s - nc: %d - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction (ac:2): %s %s, %s - nc: %d - sp: %.4x", 
                                 cpu->clock, 
                                 cpu->instruction, 
                                 cpu->regs.pc - 1, 
@@ -331,7 +331,7 @@ void cpu_clock(CPU_t* cpu) {
                     } else {
                         if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - nc: %d - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction (ac:1 sow): %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, 
                                     cpu->instruction, 
                                     cpu->regs.pc - 1, 
@@ -347,7 +347,7 @@ void cpu_clock(CPU_t* cpu) {
                             }
                         } else {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction: %s %s - nc: %d - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU %lld/%lld: PC %.4x - instruction (ac:1): %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, 
                                     cpu->instruction, 
                                     cpu->regs.pc - 1, 
@@ -371,7 +371,11 @@ void cpu_clock(CPU_t* cpu) {
                             cpu_reduced_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_reduced] +
                             cpu_extended_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_extended];
                     } else if (cpu->intermediate.argument_count == 1) {
-                        cpu->intermediate.argument_bytes_to_load = cpu_extended_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_extended];
+                        if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
+                            cpu->intermediate.argument_bytes_to_load = cpu_reduced_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_reduced];
+                        } else {
+                            cpu->intermediate.argument_bytes_to_load = cpu_extended_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_extended];
+                        }
                     }
 
                     cpu->regs.pc ++;
@@ -412,10 +416,15 @@ void cpu_clock(CPU_t* cpu) {
                         for (int i = 0; i < cpu->intermediate.argument_bytes_to_load; i++) {
                             printf("%.2x ", (uint8_t) cpu->intermediate.argument_data_raw[i]);
                         } printf("\n");*/
-                        
+                        int admc;
+                        if (!cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
+                            admc = cpu_extended_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_extended];
+                        } else {
+                            admc = cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced];
+                        }
+
                         // if its only for admx, then skip to fetch source
-                        int admxc = cpu_extended_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_extended];
-                        switch (admxc) {
+                        switch (admc) {
                             case ADMC_IND:
                                 cpu->state = CS_COMPUTE_ADDRESS;
                                 goto CS_COMPUTE_ADDRESS;
@@ -430,7 +439,7 @@ void cpu_clock(CPU_t* cpu) {
                                 goto CS_COMPUTE_ADDRESS;
                                 break;
                             default:
-                                //log_msg(LP_ERROR, "CPU %d: Unkown extended adm category %d [%s:%d]", cpu->clock, admxc, __FILE__, __LINE__);
+                                //log_msg(LP_ERROR, "CPU %d: Unkown extended adm category %d [%s:%d]", cpu->clock, admc, __FILE__, __LINE__);
                                 break;
                         }
                         break;
@@ -991,7 +1000,6 @@ void cpu_clock(CPU_t* cpu) {
                             break;
 
                         case POP:
-                            cpu->intermediate.argument_address_reduced = cpu->regs.sp;
                             cpu->state = CS_POP_LOW;
                             goto CS_POP_LOW;
                             break;

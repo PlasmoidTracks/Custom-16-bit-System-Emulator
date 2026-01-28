@@ -50,7 +50,7 @@ typedef struct System_t {
 } System_t;
 
 
-extern void hook_action_halt(System_t* system);
+extern void hook_action_halt(void* system);
 #define hook_action_pass NULL
 
 #define HOOK_TARGET_CPU_R0 ((void*) &system->cpu->regs.r0)

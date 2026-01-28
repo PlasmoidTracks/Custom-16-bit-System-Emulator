@@ -12,8 +12,8 @@
 
 int VERBOSE = 0;
 
-void hook_action_halt(System_t* system) {
-    system->cpu->state = CS_HALT;
+void hook_action_halt(void* system) {
+    ((System_t*) system)->cpu->state = CS_HALT;
 }
 
 System_t* system_create(

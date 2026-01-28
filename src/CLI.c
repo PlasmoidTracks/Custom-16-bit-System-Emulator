@@ -10,54 +10,67 @@ const char* CLI_USAGE = "\
 USAGE:\n\
   ./main [options] <input>\n\
 \n\
-INPUT:\n\
+FILES:\n\
   <input>                 .c | .ccan | .ir | .asm | .bin\n\
-\n\
-TYPE: \n\
   -c=<type>               c | ccan | ir | asm | bin; force-interpret input file as <type> despite extension\n\
+  -o <file>               Output file (default: file=prog.bin)\n\
+  -save-temps             Keep all intermediate files\n\
 \n\
-MODES (one):\n\
-  -run                    execute final binary in emulator\n\
+ASSEMBLER:\n\
+  -noerr-csb              No error when binary exceeds code memory bounds (overrides padding)\n\
+  -pad-zero               Pad segment breach with zeros when binary exceeds memory bounds\n\
 \n\
-OTHER :\n\
-  -pic                    compile as position independent code\n\
-  -no-preamble            omit main call preamble in executable\n\
+DISASSEMBLER:\n\
+  -d                      Enable disassembly\n\
 \n\
-OPTIMIZATION:\n\
+OPTIMIZER:\n\
   -O0                     No optimization\n\
   -O1                     Basic optimization (default: O1)\n\
 \n\
-OUTPUT:\n\
-  -o <file>               Output file (default: file=prog.bin)\n\
-\n\
-INTERMEDIATES:\n\
-  -save-temps             Keep all intermediate files\n\
-\n\
-DEBUG / INSPECTION:\n\
-  -d                      Enable disassembly\n\
+CANONICALIZER AND MACRO-EXPANDER:\n\
   -no-c                   Skip canonicalizer\n\
   -no-m                   Skip macro expander\n\
 \n\
+IR:\n\
+  -pic                    compile as position independent code\n\
+  -no-preamble            omit main call preamble in executable\n\
+\n\
+EMULATOR:\n\
+  -run                    execute final binary in emulator\n\
+\n\
 EXAMPLES:\n\
-  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d -pic -no-preamble\n\
+  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d -pic -no-preamble -pad-zero\n\
   ./main input.asm -run -save-temps -d\n\
   ./main input.bin -d\n\
+  ./main any.file -c=bin -run\n\
 ";
+
 
 const CompileOption_t CO_DEFAULT = {
     .input_filename = (void*) 0, 
     .binary_filename = "prog.bin", 
     .cft = CFT_BIN, 
-    .run = 0, 
-    .O = 1, 
+    // Files
+    .c = 0,
     .o = 0, 
     .save_temps = 0, 
+    // Assembler
+    .err_csb = 1, 
+    .pad_zero = 1, 
+    // Disassembler
     .d = 0, 
+    // Optimizer
+    .O = 1, 
+    // Canonicalizer and macro-expander
     .no_c = 0, 
     .no_m = 0, 
+    // IR
     .pic = 0, 
     .no_preamble = 0, 
+    // Emulator
+    .run = 0, 
 };
+
 
 CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
     if (error) {*error = 0;}
@@ -119,6 +132,16 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         if (strcmp(argv[arg_index], "-no-preamble") == 0) {
             co.no_preamble = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-noerr-csb") == 0) {
+            co.err_csb = 0;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-nopad-zero") == 0) {
+            co.pad_zero = 0;
             arg_index ++;
             continue;
         }

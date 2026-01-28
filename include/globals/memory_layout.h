@@ -25,5 +25,13 @@ typedef enum {
     SEGMENT_MMIO          = 0xF000,
 } MemoryLayout_t;
 
+typedef enum {
+    SEGMENT_CODE_END          = SEGMENT_MEMORY_BANK - 1,
+    SEGMENT_STACK_END         = SEGMENT_MEMORY_BANK - 1,
+    SEGMENT_MEMORY_BANK_END   = SEGMENT_UNUSED - 1,
+    SEGMENT_UNUSED_END        = SEGMENT_IRQ_TABLE - 1,
+    SEGMENT_IRQ_TABLE_END     = SEGMENT_MMIO - 1,
+    SEGMENT_MMIO_END          = 0xFFFF,
+} MemoryLayoutHigh_t;
 
 #endif // _MEMORY_LAYOUT_H_

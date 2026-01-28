@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
     int segment_count = 0;
     // from asm to bytecode
     if (co.cft > CFT_BIN) {
-        bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count);
+        bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count, ((AO_ERROR_ON_CODE_SEGMENT_BREACH * co.err_csb) | (AO_PAD_SEGMENT_BREACH_WITH_ZERO * co.pad_zero)));
 
         if (!co.save_temps && co.cft > CFT_BIN && (!co.no_c || co.O || !co.no_m)) {
             remove(filename);
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Execution step
-        for (long long int i = 0; i < 1000000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
+        for (long long int i = 0; i < 10000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
             #ifdef HW_WATCH
                 system_clock_debug(system);
             #else

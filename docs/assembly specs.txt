@@ -87,6 +87,9 @@ Address Control
   - .address $1234  
   Forces the next instruction or data to be placed at the given RAM address.
 
+- Memory reservation:
+  - .reserve $100
+  Skips the next $100 bytes, basically jumping in address space by the relative amount. 
 
 Segments
 --------
@@ -103,6 +106,10 @@ Segments
   .text "string"
   Text will be written sequentially, with a null terminator
 
+- Includes:
+  .incbin "path/to/binary.bin"
+  Will insert the full binary at the current position
+  setting the address of the next instruction to right after the binary
 
 
 Other stuff

@@ -10,6 +10,8 @@
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu_instructions.h"
 
+#include "globals/memory_layout.h"
+
 #include "compiler/asm/assembler.h"
 
 Label_t jump_label[MAX_LABELS];
@@ -557,7 +559,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
 }
 
 
-Instruction_t* assembler_parse_expression(Expression_t* expression, int expression_count, int* instruction_count, uint16_t** segment, int* segment_count) {
+Instruction_t* assembler_parse_expression(Expression_t* expression, int expression_count, int* instruction_count, uint16_t** segment, int* segment_count, AssembleOption_t options) {
     int allocated_instructions = 16;
     Instruction_t* instruction = calloc(allocated_instructions, sizeof(Instruction_t));
     instruction->instruction = -1;
@@ -573,7 +575,31 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
     int byte_alignment = 2;
     int current_byte_align = 0; // switches between 0 and 1, with alignment 1, to show which byte to write to, since I can only do 16-bit else
 
+    int exceeding_boundary_error = 0;
+
     while (expression_index < expression_count) {
+
+        if (byte_index > SEGMENT_CODE_END) {
+            if (!exceeding_boundary_error) {
+                LOG_PRIORITY lp = (options & AO_ERROR_ON_CODE_SEGMENT_BREACH) ? LP_ERROR : LP_WARNING;
+                log_msg(lp, "Parsing expressions: Binary exceeds memory boundary of 0x0000 - 0x%.4X [%s:%d]", SEGMENT_CODE_END, __FILE__, __LINE__);
+                if (options & AO_ERROR_ON_CODE_SEGMENT_BREACH) {
+                    // abort
+                    return NULL;
+                }
+                if (options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) {
+                    log_msg(LP_INFO, "Regarding the warning above: The code segment will be padded with zeros instead, cutting part of the code off");
+                } else {
+                    log_msg(LP_WARNING, "Regarding the warning above: The data will spill into the segments outside the designated code segment");
+                }
+            }
+            exceeding_boundary_error = 1;
+            if (options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) {
+                // simply stop, the rest will be zeros instead
+                break;
+            }
+            // else, do nothing. 
+        }
 
         // check for const 
         if (instruction_index >= allocated_instructions) {
@@ -1290,6 +1316,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 }
 
 Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruction_count) {
+    if (! instruction) {
+        return NULL;
+    }
     for (int i = 0; i < instruction_count; i++) {
         int expression_count = instruction[i].expression_count;
         int argument_byte_index = 0;
@@ -1496,7 +1525,18 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
     return instruction;
 }
 
-uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction_count, long* binary_size) {
+static void safe_write(uint8_t* bin, int index, uint8_t value, AssembleOption_t options) {
+    if ((options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) && index > SEGMENT_CODE_END) {
+        return;
+    }
+    bin[index] = value;
+}
+
+uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction_count, long* binary_size, AssembleOption_t options) {
+    if (!instruction) {
+        return NULL;
+    }
+    
     uint8_t* bin = calloc(0xffff, sizeof(uint8_t));
     uint8_t* written = calloc(0xffff, sizeof(uint8_t));
     int index = 0;
@@ -1539,7 +1579,8 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     return NULL;
                 }
                 written[index] = 1;
-                bin[index++] = content[i];
+                safe_write(bin, index++, content[i], options);
+                //bin[index++] = content[i];
                 if (index > *binary_size) {
                     *binary_size = index;
                 }
@@ -1553,9 +1594,11 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             if (instruction[instruction_index].byte_aligned) {
                 //printf("aligned!\n");
                 written[index] = 1;
-                bin[index++] = instruction[instruction_index].raw_data & 0x00ff;
+                //bin[index++] = instruction[instruction_index].raw_data & 0x00ff;
+                safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, options);
                 written[index] = 1;
-                bin[index++] = (instruction[instruction_index].raw_data & 0xff00) >> 8;
+                //bin[index++] = (instruction[instruction_index].raw_data & 0xff00) >> 8;
+                safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, options);
                 instruction_index ++;
                 if (index > *binary_size) {
                     *binary_size = index;
@@ -1563,7 +1606,8 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             } else {
                 //printf("unaligned!\n");
                 written[index] = 1;
-                bin[index++] = instruction[instruction_index].raw_data & 0x00ff;
+                //bin[index++] = instruction[instruction_index].raw_data & 0x00ff;
+                safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, options);
                 instruction_index ++;
                 if (index > *binary_size) {
                     *binary_size = index;
@@ -1577,12 +1621,15 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             return NULL;
         }
         written[index] = 1;
-        bin[index++] = instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7);
+        //bin[index++] = instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7);
+        safe_write(bin, index++, instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7), options);
         written[index] = 1;
-        bin[index++] = instruction[instruction_index].admr | (instruction[instruction_index].admx << 3);
+        //bin[index++] = instruction[instruction_index].admr | (instruction[instruction_index].admx << 3);
+        safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), options);
         for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
             written[index] = 1;
-            bin[index++] = (uint8_t) instruction[instruction_index].arguments[i];
+            //bin[index++] = (uint8_t) instruction[instruction_index].arguments[i];
+            safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], options);
         }
         instruction_index ++;
         if (index > *binary_size) {
@@ -1598,7 +1645,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 }
 
 
-uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count) {
+uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options) {
     // char* content - holds the raw assembly in text form
     // long* binary_size - deref will be overwritten with the final binary size in bytes
     // uint16_t** segment - will be allocated to hold the segment offsets
@@ -1653,7 +1700,7 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
 
     // build instruction array
     int instruction_count = 0;
-    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, segment, segment_count);
+    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, segment, segment_count, options);
     for (int i = 0; i < instruction_count; i++) {
         /*if ((int) instruction[i].instruction >= 0) {
             printf("Instruction %d: \"%s\" [pos: %d] - ", i + 1, cpu_instruction_string[instruction[i].instruction], instruction[i].address);
@@ -1672,7 +1719,7 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     instruction = assembler_resolve_labels(instruction, instruction_count);
 
     // to machine code
-    uint8_t* machine_code = assembler_parse_instruction(instruction, instruction_count, binary_size);
+    uint8_t* machine_code = assembler_parse_instruction(instruction, instruction_count, binary_size, options);
 
 
     // free
@@ -1690,14 +1737,14 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     return machine_code;
 }
 
-uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count) {
+uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options) {
     // load raw text from file
     char* content = read_file(filename, binary_size);
     if (!content) {
         log_msg(LP_ERROR, "read_file failed [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
-    uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count);
+    uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count, options);
     
     return machine_code;
 }

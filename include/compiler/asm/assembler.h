@@ -6,6 +6,11 @@
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"
 
+typedef enum {
+    AO_ERROR_ON_CODE_SEGMENT_BREACH = 0001,                 // Error out when binary exceeds code memory bounds. This overwrites the behavior of AO_PAD_SEGMENT_BREACH_WITH_ZERO
+    AO_PAD_SEGMENT_BREACH_WITH_ZERO = 0002,                 // When binary exceeds memory bounds of code, write zeros there instead
+} AssembleOption_t;
+
 #define MAX_LABELS 256
 
 typedef enum TokenType_t {
@@ -106,10 +111,12 @@ extern Token_t* assembler_parse_words(char** word, int word_count, int* token_co
 
 extern Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expression_count);
 
-extern Instruction_t* assembler_parse_expression(Expression_t* expression, int expression_count, int* instruction_count, uint16_t** segment, int* segment_count);
+extern Instruction_t* assembler_parse_expression(Expression_t* expression, int expression_count, int* instruction_count, uint16_t** segment, int* segment_count, AssembleOption_t options);
 
-extern uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count);
+extern uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction_count, long* binary_size, AssembleOption_t options);
 
-extern uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count);
+extern uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options);
+
+extern uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options);
 
 #endif

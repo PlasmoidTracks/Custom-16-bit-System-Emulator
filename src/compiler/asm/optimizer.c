@@ -153,7 +153,7 @@ char* optimizer_compile(char* content) {
 
     // build instruction array
     int instruction_count = 0;
-    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, 0);
+    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, 0, 0);
     
     int changes_applied = 1;
     while (changes_applied) {

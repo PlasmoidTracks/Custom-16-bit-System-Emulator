@@ -89,7 +89,7 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
 
     // build instruction array
     int instruction_count = 0;
-    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, 0);
+    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, 0, 0);
     
     int changes_applied = 1;
     int label_uid = 0;

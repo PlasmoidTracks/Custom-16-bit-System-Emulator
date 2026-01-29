@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
     int segment_count = 0;
     // from asm to bytecode
     if (co.cft > CFT_BIN) {
-        bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count, ((AO_ERROR_ON_CODE_SEGMENT_BREACH * co.err_csb) | (AO_PAD_SEGMENT_BREACH_WITH_ZERO * co.pad_zero)));
+        bin = assembler_compile_from_file(filename, &binary_size, &segment, &segment_count, ((AO_ERROR_ON_CODE_SEGMENT_BREACH * co.err_csb) | (AO_PAD_SEGMENT_BREACH_WITH_ZERO * co.pad_zero) | (AO_OVERWRITE_ON_OVERLAP * co.overwrite_overlap) | (AO_ERROR_ON_OVERLAP * co.err_overlap)));
 
         if (!co.save_temps && co.cft > CFT_BIN && (!co.no_c || co.O || !co.no_m)) {
             remove(filename);

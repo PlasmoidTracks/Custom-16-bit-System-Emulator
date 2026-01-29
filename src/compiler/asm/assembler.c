@@ -713,6 +713,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     instruction_index ++;
                     expression_index ++;
                     continue;
+                } else if (expression[expression_index].type == EXPR_INCBIN) {
+                    log_msg(LP_ERROR, "Parsing expressions: .incbin may only be used within .data segments, not inside .code segments");
+                    return NULL;
                 } else {
                     log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                     return NULL;
@@ -1525,11 +1528,29 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
     return instruction;
 }
 
-static void safe_write(uint8_t* bin, int index, uint8_t value, AssembleOption_t options) {
-    if ((options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) && index > SEGMENT_CODE_END) {
-        return;
+static int safe_write(uint8_t* bin, uint16_t index, uint8_t value, uint8_t* written, AssembleOption_t options) {
+    static int error_shown = 0;
+    if (written[index]) {
+        if (!error_shown) {
+            LOG_PRIORITY lp = (options & AO_ERROR_ON_OVERLAP) ? LP_ERROR : LP_WARNING;
+            log_msg(lp, "Parsing instruction: The inserted binary data is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
+            log_msg(LP_INFO, "Parsing instruciton: Overlap occured at address 0x%.4x", index);
+            error_shown = 1;
+        }
+        if (options & AO_ERROR_ON_OVERLAP) {
+            return 1;
+        }
+        if (options & AO_OVERWRITE_ON_OVERLAP) {
+            bin[index] = value;
+        }
+        return 0;
     }
+    if ((options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) && index > SEGMENT_CODE_END) {
+        return 1;
+    }
+    written[index] = 1;
     bin[index] = value;
+    return 0;
 }
 
 uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction_count, long* binary_size, AssembleOption_t options) {
@@ -1539,8 +1560,9 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
     
     uint8_t* bin = calloc(0xffff, sizeof(uint8_t));
     uint8_t* written = calloc(0xffff, sizeof(uint8_t));
-    int index = 0;
+    uint16_t index = 0;
     int instruction_index = 0;
+    int error = 0;
 
     //printf("instruction_count: %d\n", instruction_count);
     while (instruction_index < instruction_count) {
@@ -1573,13 +1595,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             long filesize;
             uint8_t* content = (uint8_t*) read_file(filename, &filesize);
             for (long i = 0; i < filesize; i++) {
-                if (written[index]) {
-                    log_msg(LP_ERROR, "Parsing instruction: The inserted binary data is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
-                    log_msg(LP_INFO, "Parsing instruciton: Overlap occured at address 0x%.4x", index);
-                    return NULL;
-                }
-                written[index] = 1;
-                safe_write(bin, index++, content[i], options);
+                error |= safe_write(bin, index++, content[i], written, options);
                 //bin[index++] = content[i];
                 if (index > *binary_size) {
                     *binary_size = index;
@@ -1593,21 +1609,15 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             //printf("is raw data! %d\n", instruction_index);
             if (instruction[instruction_index].byte_aligned) {
                 //printf("aligned!\n");
-                written[index] = 1;
-                //bin[index++] = instruction[instruction_index].raw_data & 0x00ff;
-                safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, options);
-                written[index] = 1;
-                //bin[index++] = (instruction[instruction_index].raw_data & 0xff00) >> 8;
-                safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, options);
+                error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+                error |= safe_write(bin, index++, (instruction[instruction_index].raw_data & 0xff00) >> 8, written, options);
                 instruction_index ++;
                 if (index > *binary_size) {
                     *binary_size = index;
                 }
             } else {
                 //printf("unaligned!\n");
-                written[index] = 1;
-                //bin[index++] = instruction[instruction_index].raw_data & 0x00ff;
-                safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, options);
+                error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
                 instruction_index ++;
                 if (index > *binary_size) {
                     *binary_size = index;
@@ -1615,21 +1625,14 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             }
             continue;
         }
-        if (written[index]) {
-            log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
-            log_msg(LP_INFO, "Parsing instruciton: Overlap occured at address 0x%.4x", index);
-            return NULL;
-        }
-        written[index] = 1;
-        //bin[index++] = instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7);
-        safe_write(bin, index++, instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7), options);
-        written[index] = 1;
-        //bin[index++] = instruction[instruction_index].admr | (instruction[instruction_index].admx << 3);
-        safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), options);
+        error |= safe_write(bin, index++, instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
+        error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
         for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
-            written[index] = 1;
-            //bin[index++] = (uint8_t) instruction[instruction_index].arguments[i];
-            safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], options);
+            error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);
+        }
+        if (error && (options & AO_ERROR_ON_OVERLAP)) {
+            log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
+            return NULL;
         }
         instruction_index ++;
         if (index > *binary_size) {

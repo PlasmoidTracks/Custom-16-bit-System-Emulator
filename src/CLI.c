@@ -19,6 +19,8 @@ FILES:\n\
 ASSEMBLER:\n\
   -noerr-csb              No error when binary exceeds code memory bounds (overrides padding)\n\
   -pad-zero               Pad segment breach with zeros when binary exceeds memory bounds\n\
+  -noerr-overlap          No error when binary overwrites itself (for example, on address overflow)\n\
+  -overwrite-overlap      Overwrite old values with new values on overwrites\n\
 \n\
 DISASSEMBLER:\n\
   -d                      Enable disassembly\n\
@@ -39,7 +41,7 @@ EMULATOR:\n\
   -run                    execute final binary in emulator\n\
 \n\
 EXAMPLES:\n\
-  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d -pic -no-preamble -pad-zero\n\
+  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d -pic -no-preamble -pad-zero -noerr-overlap -overwrite-overlap\n\
   ./main input.asm -run -save-temps -d\n\
   ./main input.bin -d\n\
   ./main any.file -c=bin -run\n\
@@ -57,6 +59,8 @@ const CompileOption_t CO_DEFAULT = {
     // Assembler
     .err_csb = 1, 
     .pad_zero = 1, 
+    .err_overlap = 1, 
+    .overwrite_overlap = 0, 
     // Disassembler
     .d = 0, 
     // Optimizer
@@ -142,6 +146,16 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         if (strcmp(argv[arg_index], "-nopad-zero") == 0) {
             co.pad_zero = 0;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-noerr-overlap") == 0) {
+            co.err_overlap = 0;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-overwrite-overlap") == 0) {
+            co.overwrite_overlap = 1;
             arg_index ++;
             continue;
         }

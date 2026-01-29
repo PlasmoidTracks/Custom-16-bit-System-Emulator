@@ -21,8 +21,10 @@ typedef struct CompileOption_t {
     unsigned int o : 1;             // [o]utput name
     unsigned int save_temps : 1;    // [save temps]
     // Assembler
-    unsigned int err_csb : 1;       // [e]rror on [c]ode [s]egment [b]reach
+    unsigned int err_csb : 1;       // [err]or on [c]ode [s]egment [b]reach
     unsigned int pad_zero : 1;      // [pad] segment breach with [zero]s
+    unsigned int err_overlap : 1;   // [err]or on [overlap]
+    unsigned int overwrite_overlap : 1;   // [overwrite] [overlap]
     // Disassembler
     unsigned int d : 1;             // [d]isassemble
     // Optimizer

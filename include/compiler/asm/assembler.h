@@ -7,8 +7,10 @@
 #include "cpu/cpu_addressing_modes.h"
 
 typedef enum {
-    AO_ERROR_ON_CODE_SEGMENT_BREACH = 0001,                 // Error out when binary exceeds code memory bounds. This overwrites the behavior of AO_PAD_SEGMENT_BREACH_WITH_ZERO
-    AO_PAD_SEGMENT_BREACH_WITH_ZERO = 0002,                 // When binary exceeds memory bounds of code, write zeros there instead
+    AO_ERROR_ON_OVERLAP = 0001,                             // During assembly, when two sources write to the same memory, produce an error
+    AO_OVERWRITE_ON_OVERLAP = 0002,                     // During assembly, when two sources write to the same memory, keep the old value. If not set, it will keep the newest value. 
+    AO_ERROR_ON_CODE_SEGMENT_BREACH = 0004,                 // Error out when binary exceeds code memory bounds. This overwrites the behavior of AO_PAD_SEGMENT_BREACH_WITH_ZERO
+    AO_PAD_SEGMENT_BREACH_WITH_ZERO = 0010,                 // When binary exceeds memory bounds of code, write zeros there instead
 } AssembleOption_t;
 
 #define MAX_LABELS 256

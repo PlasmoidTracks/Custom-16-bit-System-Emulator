@@ -25,6 +25,7 @@ compile_commands.json
 .cache/
 
 # Ignore custom folders
+!example_scripts/**
 Compiler pipeline/
 custom-asm/
 obj/

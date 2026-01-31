@@ -18,19 +18,19 @@ ppu memory (aka. VRAM) for future ppu device. May as well be part of the MMIO se
 
 typedef enum {
     SEGMENT_CODE          = 0x0000,
-    SEGMENT_STACK         = 0x7FFF,
+    SEGMENT_STACK         = 0x7EFF,
+    SEGMENT_IRQ_TABLE     = 0x7F00,
     SEGMENT_MEMORY_BANK   = 0x8000,
     SEGMENT_UNUSED        = 0xa000,
-    SEGMENT_IRQ_TABLE     = 0xEF00,
     SEGMENT_MMIO          = 0xF000,
 } MemoryLayout_t;
 
 typedef enum {
     SEGMENT_CODE_END          = SEGMENT_MEMORY_BANK - 1,
-    SEGMENT_STACK_END         = SEGMENT_MEMORY_BANK - 1,
+    SEGMENT_STACK_END         = SEGMENT_IRQ_TABLE - 1,
     SEGMENT_MEMORY_BANK_END   = SEGMENT_UNUSED - 1,
-    SEGMENT_UNUSED_END        = SEGMENT_IRQ_TABLE - 1,
-    SEGMENT_IRQ_TABLE_END     = SEGMENT_MMIO - 1,
+    SEGMENT_UNUSED_END        = SEGMENT_MMIO - 1,
+    SEGMENT_IRQ_TABLE_END     = SEGMENT_MEMORY_BANK - 1,
     SEGMENT_MMIO_END          = 0xFFFF,
 } MemoryLayoutHigh_t;
 

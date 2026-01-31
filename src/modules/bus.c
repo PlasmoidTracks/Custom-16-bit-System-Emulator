@@ -126,6 +126,7 @@ void bus_clock(BUS_t* bus) {
                     // Check the reading address, if its below 0xF000, then its addressing ram
                     Device_t* device_mmio = bus_find_readable_device_by_mmio_address(bus, device->address);
                     if (!device_mmio) {
+                        // this here is open bus behavior! Good. 
                         device->processed = 1;
                         device->device_state = DS_IDLE;
                         //log_msg(LP_DEBUG, "BUS %d: No MMIO device attached to the BUS, that is responding on reads from address $%.4x [%s:%d]", bus->clock, device->address, __FILE__, __LINE__);
@@ -309,11 +310,6 @@ void bus_clock(BUS_t* bus) {
                     break;
             }
             break;
-
-
-        default:
-            //log_msg(LP_WARNING, "BUS %d: Attending to an unknown device %d / %llu [%s:%d]", bus->clock, device_type, device->device_id, __FILE__, __LINE__);
-            break;
         
 
 
@@ -367,6 +363,11 @@ void bus_clock(BUS_t* bus) {
                     break;
             }
             break;
+
+
+            default:
+                //log_msg(LP_WARNING, "BUS %d: Attending to an unknown device %d / %llu [%s:%d]", bus->clock, device_type, device->device_id, __FILE__, __LINE__);
+                break;
     }
 
 

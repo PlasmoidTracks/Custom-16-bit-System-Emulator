@@ -11,10 +11,10 @@ RAM_t* ram_create(uint32_t capacity) {
         &ram->device, 
         listening_region_create(0x0000, 0x7fff, 1, 1)
     );
-    device_add_listening_region(
+    /*device_add_listening_region(
         &ram->device, 
         listening_region_create(0xa000, 0xefff, 1, 1)
-    );
+    );*/
     ram->capacity = capacity;
     //log_msg(LP_INFO, "setting ram cap to %.4x and is now %.4x\n", capacity, ram->capacity);
     ram->data = malloc(sizeof(uint8_t) * capacity);
@@ -68,6 +68,7 @@ void ram_clock(RAM_t* ram) {
         uint64_t data = 0;
         for (size_t i = 0; i < sizeof(data); i++) {
             data |= ((uint64_t) ram_read(ram, address + i) << (8 * i));
+            //data |= ((uint64_t) ram_read(ram, (address & ~(sizeof(data) - 1ULL)) + i) << (8 * i));
         }
         ram->device.data = data;
         ram->device.processed = 1;

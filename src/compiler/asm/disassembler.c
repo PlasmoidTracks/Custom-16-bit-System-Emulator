@@ -151,20 +151,22 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
             case ADMR_IND16:
                 {
                     int argument_byte_offset = 0;
-                    switch (admx) {
-                        case ADMX_IMM16: case ADMX_IND16:
-                        case ADMX_IND_R0_OFFSET16: case ADMX_IND_R1_OFFSET16:
-                        case ADMX_IND_R2_OFFSET16: case ADMX_IND_R3_OFFSET16:
-                        case ADMX_IND_PC_OFFSET16:
-                            argument_byte_offset = 2;
-                            break;
-                        case ADMX_IND16_SCALED8_R0_OFFSET: case ADMX_IND16_SCALED8_R1_OFFSET:
-                        case ADMX_IND16_SCALED8_R2_OFFSET: case ADMX_IND16_SCALED8_R3_OFFSET:
-                        case ADMX_IND16_SCALED8_PC_OFFSET:
-                            argument_byte_offset = 3;
-                            break;
-                        default:
-                            break;
+                    if (argument_count != 1) {
+                        switch (admx) {
+                            case ADMX_IMM16: case ADMX_IND16:
+                            case ADMX_IND_R0_OFFSET16: case ADMX_IND_R1_OFFSET16:
+                            case ADMX_IND_R2_OFFSET16: case ADMX_IND_R3_OFFSET16:
+                            case ADMX_IND_PC_OFFSET16:
+                                argument_byte_offset = 2;
+                                break;
+                            case ADMX_IND16_SCALED8_R0_OFFSET: case ADMX_IND16_SCALED8_R1_OFFSET:
+                            case ADMX_IND16_SCALED8_R2_OFFSET: case ADMX_IND16_SCALED8_R3_OFFSET:
+                            case ADMX_IND16_SCALED8_PC_OFFSET:
+                                argument_byte_offset = 3;
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     char str[16];
                     uint16_t value = disassembler_read_u16(data + argument_byte_offset);
@@ -425,8 +427,8 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                     } else {
                         if (options & DO_ADD_SPECULATIVE_CODE) {
                             sprintf(disassembly.code[assembly_index++], "$%.2x%.2x                      ; %s%*s; %d byte instruction\n",
-                                machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index)
-                                ;
+                                machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index
+                            );
                         } else {
                             sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n",
                                 machine_code[previous_binary_index + 1], machine_code[previous_binary_index]

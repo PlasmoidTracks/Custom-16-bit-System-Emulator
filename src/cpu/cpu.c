@@ -162,13 +162,13 @@ First it looks through cache, if its not there, it sends a request to ram
 int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     #ifdef _CPU_DEEP_DEBUG_
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Attempting to request memory at address 0x%.4x", cpu->clock, cpu->state, cpu->device.device_state, address);
-    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking cache first", cpu->clock);
+    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking cache first", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
     int success = cache_read(cpu->cache, address, data, cpu->regs.sr.NC);
     if (success) return 1;
     #ifdef _CPU_DEEP_DEBUG_
-    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tCache miss", cpu->clock);
-    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking device response", cpu->clock);
+    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tCache miss", cpu->clock, cpu->state, cpu->device.device_state);
+    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking device response", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
     if (cpu->device.processed) {
         if (cpu->device.address != address) {
@@ -181,14 +181,14 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
             return 0;
         }
         #ifdef _CPU_DEEP_DEBUG_
-        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tDevice responded", cpu->clock);
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tDevice responded", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         uint64_t response = cpu->device.data;
         cpu->device.processed = 0;
         cpu->device.device_state = DS_IDLE;
 
         #ifdef _CPU_DEEP_DEBUG_
-        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Requesting write to cache", cpu->clock);
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Requesting write to cache", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         cache_write(cpu->cache, cpu->device.address, (uint8_t*) &response, sizeof(response), cpu->regs.sr.NC);
 
@@ -200,11 +200,11 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     }
 
     #ifdef _CPU_DEEP_DEBUG_
-    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tNo device response. Making request", cpu->clock);
+    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tNo device response. Making request", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
         if (cpu->device.device_state != DS_IDLE) {
         #ifdef _CPU_DEEP_DEBUG_
-        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tDevice is not idle, cannot make request", cpu->clock);
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tDevice is not idle, cannot make request", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         return 0;
     }
@@ -223,7 +223,7 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
                                 
     if (cpu->device.processed) {
         #ifdef _CPU_DEEP_DEBUG_
-        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Update went through", cpu->clock);
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Update went through", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         cpu->device.processed = 0;
         cpu->device.device_state = DS_IDLE;
@@ -232,11 +232,11 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
     }
 
     #ifdef _CPU_DEEP_DEBUG_
-    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tNo device response. Making request", cpu->clock);
+    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tNo device response. Making request", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
     if (cpu->device.device_state != DS_IDLE) {
         #ifdef _CPU_DEEP_DEBUG_
-        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tDevice is not idle, cannot make request", cpu->clock);
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tDevice is not idle, cannot make request", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         return 0;
     }
@@ -262,7 +262,7 @@ void cpu_clock(CPU_t* cpu) {
     #ifdef _CPU_DEEP_DEBUG_
     log_msg(LP_DEBUG, "CS %d, DS %d", cpu->state, cpu->device.device_state);
 
-    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Checking for interrupt", cpu->clock);
+    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Checking for interrupt", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
     if (cpu->device.device_state == DS_INTERRUPT) {
         #ifdef _CPU_DEBUG_
@@ -281,11 +281,11 @@ void cpu_clock(CPU_t* cpu) {
     switch (cpu->state) {
 
         case CS_FETCH_INSTRUCTION:
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching instruction", cpu->clock);
-            #endif
             {
                 CS_FETCH_INSTRUCTION:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching instruction", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 uint16_t address = cpu->regs.pc;
                 cpu->intermediate.previous_pc = cpu->regs.pc;
@@ -334,25 +334,25 @@ void cpu_clock(CPU_t* cpu) {
                     }
                 } else {
                     #ifdef _CPU_DEEP_DEBUG_
-                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was unsuccessful", cpu->clock);
+                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was unsuccessful", cpu->clock, cpu->state, cpu->device.device_state);
                     #endif
                 }
             }
             break;
         
         case CS_FETCH_ADDRESSING_MODES:
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching addressing modes", cpu->clock);
-            #endif
             {
                 CS_FETCH_ADDRESSING_MODES:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching addressing modes", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 uint16_t address = cpu->regs.pc;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, address, &data);
                 if (success) {
                     #ifdef _CPU_DEEP_DEBUG_
-                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was successful", cpu->clock);
+                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was successful", cpu->clock, cpu->state, cpu->device.device_state);
                     #endif
                     // ok, we got the data for the instruction, saving it intermediatly
                     cpu->intermediate.addressing_mode.value = data;
@@ -448,18 +448,18 @@ void cpu_clock(CPU_t* cpu) {
                     goto CS_FETCH_ARGUMENT_BYTES;
                 } else {
                     #ifdef _CPU_DEEP_DEBUG_
-                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was unsuccessful", cpu->clock);
+                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was unsuccessful", cpu->clock, cpu->state, cpu->device.device_state);
                     #endif
                 }
             }
             break;
         
         case CS_FETCH_ARGUMENT_BYTES: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching all argument bytes", cpu->clock);
-            #endif
             {
                 CS_FETCH_ARGUMENT_BYTES:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching all argument bytes", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, cpu->regs.pc, &data);
@@ -472,7 +472,7 @@ void cpu_clock(CPU_t* cpu) {
                     cpu->regs.pc ++;
 
                     if (cpu->intermediate.argument_data_raw_index >= cpu->intermediate.argument_bytes_to_load) {
-                        /*log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Done reading all bytes", cpu->clock);
+                        /*log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Done reading all bytes", cpu->clock, cpu->state, cpu->device.device_state);
                         for (int i = 0; i < cpu->intermediate.argument_bytes_to_load; i++) {
                             printf("%.2x ", (uint8_t) cpu->intermediate.argument_data_raw[i]);
                         } printf("\n");*/
@@ -491,7 +491,7 @@ void cpu_clock(CPU_t* cpu) {
                                 break;
                             case ADMC_IMM:
                                 #ifdef _CPU_DEEP_DEBUG_
-                                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): admc is not indirect, skipping CS_COMPUTE_ADDRESS", cpu->clock);
+                                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): admc is not indirect, skipping CS_COMPUTE_ADDRESS", cpu->clock, cpu->state, cpu->device.device_state);
                                 #endif
                                 cpu->state = CS_COMPUTE_ADDRESS;//CS_FETCH_SOURCE;
                                 goto CS_COMPUTE_ADDRESS;
@@ -513,11 +513,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_COMPUTE_ADDRESS: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Calculating source address from argument composition", cpu->clock);
-            #endif
             {
                 CS_COMPUTE_ADDRESS:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Calculating source address from argument composition", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 int admr = cpu->intermediate.addressing_mode.addressing_mode_reduced;
                 int admx = cpu->intermediate.addressing_mode.addressing_mode_extended;
@@ -781,7 +781,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     case ADMX_NONE:
                         #ifdef _CPU_DEEP_DEBUG_
-                        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): no admx address specified", cpu->clock);
+                        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): no admx address specified", cpu->clock, cpu->state, cpu->device.device_state);
                         #endif
                         cpu->state = CS_FETCH_DESTINATION;
                         break;
@@ -826,7 +826,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     case ADMR_NONE:
                         #ifdef _CPU_DEEP_DEBUG_
-                        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): no admx address specified", cpu->clock);
+                        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): no admx address specified", cpu->clock, cpu->state, cpu->device.device_state);
                         #endif
                         //cpu->state = CS_FETCH_DESTINATION;
                         break;
@@ -841,10 +841,10 @@ void cpu_clock(CPU_t* cpu) {
             break;
 
         case CS_FETCH_SOURCE: // only fetch data from source, nothing else
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching source (low) from adm address", cpu->clock);
-            #endif
             {
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching source (low) from adm address", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 int admxc = cpu_extended_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_extended];
                 switch (admxc) {
@@ -854,7 +854,7 @@ void cpu_clock(CPU_t* cpu) {
                             switch (admx) {
                                 case ADMX_IMM16:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): IMM16", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): IMM16", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = (uint8_t) cpu->intermediate.argument_data_raw[cpu->intermediate.argument_count_for_admr];
                                     cpu->intermediate.data_address_extended |= (cpu->intermediate.argument_data_raw[cpu->intermediate.argument_count_for_admr + 1] << 8);
@@ -870,7 +870,7 @@ void cpu_clock(CPU_t* cpu) {
                                 goto CS_FETCH_DESTINATION;
                             } else {
                                 #ifdef _CPU_DEEP_DEBUG_
-                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Skipping destination fetching, cause only one argument", cpu->clock);
+                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Skipping destination fetching, cause only one argument", cpu->clock, cpu->state, cpu->device.device_state);
                                 #endif
                                 cpu->state = CS_EXECUTE;
                                 goto CS_EXECUTE;
@@ -884,37 +884,37 @@ void cpu_clock(CPU_t* cpu) {
                             switch (admx) {
                                 case ADMX_R0:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r0", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r0", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = cpu->regs.r0;
                                     break;
                                 case ADMX_R1:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r1", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r1", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = cpu->regs.r1;
                                     break;
                                 case ADMX_R2:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r2", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r2", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = cpu->regs.r2;
                                     break;
                                 case ADMX_R3:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r3", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r3", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = cpu->regs.r3;
                                     break;
                                 case ADMX_SP:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): sp", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): sp", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = cpu->regs.sp;
                                     break;
                                 case ADMX_PC:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): pc", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): pc", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_extended = cpu->intermediate.previous_pc;
                                     break;
@@ -930,7 +930,7 @@ void cpu_clock(CPU_t* cpu) {
                                 goto CS_FETCH_DESTINATION;
                             } else {
                                 #ifdef _CPU_DEEP_DEBUG_
-                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Skipping destination fetching, cause only one argument", cpu->clock);
+                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Skipping destination fetching, cause only one argument", cpu->clock, cpu->state, cpu->device.device_state);
                                 #endif
                                 cpu->state = CS_EXECUTE;
                                 goto CS_EXECUTE;
@@ -961,11 +961,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_FETCH_SOURCE_HIGH: // only fetch data from source, nothing else
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching source high from adm address", cpu->clock);
-            #endif
             {
                 CS_FETCH_SOURCE_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching source high from adm address", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 int admc = cpu_extended_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_extended];
                 switch (admc) {
@@ -981,7 +981,7 @@ void cpu_clock(CPU_t* cpu) {
                                     goto CS_FETCH_DESTINATION;
                                 } else {
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Skipping destination fetching, cause only one argument", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Skipping destination fetching, cause only one argument", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->state = CS_EXECUTE;
                                     goto CS_EXECUTE;
@@ -1002,11 +1002,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_FETCH_DESTINATION: // only fetch data from destination, nothing else
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching destination from adm address", cpu->clock);
-            #endif
             {
                 CS_FETCH_DESTINATION:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching destination from adm address", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 int admc = cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced];
                 switch (admc) {
@@ -1015,7 +1015,7 @@ void cpu_clock(CPU_t* cpu) {
                             int admr = cpu->intermediate.addressing_mode.addressing_mode_reduced;
                             switch (admr) {
                                 case ADMR_IMM16:
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): IMM16", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): IMM16", cpu->clock, cpu->state, cpu->device.device_state);
                                     cpu->intermediate.data_address_reduced = (uint8_t) cpu->intermediate.argument_data_raw[cpu->intermediate.argument_count_for_admr];
                                     cpu->intermediate.data_address_reduced |= (cpu->intermediate.argument_data_raw[cpu->intermediate.argument_count_for_admr + 1] << 8);
                                     break;
@@ -1033,31 +1033,31 @@ void cpu_clock(CPU_t* cpu) {
                             switch (admr) {
                                 case ADMR_R0:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r0", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r0", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_reduced = cpu->regs.r0;
                                     break;
                                 case ADMR_R1:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r1", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r1", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_reduced = cpu->regs.r1;
                                     break;
                                 case ADMR_R2:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r2", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r2", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_reduced = cpu->regs.r2;
                                     break;
                                 case ADMR_R3:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r3", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): r3", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_reduced = cpu->regs.r3;
                                     break;
                                 case ADMR_SP:
                                     #ifdef _CPU_DEEP_DEBUG_
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): sp", cpu->clock);
+                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): sp", cpu->clock, cpu->state, cpu->device.device_state);
                                     #endif
                                     cpu->intermediate.data_address_reduced = cpu->regs.sp;
                                     break;
@@ -1097,11 +1097,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
 
         case CS_FETCH_DESTINATION_HIGH: // only fetch data from destination, nothing else
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching destination from adm address", cpu->clock);
-            #endif
             {
                 CS_FETCH_DESTINATION_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetching destination from adm address", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 int admc = cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced];
                 switch (admc) {
@@ -1130,9 +1130,6 @@ void cpu_clock(CPU_t* cpu) {
         
         // =======================================================================================
         case CS_EXECUTE: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Executing instruction and writing to intermediate result for possible writeback", cpu->clock);
-            #endif
             /*printf("amdx add: %.4x, admr add: %.4x, amdx data: %.4x, admr data: %.4x\n", 
                 cpu->intermediate.argument_address_extended, 
                 cpu->intermediate.argument_address_reduced, 
@@ -1140,6 +1137,9 @@ void cpu_clock(CPU_t* cpu) {
                 cpu->intermediate.data_address_reduced);*/
             {
                 CS_EXECUTE:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Executing instruction and writing to intermediate result for possible writeback", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 0;
                 switch (cpu->intermediate.instruction) {
                     case NOP:
@@ -2200,11 +2200,11 @@ void cpu_clock(CPU_t* cpu) {
         // =======================================================================================
         
         case CS_WRITEBACK_LOW: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Writing low result back to cpu/memory", cpu->clock);
-            #endif
             {
                 CS_WRITEBACK_LOW:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Writing low result back to cpu/memory", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 switch (cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced]) {
                     case ADMC_IND:
@@ -2245,7 +2245,7 @@ void cpu_clock(CPU_t* cpu) {
                     case ADMC_NONE:
                         // Here if writeback happens to admx instead of admr
                         #ifdef _CPU_DEEP_DEBUG_
-                        log_msg(LP_NOTICE, "CPU (C:%d CS:%d DS:%d): Writeback to ADMX instead of ADMR", cpu->clock);
+                        log_msg(LP_NOTICE, "CPU (C:%d CS:%d DS:%d): Writeback to ADMX instead of ADMR", cpu->clock, cpu->state, cpu->device.device_state);
                         #endif
                         break;
 
@@ -2260,11 +2260,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_WRITEBACK_HIGH: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Writing high result back to memory", cpu->clock);
-            #endif
             {
                 CS_WRITEBACK_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Writing high result back to memory", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 switch (cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced]) {
                     case ADMC_IND:
@@ -2316,11 +2316,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_PUSH_HIGH: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Pushing low result", cpu->clock);
-            #endif
             {
                 CS_PUSH_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Pushing low result", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 int success = cpu_write_memory(cpu, cpu->regs.sp - 1, (uint8_t) ((cpu->intermediate.result & 0xff00) >> 8));
                 if (success) {
@@ -2332,11 +2332,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_PUSH_LOW: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Pushing high result", cpu->clock);
-            #endif
             {   
                 CS_PUSH_LOW:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Pushing high result", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 int success = cpu_write_memory(cpu, cpu->regs.sp - 1, (uint8_t) (cpu->intermediate.result & 0x00ff));
                 if (success) {
@@ -2349,11 +2349,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_POP_LOW: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping low result", cpu->clock);
-            #endif
             {
                 CS_POP_LOW:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping low result", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, cpu->regs.sp, &data);
@@ -2370,11 +2370,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_POP_HIGH: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping high result", cpu->clock);
-            #endif
             {   
                 CS_POP_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping high result", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, cpu->regs.sp, &data);
@@ -2398,11 +2398,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_POPSR_LOW: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping low result", cpu->clock);
-            #endif
             {
                 CS_POPSR_LOW:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping low result", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, cpu->regs.sp, &data);
@@ -2419,11 +2419,11 @@ void cpu_clock(CPU_t* cpu) {
             break;
         
         case CS_POPSR_HIGH: 
-            #ifdef _CPU_DEEP_DEBUG_
-            log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping high result", cpu->clock);
-            #endif
             {   
                 CS_POPSR_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Popping high result", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, cpu->regs.sp, &data);
@@ -2442,6 +2442,9 @@ void cpu_clock(CPU_t* cpu) {
         case CS_INTERRUPT_PUSH_PC_HIGH:
             {
                 CS_INTERRUPT_PUSH_PC_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt push pc high", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 int success = cpu_write_memory(cpu, cpu->regs.sp - 1, (uint8_t) ((cpu->regs.pc & 0xff00) >> 8));
                 if (success) {
@@ -2455,6 +2458,9 @@ void cpu_clock(CPU_t* cpu) {
         case CS_INTERRUPT_PUSH_PC_LOW:
             {   
                 CS_INTERRUPT_PUSH_PC_LOW:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt push pc low", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 int success = cpu_write_memory(cpu, cpu->regs.sp - 1, (uint8_t) (cpu->regs.pc & 0x00ff));
                 if (success) {
@@ -2468,6 +2474,9 @@ void cpu_clock(CPU_t* cpu) {
         case CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW:
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2, &data);
@@ -2482,6 +2491,9 @@ void cpu_clock(CPU_t* cpu) {
         case CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH:
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
                 int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2 + 1, &data);

@@ -122,7 +122,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     if (argument_count == 0) {
         //printf("instruction_string: %s\n", instruction_string);
         char* instruction_string_newline = calloc(256, sizeof(char)); 
-        sprintf(instruction_string_newline, "%s", instruction_string_pointer);
+        sprintf(instruction_string_newline, "%s", instruction_string);
         free(instruction_string);
 
         return instruction_string_newline;
@@ -344,7 +344,6 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         int valid_instruction = 0;
         int instruction_bytes = 0;
         char* instruction = disassembler_decompile_single_instruction(machine_code, &binary_index, &valid_instruction, &disassembly.admr[assembly_index], &disassembly.admx[assembly_index], &instruction_bytes, options);
-
         disassembly.is_data[assembly_index] = 0;
 
         // I dont know if this is even good to do like this

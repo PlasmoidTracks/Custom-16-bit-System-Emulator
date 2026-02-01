@@ -516,7 +516,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         //strcpy(disassembly.code[assembly_index], instruction);
         if (options & DO_ADD_RAW_BYTES) {
             char tmp[256];
-            sprintf(tmp, "; ");
+            sprintf(tmp, "; [0x%.4x] : ", previous_binary_index);
             for (int i = 0; i < instruction_bytes; i++) {
                 sprintf(&tmp[strlen(tmp)], "0x%.2x ",
                     machine_code[previous_binary_index + i]

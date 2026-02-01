@@ -1151,8 +1151,7 @@ char* optimizer_compile(char* content) {
                     int tc = instr.expression[j].token_count;
                     for (int k = 0; k < tc; k++) {
                         output = append_to_output(output, &output_len, instr.expression[j].tokens[k].raw);
-                        if ((tc == 5 && (k > 0 && k < tc - 2))
-                            || (tc == 3 && k < 2)) {
+                        if (k > 0 && k < tc - 2) {
                             output = append_to_output(output, &output_len, " ");
                         }
                     }

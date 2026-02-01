@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "utils/Log.h"
 #include "utils/ExtendedTypes.h"
 
 #include "modules/cache.h"
@@ -17,10 +16,18 @@
 
 
 #define _CPU_DEBUG_
-#undef _CPU_DEBUG_
+//#undef _CPU_DEBUG_
 
 #define _CPU_DEEP_DEBUG_
-#undef _CPU_DEEP_DEBUG_
+//#undef _CPU_DEEP_DEBUG_
+
+
+
+#ifdef _CPU_DEBUG_
+#include "utils/Log.h"
+#elif defined _CPU_DEEP_DEBUG_
+#include "utils/Log.h"
+#endif
 
 
 static int halted = 0;

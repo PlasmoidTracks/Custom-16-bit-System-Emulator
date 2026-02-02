@@ -649,6 +649,13 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             continue;
                         } 
                         address += instruction[i].argument_bytes + 2;
+
+                        if (instruction[i].instruction == (CPU_INSTRUCTION_MNEMONIC_t) -1) {
+                            continue;
+                        }
+                        if (cpu_instruction_argument_count[instruction[i].instruction] == 0) {
+                            address -= 1;
+                        }
                     }
                     jump_label[jump_label_index].value = address;
                     //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
@@ -1090,6 +1097,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].address = byte_index;
 
             byte_index += 2 + argument_bytes_used;
+            if (cpu_instruction_argument_count[instruction[instruction_index].instruction] == 0) {
+                // compensate for one-byte instructions
+                byte_index -= 1;
+            }
 
             instruction_index ++;
 
@@ -1626,9 +1637,11 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             continue;
         }
         error |= safe_write(bin, index++, instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
-        error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
-        for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
-            error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);
+        if (cpu_instruction_argument_count[instruction[instruction_index].instruction] > 0) {
+            error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
+            for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
+                error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);
+            }
         }
         if (error && (options & AO_ERROR_ON_OVERLAP)) {
             log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);

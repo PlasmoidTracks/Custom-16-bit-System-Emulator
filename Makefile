@@ -2,7 +2,8 @@
 CC = gcc
 CFLAGS = -D_FILE_OFFSET_BITS=64 -Iinclude -Iinclude/utils -march=native -Wall -Werror=format-security -Werror=implicit-function-declaration -std=c11 -fpie -march=native \
          -Wextra -pedantic -fstack-protector-all -Wshadow -Wstrict-prototypes -Werror=return-type -pthread -finstrument-functions -D_GNU_SOURCE
-LIBS = -Llib 
+LDFLAGS = -lraylib
+LIBS = -Llib
 
 # Directories
 SRC_DIR = src
@@ -45,7 +46,7 @@ main.i: $(MAIN_FILE)
 
 # Link executable
 $(OUTPUT): $(OBJ_FILES) $(MAIN_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lm
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) -lm
 
 # Compile source files (place object files in obj/)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

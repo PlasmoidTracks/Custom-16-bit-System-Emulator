@@ -21,10 +21,35 @@
 #include "modules/system.h"
 #include "CLI.h"
 
+#include "raylib.h"
+
 
 #define HW_WATCH
 #undef HW_WATCH
 
+
+const int GUI = 1;
+
+
+typedef struct {
+    System_t* system;
+} arg_t;
+
+void* thread_worker_system_clock(void* args) {
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    System_t* system = ((arg_t*)args)->system;
+
+    // Execution step
+    while (1) {
+        #ifdef HW_WATCH
+            system_clock_debug(system);
+        #else
+            system_clock(system);
+        #endif
+    }
+    free(args);
+    return NULL;
+}
 
 int main(int argc, char* argv[]) {
 
@@ -221,13 +246,49 @@ int main(int argc, char* argv[]) {
             ram_write(system->ram, i, bin[i]);
         }
 
-        // Execution step
-        for (long long int i = 0; i < 10000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
-            #ifdef HW_WATCH
-                system_clock_debug(system);
-            #else
-                system_clock(system);
-            #endif
+        if (GUI) {
+            // Initialization
+            //--------------------------------------------------------------------------------------
+            const int screenWidth = 1280;
+            const int screenHeight = 768;
+
+            InitWindow(screenWidth, screenHeight, "basic window");
+            //SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+
+
+            // init threads
+            pthread_t pid;
+            arg_t* arg = malloc(sizeof(arg_t));
+            arg->system = system;
+            pthread_create(&pid, NULL, thread_worker_system_clock, arg);
+
+
+            // Main game loop
+            while (!WindowShouldClose())    // Detect window close button or ESC key
+            {
+                BeginDrawing();
+
+                    ClearBackground(BLACK);
+                    
+                    DrawFPS(8, 8);
+
+                EndDrawing();
+            }
+            CloseWindow();        // Close window and OpenGL context
+
+            pthread_cancel(pid);
+
+        } else {
+
+            // Execution step
+            for (long long int i = 0; i < 10000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
+                #ifdef HW_WATCH
+                    system_clock_debug(system);
+                #else
+                    system_clock(system);
+                #endif
+            }
+
         }
 
         cpu_print_state(system->cpu);

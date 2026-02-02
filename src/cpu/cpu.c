@@ -325,7 +325,6 @@ void cpu_clock(CPU_t* cpu) {
                     if (cpu->intermediate.argument_count == 0) {
                         cpu->regs.pc ++;
                         cpu->state = CS_EXECUTE;
-                        cpu->regs.pc ++;
                         goto CS_EXECUTE;
                     } else {
                         cpu->state = CS_FETCH_ADDRESSING_MODES;

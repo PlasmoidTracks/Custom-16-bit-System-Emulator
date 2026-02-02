@@ -27,7 +27,13 @@ uint16_t disassembler_read_u16(uint8_t* data) {
 
 char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, int* instruction_bytes, DisassembleOption_t options) {
     uint8_t instruction = binary[(*binary_index) ++];
-    uint8_t addressing_mode = binary[(*binary_index) ++];
+    uint8_t addressing_mode = 0;
+    int one_byte_instruction = 1;
+
+    if (cpu_instruction_argument_count[instruction] > 0) {
+        addressing_mode = binary[(*binary_index) ++];
+        one_byte_instruction = 0;
+    }
     if (valid_instruction) *valid_instruction = 1;
 
     int no_cache = 0;
@@ -104,7 +110,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     (*binary_index) += data_size;
 
     if (instruction_bytes) {
-        *instruction_bytes = data_size + 2;
+        *instruction_bytes = data_size + 2 - one_byte_instruction;
     }
 
     // should be plenty of space

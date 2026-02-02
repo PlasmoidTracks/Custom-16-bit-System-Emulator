@@ -5273,6 +5273,11 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
     free(expression);
     free(instruction);
 
+    if (output == NULL) {
+        output = malloc(sizeof("; empty\0"));
+        memcpy(output, "; empty\0", sizeof("; empty\0"));
+    }
+
     return output;
 }
 

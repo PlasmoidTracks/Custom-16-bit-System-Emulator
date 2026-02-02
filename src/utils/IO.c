@@ -22,7 +22,7 @@ char* read_file(const char* const filename, long* filesize) {
     fseek(file, 0, SEEK_END);
     long fsize = ftell(file);
     if (fsize == 0) {
-        log_msg(LP_ERROR, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_WARNING, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "Perhaps the file is too large. In that case try using read_file64(const char* const, long long int*)");
     }
     if (filesize) {*filesize = fsize;}
@@ -112,7 +112,7 @@ char* read_file_partial(const char* const filename, long bytes, long offset, lon
     fseek(file, 0, SEEK_END);
     long fsize = ftell(file);
     if (fsize == 0) {
-        log_msg(LP_ERROR, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_WARNING, "The size returned is 0 Bytes [%s:%d]", __FILE__, __LINE__);
         log_msg(LP_INFO, "Perhaps the file is too large. In that case try using read_file_partial64(const char* const, long long int, long long int, long long int*)");
     }
     if (filesize) {

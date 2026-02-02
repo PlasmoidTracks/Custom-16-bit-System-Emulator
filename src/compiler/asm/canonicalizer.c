@@ -315,6 +315,11 @@ char* canonicalizer_compile(char* content) {
     free(expression);
     free(instruction);
 
+    if (output == NULL) {
+        output = malloc(sizeof("; empty\0"));
+        memcpy(output, "; empty\0", sizeof("; empty\0"));
+    }
+
     return output;
 }
 

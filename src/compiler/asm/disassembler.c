@@ -29,17 +29,17 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     uint8_t instruction = binary[(*binary_index) ++];
     uint8_t addressing_mode = 0;
     int one_byte_instruction = 1;
-
-    if (cpu_instruction_argument_count[instruction] > 0) {
-        addressing_mode = binary[(*binary_index) ++];
-        one_byte_instruction = 0;
-    }
     if (valid_instruction) *valid_instruction = 1;
 
     int no_cache = 0;
 
     no_cache = (instruction & 0x80) != 0;
     instruction &= 0x7f;
+
+    if (cpu_instruction_argument_count[instruction] > 0) {
+        addressing_mode = binary[(*binary_index) ++];
+        one_byte_instruction = 0;
+    }
 
     if (instruction >= INSTRUCTION_COUNT) {
         //log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x] [%s:%d]", instruction, __FILE__, __LINE__);

@@ -30,6 +30,8 @@ No-Cache Modifier
 ------
 Instructions can have a no-cache modifier, simply by prepending a '%' to the instruction, like this:
 - "%mov r0, [$1234]"
+Or by using the 'nc' specifier
+- "nc mov r0 [$1234]"
 This has the effect, that the memory fetching and writing does read or write to cache. 
 This is useful for addresses that may change during consecutive reads from the same address, like external registers. 
 

@@ -183,7 +183,7 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
             token[i].type = TT_REGISTER;
         } else if (string_is_string(word[i])) {
             token[i].type = TT_STRING;
-        } else if (word[i][0] == '%') {
+        } else if (word[i][0] == '%' || strcmp(&word[i][0], "nc") == 0) {
             token[i].type = TT_NOCACHE;
         } else {
             token[i].type = TT_INSTRUCTION; // TODO: check if its really part of the mnemonic vocab

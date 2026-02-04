@@ -67,7 +67,7 @@ Labels
   - mov r0, [.my_label]
   - .data
   - .my_label
-  - $1234
+  - .dw $1234
 - When used with relative jumps, the label resolves to the correct relative value instead of the absolute value
   - rjmp .label   ; here '.label' resolves to $0004
   - jmp .label    ; here '.label' resolves to the absolute address
@@ -99,8 +99,10 @@ Segments
   
 - Data Segment:  
   .data  
-  Everything here is treated as raw data (16-bit by default).
-  It is imperative that an alignment has been set before any data is written
+  Define words (16-bit values) using the .dw prefix: 
+    .dw $1234
+  or bytes (8-bit values) using the .db prefix:
+    .db $56
 
 - Text:
   .text "string"

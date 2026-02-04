@@ -42,7 +42,9 @@ const char* token_type_string[] = {
     [TT_INCBIN]                     = "incbin",
     [TT_TEXT]                       = "text",
     [TT_STRING]                     = "string",
-    [TT_NOCACHE]                    = "nocache"
+    [TT_NOCACHE]                    = "nocache", 
+    [TT_DB]                         = "db", 
+    [TT_DW]                         = "dw"
 };
 
 const char* expression_type_string[] = {
@@ -59,6 +61,7 @@ const char* expression_type_string[] = {
     [EXPR_RESERVE]                  = "reserve", 
     [EXPR_INCBIN]                   = "incbin", 
     [EXPR_ADDRESS]                  = "address", 
+    [EXPR_DATA]                     = "data", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
 };
 
@@ -153,6 +156,10 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
                 token[i].type = TT_TEXT;
             } else if (strcmp(&word[i][1], "reserve") == 0) {
                 token[i].type = TT_RESERVE;
+            } else if (strcmp(&word[i][1], "db") == 0) {
+                token[i].type = TT_DB;
+            } else if (strcmp(&word[i][1], "dw") == 0) {
+                token[i].type = TT_DW;
             } else {
                 token[i].type = TT_LABEL;
             }
@@ -214,13 +221,27 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
         }
 
         // $ffff
-        if (token_index + 0 < token_count &&
+        else if (token_index + 0 < token_count &&
             (tokens[token_index + 0].type == TT_IMMEDIATE || tokens[token_index + 0].type == TT_LABEL)) {
 
                 expression[expression_index].type = EXPR_IMMEDIATE;
                 expression[expression_index].tokens[0] = tokens[token_index];
                 expression[expression_index].token_count = 1;
                 token_index += 1;
+                expression_index ++;
+        }
+
+        // .db $ffff
+        // .dw $1234
+        else if (token_index + 1 < token_count &&
+            ((tokens[token_index + 0].type == TT_DB || tokens[token_index + 0].type == TT_DW) && 
+             tokens[token_index + 1].type == TT_IMMEDIATE)) {
+
+                expression[expression_index].type = EXPR_DATA;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].tokens[1] = tokens[token_index + 1];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
@@ -572,7 +593,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
     typedef enum {CODE, DATA} Mode_t;
 
     Mode_t mode = CODE;
-    int byte_alignment = 2;
     int current_byte_align = 0; // switches between 0 and 1, with alignment 1, to show which byte to write to, since I can only do 16-bit else
 
     int exceeding_boundary_error = 0;
@@ -582,7 +602,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
         if (byte_index > SEGMENT_CODE_END) {
             if (!exceeding_boundary_error) {
                 LOG_PRIORITY lp = (options & AO_ERROR_ON_CODE_SEGMENT_BREACH) ? LP_ERROR : LP_WARNING;
-                log_msg(lp, "Parsing expressions: Binary exceeds memory boundary of 0x0000 - 0x%.4X [%s:%d]", SEGMENT_CODE_END, __FILE__, __LINE__);
+                log_msg(lp, "Parsing expressions: Binary exceeds memory boundary of 0x0000 - 0x%.4X (current index: 0x%.4X) [%s:%d]", SEGMENT_CODE_END, byte_index, __FILE__, __LINE__);
                 if (options & AO_ERROR_ON_CODE_SEGMENT_BREACH) {
                     // abort
                     return NULL;
@@ -1173,35 +1193,22 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 }*/
                 expression_index += 1;
                 continue;
-            } else if (expression[expression_index].type == EXPR_IMMEDIATE) {
-                if (expression[expression_index].token_count > 1) {
-                    log_msg(LP_ERROR, "Parsing expressions: label offset immediate values are not allowed inside data segment [%s:%d]", __FILE__, __LINE__);
-                    return NULL;
-                }
-                char* string_value = expression[expression_index].tokens[0].raw;
+            } else if (expression[expression_index].type == EXPR_DATA) {
+                char* string_value = expression[expression_index].tokens[1].raw;
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                if (byte_alignment == 1) {
-                    if (value > 0x00ff) {
-                        log_msg(LP_WARNING, "Parsing expressions: Due to the alignment, values above 0xff will be truncated! This also applies to floating point values! [%s:%d]", __FILE__, __LINE__);
-                    }
-                    if (current_byte_align == 0) {
-                        instruction[instruction_index].raw_data = value & 0x00ff;
-                        current_byte_align = 1;
-                        instruction[instruction_index].byte_aligned = 0;
-                        expression_index ++;
-                        continue;
-                    } else {
-                        instruction[instruction_index].raw_data = ((value & 0x00ff) << 8) | (instruction[instruction_index].raw_data & 0x00ff);
-                        current_byte_align = 0;
-                        instruction[instruction_index].byte_aligned = 1;
-                    }
-                } else if (byte_alignment == 2) {
+                if (expression[expression_index].tokens[0].type == TT_DW) {
                     instruction[instruction_index].raw_data = value;
-                } else {
-                    log_msg(LP_ERROR, "Parsing expressions: No alignment specified in data segment! [%s:%d]", __FILE__, __LINE__);
-                    exit(1);
+                    instruction[instruction_index].data_size_in_bytes = 2;
+                    byte_index += 2;
+                } else if (expression[expression_index].tokens[0].type == TT_DB) {
+                    if (value > 0x00ff) {
+                        log_msg(LP_ERROR, "Parsing expression: Byte definition has value greater than 0xff ($%X) [%s:%d]", value, __FILE__, __LINE__);
+                        return NULL;
+                    }
+                    instruction[instruction_index].raw_data = value;
+                    instruction[instruction_index].data_size_in_bytes = 1;
+                    byte_index += 1;
                 }
-                byte_index += 2;
             } else if (expression[expression_index].type == EXPR_SEGMENT_DATA) {
                 instruction_index ++;
                 expression_index ++;
@@ -1233,8 +1240,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 char* string_value = expression[expression_index].tokens[1].raw;
                 //printf("%s\n", string_value);
                 int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
-                instruction[instruction_index].address = byte_index + value;
-                byte_index += value;
+                instruction[instruction_index].address = byte_index + (int16_t) value;
+                byte_index += (int16_t) value;
 
                 //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                 
@@ -1263,8 +1270,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
                         instruction[instruction_index].expression[0] = expression[expression_index];
                         instruction[instruction_index].expression_count = 1;
-                        instruction[instruction_index].is_address = 0;
-                        instruction[instruction_index].is_raw_data = 1;
                         instruction[instruction_index].byte_aligned = 0;
                     } else {
                         instruction[instruction_index].raw_data = (value << 8) | (instruction[instruction_index].raw_data & 0x00ff);
@@ -1280,8 +1285,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         
                         instruction[instruction_index].expression[0] = expression[expression_index];
                         instruction[instruction_index].expression_count = 1;
-                        instruction[instruction_index].is_address = 0;
-                        instruction[instruction_index].is_raw_data = 1;
                         instruction[instruction_index].byte_aligned = 1;
                     }
                     byte_index ++;
@@ -1303,7 +1306,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
             } else {
                 log_msg(LP_WARNING, "Parsing expression: Unknown expression type while in data segment \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
-                log_msg(LP_INFO, "Parsing expression: Will treat code as code from now on, but this could be instable");
+                log_msg(LP_INFO, "Parsing expression: Will treat code as code from now on, but this could be unstable");
                 mode = CODE;
                 continue;
                 //exit(1);
@@ -1526,11 +1529,12 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_RESERVE:
                 case EXPR_INCBIN:
                 case EXPR_TEXT_DEFINITION:
+                case EXPR_DATA:
                 // etc.
                     break;
 
                 default:
-                    log_msg(LP_WARNING, "Solving label: Non implemented label resolve for expression type %d at instruction index %d, expression index %d [%s:%d]", instruction[i].expression[exp].type, i, exp, __FILE__, __LINE__);
+                    log_msg(LP_WARNING, "Solving label: Non implemented label resolve for expression type %d [\"%s\"] at instruction index %d, expression index %d [%s:%d]", instruction[i].expression[exp].type, expression_type_string[instruction[i].expression[exp].type], i, exp, __FILE__, __LINE__);
                     //exit(1);
                     break;
             }
@@ -1577,6 +1581,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 
     //printf("instruction_count: %d\n", instruction_count);
     while (instruction_index < instruction_count) {
+        //log_msg(LP_DEBUG, "%d/%d", instruction_index, instruction_count);
         if (instruction[instruction_index].is_address) {
             //log_msg(LP_INFO, "Parsing instruction: Jumping in address from 0x%.4x to 0x%.4x", index, instruction[instruction_index].address);
             index = instruction[instruction_index].address;
@@ -1584,18 +1589,22 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             if (index > *binary_size) {
                 *binary_size = index;
             }
+            //log_msg(LP_DEBUG, "is_address");
             continue;
         }
         if (instruction[instruction_index].expression[0].type == EXPR_SEGMENT_CODE) {
             instruction_index ++;
+            //log_msg(LP_DEBUG, "seg code");
             continue;
         } 
         if (instruction[instruction_index].expression[0].type == EXPR_SEGMENT_DATA) {
             instruction_index ++;
+            //log_msg(LP_DEBUG, "seg data");
             continue;
         } 
         if (instruction[instruction_index].expression[0].tokens[0].type == TT_LABEL) {
             instruction_index ++;
+            //log_msg(LP_DEBUG, "label");
             continue;
         }
         if (instruction[instruction_index].expression[0].type == EXPR_INCBIN) {
@@ -1613,27 +1622,40 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                 }
             }
             instruction_index ++;
+            //log_msg(LP_DEBUG, "incbin");
             continue;
         }
         // this here has to be checked last, else weird offsets occure
         if (instruction[instruction_index].is_raw_data) {
             //printf("is raw data! %d\n", instruction_index);
-            if (instruction[instruction_index].byte_aligned) {
-                //printf("aligned!\n");
+            if (instruction[instruction_index].data_size_in_bytes == 2) {
+                if (instruction[instruction_index].byte_aligned) {
+                    //printf("aligned!\n");
+                    error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+                    error |= safe_write(bin, index++, (instruction[instruction_index].raw_data & 0xff00) >> 8, written, options);
+                    instruction_index ++;
+                    if (index > *binary_size) {
+                        *binary_size = index;
+                    }
+                } else {
+                    //printf("unaligned!\n");
+                    error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+                    instruction_index ++;
+                    if (index > *binary_size) {
+                        *binary_size = index;
+                    }
+                }
+            } else if (instruction[instruction_index].data_size_in_bytes == 1) {
                 error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
-                error |= safe_write(bin, index++, (instruction[instruction_index].raw_data & 0xff00) >> 8, written, options);
                 instruction_index ++;
                 if (index > *binary_size) {
                     *binary_size = index;
                 }
             } else {
-                //printf("unaligned!\n");
-                error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
-                instruction_index ++;
-                if (index > *binary_size) {
-                    *binary_size = index;
-                }
+                log_msg(LP_ERROR, "Parsing instruction: data size does not match word or byte size (%d) [%s:%d]", instruction[instruction_index].data_size_in_bytes, __FILE__, __LINE__);
+                return NULL;
             }
+            //log_msg(LP_DEBUG, "raw data");
             continue;
         }
         error |= safe_write(bin, index++, instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
@@ -1643,14 +1665,15 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                 error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);
             }
         }
-        if (error && (options & AO_ERROR_ON_OVERLAP)) {
-            log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
-            return NULL;
-        }
         instruction_index ++;
         if (index > *binary_size) {
             *binary_size = index;
         }
+    }
+    
+    if (error && (options & AO_ERROR_ON_OVERLAP)) {
+        log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
+        return NULL;
     }
 
     free(written);
@@ -1697,6 +1720,10 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     // split into separate words
     int word_count;
     char** word = assembler_split_to_words(line, &word_count);
+    //index = 0;
+    //while (word[index]) {
+        //printf("%s\n", word[index++]);
+    //}
 
     // tokenize
     int token_count = 0;

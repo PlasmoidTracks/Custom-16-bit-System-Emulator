@@ -65,6 +65,22 @@ char* canonicalizer_compile(char* content) {
                 //log_msg(LP_INFO, "Label found");
                 output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
                 output = append_to_output(output, &output_len, " ");
+            } else if (instr.expression[0].tokens[0].type == TT_DW) {
+                //log_msg(LP_INFO, "Label found");
+                output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
+                output = append_to_output(output, &output_len, " ");
+                uint16_t imm = parse_immediate(instr.expression[0].tokens[1].raw);
+                char tmp[16];
+                sprintf(tmp, "$%.4X", imm);
+                output = append_to_output(output, &output_len, tmp);
+            } else if (instr.expression[0].tokens[0].type == TT_DB) {
+                //log_msg(LP_INFO, "Label found");
+                output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
+                output = append_to_output(output, &output_len, " ");
+                uint16_t imm = parse_immediate(instr.expression[0].tokens[1].raw);
+                char tmp[16];
+                sprintf(tmp, "$%.2X", imm);
+                output = append_to_output(output, &output_len, tmp);
             } else {
                 // here if instruction
                 if (  (instr.admx == ADMX_IND_R0_OFFSET16 

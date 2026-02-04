@@ -5237,6 +5237,16 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
             //log_msg(LP_INFO, "Label found");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
             output = append_to_output(output, &output_len, " ");
+        } else if (instr.expression[0].tokens[0].type == TT_DW) {
+            //log_msg(LP_INFO, "Label found");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
+            output = append_to_output(output, &output_len, " ");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
+        } else if (instr.expression[0].tokens[0].type == TT_DB) {
+            //log_msg(LP_INFO, "Label found");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
+            output = append_to_output(output, &output_len, " ");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else {
             for (int j = 0; j < ec; j++) {
                 if (instr.expression[j].type == EXPR_INSTRUCTION && instr.expression[j].token_count > 1 && instr.expression[j].tokens[1].type == TT_NOCACHE) {

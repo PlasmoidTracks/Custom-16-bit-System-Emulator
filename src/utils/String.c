@@ -94,7 +94,7 @@ char** split(const char* string, const char* const separators, const char* const
             continue;
         }
 
-        if (!inside_quotes && (contains(string[i], separators) || contains(string[i], preserved_separators))) {
+        if (!inside_quotes && (contains(string[i], separators))) {
             if (word_start != -1) {
                 int word_len = i - word_start;
                 char* word = calloc(word_len + 1, sizeof(char));

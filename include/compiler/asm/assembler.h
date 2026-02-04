@@ -38,6 +38,8 @@ typedef enum TokenType_t {
     TT_TEXT, 
     TT_STRING, 
     TT_NOCACHE, 
+    TT_DB, 
+    TT_DW, 
 } TokenType_t;
 
 typedef enum {
@@ -54,6 +56,7 @@ typedef enum {
     EXPR_RESERVE, 
     EXPR_INCBIN, 
     EXPR_ADDRESS, 
+    EXPR_DATA,
     EXPR_TEXT_DEFINITION, 
 } ExpressionType_t;
 
@@ -80,6 +83,7 @@ typedef struct Instruction_t {
 
     int is_raw_data;
     uint16_t raw_data;
+    int data_size_in_bytes;
 
     int byte_aligned;
 

@@ -419,11 +419,11 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                             sprintf(disassembly.code[assembly_index++], "f%f\n", float_from_f16(value));
                         } else {
                             if (options & DO_ADD_SPECULATIVE_CODE) {
-                                sprintf(disassembly.code[assembly_index++], "$%.2x%.2x                      ; %s%*s; %d byte instruction\n",
+                                sprintf(disassembly.code[assembly_index++], ".dw $%.2x%.2x                      ; %s%*s; %d byte instruction\n",
                                     machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index
                                 );
                             } else {
-                                sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n",
+                                sprintf(disassembly.code[assembly_index++], ".dw $%.2x%.2x\n",
                                     machine_code[previous_binary_index + 1], machine_code[previous_binary_index]
                                 );
                             }
@@ -431,11 +431,11 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                         binary_index = previous_binary_index + 2;
                     } else {
                         if (options & DO_ADD_SPECULATIVE_CODE) {
-                            sprintf(disassembly.code[assembly_index++], "$%.2x%.2x                      ; %s%*s; %d byte instruction\n",
+                            sprintf(disassembly.code[assembly_index++], ".dw $%.2x%.2x                      ; %s%*s; %d byte instruction\n",
                                 machine_code[previous_binary_index + 1], machine_code[previous_binary_index], instruction, padding, "", binary_index - previous_binary_index
                             );
                         } else {
-                            sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n",
+                            sprintf(disassembly.code[assembly_index++], ".dw $%.2x%.2x\n",
                                 machine_code[previous_binary_index + 1], machine_code[previous_binary_index]
                             );
                         }
@@ -452,13 +452,13 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                             v == float_from_f16(f16_from_float(2.71828182845904523)))) {
                             sprintf(disassembly.code[assembly_index++], "f%f\n", float_from_f16(value));
                         } else {
-                            sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n", machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
+                            sprintf(disassembly.code[assembly_index++], ".dw $%.2x%.2x\n", machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
                         }
                         binary_index = previous_binary_index + 2;
                     } else {
                         disassembly.binary_index[assembly_index] = previous_binary_index;
                         disassembly.is_data[assembly_index] = 1;
-                        sprintf(disassembly.code[assembly_index++], "$%.2x%.2x\n", machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
+                        sprintf(disassembly.code[assembly_index++], ".dw $%.2x%.2x\n", machine_code[previous_binary_index + 1], machine_code[previous_binary_index]);
                         binary_index = previous_binary_index + 2;
                     }
                 }

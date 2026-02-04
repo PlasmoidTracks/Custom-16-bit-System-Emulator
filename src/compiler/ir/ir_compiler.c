@@ -578,7 +578,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                                     return NULL;
                                 }
                                 char tmp[64];
-                                sprintf(tmp, "%s\n", expr->child[0]->token.raw);
+                                sprintf(tmp, ".dw %s\n", expr->child[0]->token.raw);
                                 data_output = append_to_output(data_output, &data_output_len, tmp);
                             }
                             break;

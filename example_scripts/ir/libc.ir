@@ -9,7 +9,7 @@ _malloc_address = 0xa000;
 
     // setting up interrupt address for INT_CLOCK vector
     var address;
-    address = 0xef02;
+    address = 0x7f02;
     var funcptr;
     funcptr = .irq_ticker;
     deref address = funcptr;

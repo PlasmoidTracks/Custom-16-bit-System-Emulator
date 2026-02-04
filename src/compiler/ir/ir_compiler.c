@@ -926,8 +926,13 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 // TODO: First solve expression, then save it in r1, the find ir_identifier, set r0 to the ident and mov indirectly?
                 IRParserToken_t* expr = parser_token[parser_token_index]->child[1];
                 parser_evaluate_expression(&code_output, &code_output_len, expr);
-                char tmp[64];
-                sprintf(tmp, "tst r1\nrjnz %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                char tmp[256];
+                if (options & IRCO_POSITION_INDEPENDENT_CODE) {
+                    sprintf(tmp, "tst r1\nrjnz %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                } else {
+                    sprintf(tmp, "tst r1\njnz %s\n", parser_token[parser_token_index]->child[2]->token.raw);
+                }
+                code_output = append_to_output(code_output, &code_output_len, tmp);
                 code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index ++;
                 break;

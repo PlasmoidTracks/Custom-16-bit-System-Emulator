@@ -670,7 +670,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         } 
                         address += instruction[i].argument_bytes + 2;
 
-                        if (instruction[i].instruction == (CPU_INSTRUCTION_MNEMONIC_t) -1) {
+                        if (instruction[i].instruction == (CPU_INSTRUCTION_MNEMONIC_t) -1 || instruction[i].instruction == NOP) {
                             continue;
                         }
                         if (cpu_instruction_argument_count[instruction[i].instruction] == 0) {

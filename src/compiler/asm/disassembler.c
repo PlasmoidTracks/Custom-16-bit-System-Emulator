@@ -63,7 +63,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
         *extern_admx = admx;
     }
 
-    //printf("admr: %s, admx: %s\n", cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
+    //printf("adm: %.2x, admr: %s, admx: %s\n", addressing_mode, cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
 
     int argument_count = cpu_instruction_argument_count[instruction];
 
@@ -102,6 +102,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     }
 
     uint8_t data[data_size];
+    //log_msg(LP_DEBUG, "instr: %s, data_size: %d, argument_count: %d, cpu_instruction_single_operand_writeback: %d", cpu_instruction_string[instruction], data_size, argument_count, cpu_instruction_single_operand_writeback[instruction]);
 
     for (int i = 0; i < data_size; i++) {
         data[i] = binary[*binary_index + i];
@@ -180,8 +181,8 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                     sprintf(str, "[$%04X]", value);
                     strcpy(&instruction_string_pointer[instruction_string_index], str);
                     instruction_string_index += strlen(str);
+                    break;
                 }
-                break;
             
             case ADMR_IND_R0:
                 {
@@ -194,17 +195,46 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                     str[4] = '\0';
                     strcpy(&instruction_string_pointer[instruction_string_index], str);
                     instruction_string_index += 4;
+                    break;
                 }
-                break;
             
-            case ADMR_NONE:
+            case ADMR_IND_R3_OFFSET16:
+                {
+                    int argument_byte_offset = 0;
+                    if (argument_count != 1) {
+                        switch (admx) {
+                            case ADMX_IMM16: case ADMX_IND16:
+                            case ADMX_IND_R0_OFFSET16: case ADMX_IND_R1_OFFSET16:
+                            case ADMX_IND_R2_OFFSET16: case ADMX_IND_R3_OFFSET16:
+                            case ADMX_IND_PC_OFFSET16:
+                                argument_byte_offset = 2;
+                                break;
+                            case ADMX_IND16_SCALED8_R0_OFFSET: case ADMX_IND16_SCALED8_R1_OFFSET:
+                            case ADMX_IND16_SCALED8_R2_OFFSET: case ADMX_IND16_SCALED8_R3_OFFSET:
+                            case ADMX_IND16_SCALED8_PC_OFFSET:
+                                argument_byte_offset = 3;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    char str[16];
+                    uint16_t value = disassembler_read_u16(data + argument_byte_offset);
+                    sprintf(str, "[$%04X + r3]", value);
+                    //log_msg(LP_CRITICAL, "%s", str);
+                    strcpy(&instruction_string_pointer[instruction_string_index], str);
+                    instruction_string_index += strlen(str);
+                    break;
+                }
+            
+            /*case ADMR_NONE:
                 strcpy(&instruction_string_pointer[instruction_string_index], "_");
                 instruction_string_index += 1;
                 if (valid_instruction) *valid_instruction = 0;
-                break;
+                break;*/
 
             default:
-                //log_msg(LP_ERROR, "Unsupported admr \"%s\" [%s:%d]", cpu_reduced_addressing_mode_string[admr], __FILE__, __LINE__);
+                log_msg(LP_ERROR, "Unsupported admr \"%s\" [%s:%d]", cpu_reduced_addressing_mode_string[admr], __FILE__, __LINE__);
                 if (valid_instruction) *valid_instruction = 0;
                 break;
         }

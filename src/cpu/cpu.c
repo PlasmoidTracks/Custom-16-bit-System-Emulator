@@ -368,7 +368,7 @@ void cpu_clock(CPU_t* cpu) {
                                 cpu->regs.sp
                             );
                         #endif
-                        if (cpu->intermediate.addressing_mode.addressing_mode_reduced == ADMR_NONE || cpu->intermediate.addressing_mode.addressing_mode_extended == ADMX_NONE) {
+                        if (cpu->intermediate.addressing_mode.addressing_mode_extended == ADMX_NONE) {
                             #ifdef _CPU_DEEP_DEBUG_
                             log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): Encountered an invalid instruction [admr or admx is none] [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
                             #endif
@@ -386,12 +386,6 @@ void cpu_clock(CPU_t* cpu) {
                                     cpu->regs.sp
                                 );
                             #endif
-                            if (cpu->intermediate.addressing_mode.addressing_mode_reduced == ADMR_NONE) {
-                                #ifdef _CPU_DEEP_DEBUG_
-                                log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): Encountered an invalid instruction [admr is none] [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
-                                #endif
-                                cpu->state = CS_EXCEPTION;
-                            }
                         } else {
                             #ifdef _CPU_DEBUG_
                                 log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:1): %s %s - nc: %d - sp: %.4x", 
@@ -823,12 +817,17 @@ void cpu_clock(CPU_t* cpu) {
                         #endif
                         break;
 
-                    case ADMR_NONE:
-                        #ifdef _CPU_DEEP_DEBUG_
-                        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): no admx address specified", cpu->clock, cpu->state, cpu->device.device_state);
-                        #endif
-                        //cpu->state = CS_FETCH_DESTINATION;
+                    case ADMR_IND_R3_OFFSET16: {
+                        cpu->intermediate.argument_address_reduced = (uint8_t) cpu->intermediate.argument_data_raw[argument_index];
+                        argument_index ++;
+                        cpu->intermediate.argument_address_reduced |= (cpu->intermediate.argument_data_raw[argument_index] << 8);
+                        //argument_index ++;
+                        ////log_msg_inline(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): admx base address [%.4x + %.4x] = ", cpu->clock, cpu->state, cpu->device.device_state, cpu->intermediate.argument_address_reduced, cpu->regs.r3);
+                        cpu->intermediate.argument_address_reduced += cpu->regs.r3;
+                        //printf("[%.4x]\n", cpu->intermediate.argument_address_reduced);
+                        cpu->state = CS_FETCH_SOURCE;
                         break;
+                    }
 
                     default:
                         #ifdef _CPU_DEEP_DEBUG_
@@ -2278,29 +2277,10 @@ void cpu_clock(CPU_t* cpu) {
                         break;
 
                     case ADMC_REG:
-                        // TODO: switch case and write to register
-                        switch (cpu->intermediate.addressing_mode.addressing_mode_reduced) {
-                            case ADMR_R0:
-                                cpu->regs.r0 = cpu->intermediate.result;
-                                break;
-                            case ADMR_R1:
-                                cpu->regs.r1 = cpu->intermediate.result;
-                                break;
-                            case ADMR_R2:
-                                cpu->regs.r0 = cpu->intermediate.result;
-                                break;
-                            case ADMR_R3:
-                                cpu->regs.r1 = cpu->intermediate.result;
-                                break;
-                            case ADMR_SP:
-                                cpu->regs.sp = cpu->intermediate.result;
-                                break;
-                            default:
-                                break;
-                        }
-                        cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
+                        #ifdef _CPU_DEEP_DEBUG_
+                        log_msg(LP_NOTICE, "CPU (C:%d CS:%d DS:%d): Writeback to high byte of register ADMR is infeasible", cpu->clock, cpu->state, cpu->device.device_state);
+                        #endif
+                        cpu->state = CS_EXCEPTION;
                         break;
                     
                     case ADMC_IMM:
@@ -2309,6 +2289,7 @@ void cpu_clock(CPU_t* cpu) {
                         #ifdef _CPU_DEEP_DEBUG_
                         log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): Unkown addressing mode category %d [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, cpu->intermediate.argument_address_reduced, __FILE__, __LINE__);
                         #endif
+                        cpu->state = CS_EXCEPTION;
                         break;
                 }
             }

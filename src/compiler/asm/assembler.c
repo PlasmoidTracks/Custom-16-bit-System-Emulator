@@ -598,6 +598,14 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
     int exceeding_boundary_error = 0;
 
     while (expression_index < expression_count) {
+        /*log_msg_inline(LP_DEBUG, "expr %d [%s]: \"", expression_index, expression_type_string[expression[expression_index].type]);
+        for (int t = 0; t < expression[expression_index].token_count; t++) {
+            printf("%s", expression[expression_index].tokens[t].raw);
+            if (t < expression[expression_index].token_count - 1) {
+                printf(" ");
+            }
+        }
+        printf("\"\n");*/
 
         if (byte_index > SEGMENT_CODE_END) {
             if (!exceeding_boundary_error) {
@@ -777,7 +785,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
             // 3. identify adm's
             instruction[instruction_index].admx = ADMX_NONE;
-            instruction[instruction_index].admr = ADMR_NONE;
+            instruction[instruction_index].admr = ADMR_R0;
             int admr_expression_index = expression_index;
             if (argument_count == 2 || cpu_instruction_single_operand_writeback[instruction[instruction_index].instruction]) {
                 
@@ -823,6 +831,17 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         }
                         break;
                     }
+
+                    case EXPR_INDIRECT_REGISTER_OFFSET:
+                        {
+                            char* register_string = expression[expression_index].tokens[3].raw;
+                            if (register_string[0] == 'r') {
+                                if (register_string[1] == '3') {
+                                    admr = ADMR_IND_R3_OFFSET16;
+                                }
+                            }
+                        }
+                        break;
 
                     default:
                         log_msg(LP_ERROR, "Assembler: Parsing expressions: Unknown admr \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
@@ -1088,7 +1107,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 case ADMR_R3:
                 case ADMR_SP:
                 case ADMR_IND_R0:
-                case ADMR_NONE:
+                //case ADMR_NONE:
                     break;
                 
                 case ADMR_IND16:
@@ -1099,13 +1118,24 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
                             instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
                             argument_bytes_used += 2;
-                        } else {
+                        } else if (expression[admr_expression_index].token_count == 3) {
                             char* string_value = expression[admr_expression_index].tokens[1].raw;
+                            //log_msg(LP_DEBUG, "%s", string_value);
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                             instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
                             instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
                             argument_bytes_used += 2;
                         }
+                    }
+                    break;
+                
+                case ADMR_IND_R3_OFFSET16:
+                    {
+                        char* string_value = expression[admr_expression_index].tokens[1].raw;
+                        int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                        instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
+                        instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
+                        argument_bytes_used += 2;
                     }
                     break;
 

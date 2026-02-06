@@ -933,7 +933,6 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                     sprintf(tmp, "tst r1\njnz %s\n", parser_token[parser_token_index]->child[2]->token.raw);
                 }
                 code_output = append_to_output(code_output, &code_output_len, tmp);
-                code_output = append_to_output(code_output, &code_output_len, tmp);
                 parser_token_index ++;
                 break;
             }

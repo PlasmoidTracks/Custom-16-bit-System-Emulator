@@ -658,11 +658,17 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 if (type_mod & IR_TM_ANON) {
                     if (type_mod & IR_TM_STATIC) {
                         log_msg(LP_ERROR, "IR Compiler: Static variables cannot be anonymous [%s:%d]", __FILE__, __LINE__);
+                        log_msg(LP_INFO, "Regarding error above: voilation caused by declared static variable \"%s\"", ident_name);
                         return NULL;
                     }
                     identifier_offset[ir_identifier_scope_depth] += 1;
                 } else {
                     if (type_mod & IR_TM_STATIC) {
+                        if (options & IRCO_POSITION_INDEPENDENT_CODE) {
+                            log_msg(LP_ERROR, "IR Compiler: Static variables cannot be declared in position independent code [%s:%d]", __FILE__, __LINE__);
+                            log_msg(LP_INFO, "Regarding error above: voilation caused by declared static variable \"%s\"", ident_name);
+                            return NULL;
+                        }
                         memcpy(ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name, ident_name, strlen(ident_name));
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].name[strlen(ident_name)] = '\0';
                         ir_identifier[ir_identifier_scope_depth][ir_identifier_index[ir_identifier_scope_depth]].type_modifier = type_mod;

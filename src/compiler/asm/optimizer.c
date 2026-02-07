@@ -822,7 +822,7 @@ char* optimizer_compile(char* content) {
                                 break;
                         }
 
-                        sprintf(instruction[i].expression[2].tokens[0].raw, "%d", value);
+                        sprintf(instruction[i].expression[2].tokens[0].raw, "$%.4X", (uint16_t) value);
                         
                         Instruction_t new_instruction = {
                             .instruction = SEAO, 

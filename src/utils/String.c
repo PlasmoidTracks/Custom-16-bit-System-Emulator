@@ -225,6 +225,9 @@ int string_is_immediate(const char text[]) {
         if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
         if (length > 2 && (text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
     }
+    if (text[0] == '$') {
+        if (length > 2 && string_is_hex_numeral(&text[1])) return 1;
+    }
     return 0;
 }
 

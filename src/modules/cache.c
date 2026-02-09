@@ -7,7 +7,7 @@
 
 Cache_t* cache_create(uint16_t capacity) {
     if (capacity & (capacity - 1)) {
-        log_msg(LP_ERROR, "Cache capacity has to be a power of 2 [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_ERROR, "Cache: Capacity has to be a power of 2 [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
@@ -18,6 +18,7 @@ Cache_t* cache_create(uint16_t capacity) {
     cache->state = malloc(sizeof(CacheState_t) * cache->capacity);
 
     if (!cache->data || !cache->address || !cache->state) {
+        log_msg(LP_ERROR, "Cache: Memory allocation failure [%s:%d]", __FILE__, __LINE__);
         free(cache->data);
         free(cache->address);
         free(cache->state);

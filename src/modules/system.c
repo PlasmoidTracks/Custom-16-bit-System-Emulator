@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "modules/cache.h"
 #include "modules/memory_bank.h"
 #include "utils/Log.h"
 
@@ -29,7 +30,12 @@ System_t* system_create(
     system->memory_bank = memory_bank_create();
 
     if (cache_active) {
-        cpu_mount_cache(system->cpu, cache_create(cache_capacity));
+        Cache_t* cache = cache_create(cache_capacity);
+        if (!cache) {
+            log_msg(LP_ERROR, "System: Cache could not be created [%s:%d]", __FILE__, __LINE__);
+            return NULL;
+        }
+        cpu_mount_cache(system->cpu, cache);
     }
 
     bus_add_device(system->bus, &system->cpu->device);

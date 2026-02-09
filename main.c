@@ -187,7 +187,7 @@ int main(int argc, char* argv[]) {
 
     if (co.d) {
         disassembler_decompile_to_file(bin, "disassemble.asm", binary_size, segment, segment_count, 
-            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | DO_ADD_SPECULATIVE_CODE | (DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
+            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
     }
     
     free(segment);
@@ -202,6 +202,11 @@ int main(int argc, char* argv[]) {
             1, 
             1000.0
         );
+
+        if (!system) {
+            log_msg(LP_ERROR, "Main: System could not be created [%s:%d]", __FILE__, __LINE__);
+            return 0;
+        }
     
         #ifdef HW_WATCH
             uint16_t match = 0x10ee;

@@ -52,8 +52,8 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
     long lexer_token_count;
     IRLexerToken_t* lexer_token = ir_lexer_parse(source, source_length, &lexer_token_count);
     if (!lexer_token) {
-        log_msg(LP_ERROR, "IR: Lexer returned NULL [%s:%d]", __FILE__, __LINE__);
-        return NULL;
+        log_msg(LP_WARNING, "IR: Lexer returned NULL [%s:%d]", __FILE__, __LINE__);
+        //return NULL;
     }
     
     IRParserToken_t** parser_token = malloc(sizeof(IRParserToken_t*) * lexer_token_count);

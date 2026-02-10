@@ -37,8 +37,8 @@ char* read_file(const char* const filename, long* filesize) {
 
     int result = fread(data, 1, fsize, file);
     if (result == 0) {
-        log_msg(LP_ERROR, "fread error [%s:%d]", __FILE__, __LINE__);
-        return NULL;
+        log_msg(LP_WARNING, "fread returned 0 [%s:%d]", __FILE__, __LINE__);
+        //return NULL;
     }
 
     fclose(file);

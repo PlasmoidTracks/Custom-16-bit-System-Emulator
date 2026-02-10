@@ -117,7 +117,7 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
                 for (int j = 0; j < ec; j++) {
                     if (instr.is_address) {
                         char tmp[32];
-                        sprintf(tmp, ".address $%.4x", instr.address);
+                        sprintf(tmp, ".address $%.4X", instr.address);
                         output = append_to_output(output, &output_len, tmp);
                     } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {
                         output = append_to_output(output, &output_len, ".code");
@@ -5219,7 +5219,7 @@ char* macro_code_expand(char* content, CpuFeatureFlag_t feature_flag) {
         if (instr.is_address) {
             if (instr.expression[0].type == EXPR_ADDRESS) {
                 char tmp[32];
-                sprintf(tmp, ".address $%.4x", instr.address);
+                sprintf(tmp, ".address $%.4X", instr.address);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_RESERVE) {
                 char tmp[32];

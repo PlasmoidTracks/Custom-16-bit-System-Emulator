@@ -141,7 +141,7 @@ typedef struct CPU_t {
                     // internal
                     uint16_t NC : 1;                            // [N]o [C]ache                         (internal flag ONLY, no user control, skips caching for instruction)
                     uint16_t MNI : 1;                           // [M]ask [N]onmaskable [I]nterrupts    (internal flag ONLY, no user control, this is for cpu cycle management)
-                    uint16_t reserved : 5;                      // Ensures correct size
+                    uint16_t reserved : 6;                      // Ensures correct size
                 };
             } sr;
         } regs;

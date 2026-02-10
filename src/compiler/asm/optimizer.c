@@ -1327,7 +1327,7 @@ char* optimizer_compile(char* content) {
         if (instr.is_address) {
             if (instr.expression[0].type == EXPR_ADDRESS) {
                 char tmp[32];
-                sprintf(tmp, ".address $%.4x", instr.address);
+                sprintf(tmp, ".address $%.4X", instr.address);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_RESERVE) {
                 char tmp[32];

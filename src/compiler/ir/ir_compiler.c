@@ -794,6 +794,17 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                 }
                 break;
             }
+
+            case IR_PAR_DEREF_VARIABLE_TO_FIXED_POINTER: {
+                code_output = append_to_output(code_output, &code_output_len, "; deref fixed pointer\n");
+                IRParserToken_t* expr = parser_token[parser_token_index]->child[3];
+                parser_evaluate_expression(&code_output, &code_output_len, expr);
+                char tmp[64];
+                sprintf(tmp, "mov [%s], r1\n", parser_token[parser_token_index]->child[1]->token.raw);
+                code_output = append_to_output(code_output, &code_output_len, tmp);
+                parser_token_index ++;
+                break;
+            }
             
             case IR_PAR_VARIABLE_FUNCTION_POINTER_ASSIGNMENT: {
                 code_output = append_to_output(code_output, &code_output_len, "; variable function pointer assignment\n");

@@ -173,10 +173,13 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
         // 5) If we found a rule to apply, apply it. Otherwise, we are done.
         if (best_rule_index >= 0) {
             something_changed = 1;
-            /*log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
-                    parser_ruleset[best_rule_index].description,
-                    best_rule_priority,
-                    best_rule_startpos);*/
+            #ifdef IR_PARSER_DEBUG
+            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
+                ir_parser_ruleset[best_rule_index].description,
+                best_rule_priority,
+                best_rule_startpos
+            );
+            #endif
 
             // Create the new parser token node
             IRParserToken_t* new_token = malloc(sizeof(IRParserToken_t));

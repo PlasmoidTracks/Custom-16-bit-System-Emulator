@@ -782,6 +782,41 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .description = "deref identifier = ident; -> deref identifier = expression;",
     },
 
+    // Static deref to fixed pointer
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_DEREF,
+            (IRParserTokenType_t) IR_LEX_NUMBER,
+            (IRParserTokenType_t) IR_LEX_ASSIGN,
+            (IRParserTokenType_t) IR_PAR_EXPRESSION,
+            (IRParserTokenType_t) IR_LEX_SEMICOLON,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_DEREF_VARIABLE_TO_FIXED_POINTER,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0, 0, 0, 0, 0},
+        .context_length = 5,
+        .priority = 10000,
+        .description = "deref number = expression; -> deref_variable_to_fixed_pointer",
+    },
+
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_DEREF,
+            (IRParserTokenType_t) IR_LEX_NUMBER,
+            (IRParserTokenType_t) IR_LEX_ASSIGN,
+            (IRParserTokenType_t) IR_LEX_IDENTIFIER,
+            (IRParserTokenType_t) IR_LEX_SEMICOLON,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_EXPRESSION,
+        .context_rule = {IR_CR_KEEP, IR_CR_KEEP, IR_CR_KEEP, IR_CR_REPLACE, IR_CR_KEEP},
+        .invert_match = {0, 0, 0, 0, 0},
+        .context_length = 5,
+        .priority = 2000,
+        .description = "deref number = ident; -> deref number = expression;",
+    },
+
     // Variable function pointer assignment
     {
         .context = {

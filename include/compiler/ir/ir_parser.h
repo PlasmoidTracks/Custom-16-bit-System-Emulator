@@ -16,6 +16,7 @@ typedef enum {
     IR_PAR_VARIABLE_ASSIGNMENT,            // index1 = EXPRESSION;
     IR_PAR_CONST_VARIABLE_DECLARATION,     // const var index1;    <-- can only be declared once, can only ever hold pointers!!!
     IR_PAR_DEREF_VARIABLE_ASSIGNMENT,      // deref index1 = EXPRESSION;
+    IR_PAR_DEREF_VARIABLE_TO_FIXED_POINTER, // deref 0x1234 = EXPRESSION
     IR_PAR_VARIABLE_FUNCTION_POINTER_ASSIGNMENT,      // ident = .label;
     IR_PAR_IF,                             // if expr .true;
     IR_PAR_GOTO,                           // goto .label;

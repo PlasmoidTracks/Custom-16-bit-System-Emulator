@@ -583,7 +583,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
 Instruction_t* assembler_parse_expression(Expression_t* expression, int expression_count, int* instruction_count, uint16_t** segment, int* segment_count, AssembleOption_t options) {
     int allocated_instructions = 16;
     Instruction_t* instruction = calloc(allocated_instructions, sizeof(Instruction_t));
-    instruction->instruction = -1;
+    instruction[0].instruction = -1;
 
     int expression_index = 0;
     int instruction_index = 0;
@@ -634,6 +634,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].is_address = 0;
             instruction[instruction_index].is_raw_data = 0;
             instruction[instruction_index].no_cache = 0;
+            instruction[instruction_index].instruction = 0;
+            instruction[instruction_index].address = 0;
 
             // verify its an instruction
             if (expression[expression_index].type != EXPR_INSTRUCTION) {
@@ -653,7 +655,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             // Allocate or reallocate the segment buffer
                             uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
                             if (!new_segment) {
-                                fprintf(stderr, "Memory allocation for segment failed\n");
+                                log_msg(LP_ERROR, "Parsing expressions: Memory allocation for segment failed\n");
                                 exit(1);
                             }
                             *segment = new_segment;
@@ -1342,7 +1344,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
         for (int exp = expression_count - 1; exp >= 0; exp --) {
             switch (instruction[i].expression[exp].type) {
                 case EXPR_IMMEDIATE:
-                    if ((int) instruction[i].instruction != -1 && !cpu_instruction_is_relative_jump[instruction[i].instruction]) {
+                    if ((int) instruction[i].instruction != -1 && (int) instruction[i].instruction < INSTRUCTION_COUNT && !cpu_instruction_is_relative_jump[instruction[i].instruction]) {
                         // here the first two bytes are guaranteed to be the label destination
                         if (instruction[i].expression[exp].tokens[0].type == TT_LABEL) {
                             // find corresponding label
@@ -1534,7 +1536,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                     break;
 
                 default:
-                    log_msg(LP_WARNING, "Solving label: Non implemented label resolve for expression type %d [\"%s\"] at instruction index %d, expression index %d [%s:%d]", instruction[i].expression[exp].type, expression_type_string[instruction[i].expression[exp].type], i, exp, __FILE__, __LINE__);
+                    log_msg(LP_WARNING, "Solving label: Non implemented label resolve for expression type %d at instruction index %d, expression index %d [%s:%d]", instruction[i].expression[exp].type, i, exp, __FILE__, __LINE__);
                     //exit(1);
                     break;
             }
@@ -1678,6 +1680,16 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 
     free(written);
 
+    // trim final binary down
+    /*while (index > 0) {
+        if (bin[index - 1] == 0) {
+            index --;
+            continue;
+        }
+        break;
+    }
+    *binary_size = index;*/
+
     //*binary_size = 0xffff; //index;
     //bin = realloc(bin, (size_t) index);
     return bin;
@@ -1746,7 +1758,7 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, segment, segment_count, options);
     for (int i = 0; i < instruction_count; i++) {
         /*if ((int) instruction[i].instruction >= 0) {
-            printf("Instruction %d: \"%s\" [pos: %d] - ", i + 1, cpu_instruction_string[instruction[i].instruction], instruction[i].address);
+            printf("Instruction %d: \"%s\" (%d) [pos: %d] - ", i + 1, cpu_instruction_string[instruction[i].instruction > INSTRUCTION_COUNT ? 0 : instruction[i].instruction], instruction[i].instruction, instruction[i].address);
             for (int e = 0; e < instruction[i].expression_count; e++) {
                 for (int t = 0; t < instruction[i].expression[e].token_count; t++) {
                     printf("%s ", instruction[i].expression[e].tokens[t].raw);

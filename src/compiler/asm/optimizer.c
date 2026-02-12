@@ -101,6 +101,13 @@ static int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr == AND;
     result |= instr == OR;
     result |= instr == XOR;
+    result |= instr == CIF;
+    result |= instr == CIB;
+    result |= instr == CFI;
+    result |= instr == CFB;
+    result |= instr == CBF;
+    result |= instr == CBI;
+    result |= instr == CBW;
     return result;
 }
 
@@ -178,7 +185,7 @@ char* optimizer_compile(char* content) {
     // build instruction array
     int instruction_count = 0;
     Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, 0, 0);
-    
+
     int changes_applied = 1;
     //int changes_total = 0;
     while (changes_applied) {
@@ -832,6 +839,7 @@ char* optimizer_compile(char* content) {
                                 (instruction[j].admr == admr && (is_same_indirect_adm(admr, instruction[j].admx) || register_offset_admx_contains_admr_register(instruction[j].admx, admr))) ||
                                 instruction[j].instruction == HLT ||
                                 (is_arithmetic_operation(instruction[j].instruction) && instruction[j].admr == admr) ||
+                                (is_arithmetic_operation(instruction[j].instruction) && is_same_adm(instruction[j].admr, instruction[i].admx)) ||
                                 register_offset_admx_contains_admr_register(instruction[j].admx, admr) || 
                                 ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && is_same_adm(instruction[j].admr, instruction[i].admx)) ||
                                 (is_move_operator(instruction[j].instruction) && instruction[j].admr == admr)

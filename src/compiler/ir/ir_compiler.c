@@ -170,9 +170,19 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "mov r1, r3\nadd r1, 4\n");   
                 break;
             }
+
+            // .label
+            case IR_LEX_LABEL: {
+                // we set r1 to the pointer of arg, starting at the first (reverse order) argument, hence the add 4
+                *output = append_to_output(*output, length, "; expression -> loading argument pointer\n");
+                char tmp[32];
+                sprintf(tmp, "mov r1, %s\n", token.raw);
+                *output = append_to_output(*output, length, tmp);   
+                break;
+            }
             
             default:
-                log_msg(LP_CRITICAL, "Unknown expression \"%s\"", ir_token_name[token.type]);
+                log_msg(LP_ERROR, "IR Compiler: Unknown expression \"%s\" [%s:%d]", ir_token_name[token.type], __FILE__, __LINE__);
                 break;
         }
     } else if (expr->child_count == 2) {
@@ -279,7 +289,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 break;
 
             default:
-                log_msg(LP_CRITICAL, "Unknown unary operation \"%s\"", ir_token_name[op->token.type]);
+                log_msg(LP_ERROR, "IR Compiler: Unknown unary operation \"%s\" [%s:%d]", ir_token_name[op->token.type], __FILE__, __LINE__);
                 break;
         }
 
@@ -471,7 +481,7 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 break;
 
             default:
-                log_msg(LP_CRITICAL, "Unknown binary operation \"%s\"", ir_token_name[token1->token.type]);
+                log_msg(LP_ERROR, "IR Compiler: Unknown binary operation \"%s\" [%s:%d]", ir_token_name[token1->token.type], __FILE__, __LINE__);
                 char tmp[256];
                 sprintf(tmp, "; UNKNOWN TOKEN: %s\n", ir_token_name[token1->token.type]);
                 *output = append_to_output(*output, length, tmp);
@@ -788,7 +798,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         }
                         parser_token_index ++;
                     } else {
-                        log_msg(LP_ERROR, "IR Compiler: Deref variable assignment of static variable may not occure outside of function bodies");
+                        log_msg(LP_ERROR, "IR Compiler: Deref variable assignment of static variable may not occure outside of function bodies [%s:%d]", __FILE__, __LINE__);
                         return NULL;
                     }
                 }

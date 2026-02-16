@@ -231,7 +231,8 @@ char* optimizer_compile(char* content) {
                         while (j < instruction_count - 1) {
                             if (instruction[j].instruction == CALL || 
                                 instruction[j].instruction == RET || 
-                                (!(instruction[j].instruction == MOV || instruction[j].instruction == LEA) && instruction[j].admr == admr) ||
+                                (!(instruction[j].instruction == MOV || instruction[j].instruction == LEA) && (instruction[j].admr == admr)) ||
+                                ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && is_same_indirect_adm(admr, instruction[j].admx)) ||
                                 cpu_instruction_is_jump[instruction[j].instruction] ||
                                 (admr == ADMR_R0 && instruction[j].admr == ADMR_IND_R0) ||
                                 is_same_adm(admr, instruction[j].admx) ||

@@ -246,10 +246,16 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "cif r1\n");
                 break;
 
-            case IR_LEX_CIB:
+            case IR_LEX_CID:
                 parser_evaluate_expression(output, length, token1);
-                *output = append_to_output(*output, length, "; unary operation -> cib\n");
-                *output = append_to_output(*output, length, "cib r1\n");
+                *output = append_to_output(*output, length, "; unary operation -> cid\n");
+                *output = append_to_output(*output, length, "cid r1\n");
+                break;
+
+            case IR_LEX_CIL:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cil\n");
+                *output = append_to_output(*output, length, "cil r1\n");
                 break;
 
             case IR_LEX_CFI:
@@ -258,28 +264,58 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "cfi r1\n");
                 break;
 
-            case IR_LEX_CFB:
+            case IR_LEX_CFD:
                 parser_evaluate_expression(output, length, token1);
-                *output = append_to_output(*output, length, "; unary operation -> cfb\n");
-                *output = append_to_output(*output, length, "cfb r1\n");
+                *output = append_to_output(*output, length, "; unary operation -> cfd\n");
+                *output = append_to_output(*output, length, "cfd r1\n");
+                break;
+
+            case IR_LEX_CFL:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cfl\n");
+                *output = append_to_output(*output, length, "cfl r1\n");
+                break;
+
+            case IR_LEX_CDI:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cdi\n");
+                *output = append_to_output(*output, length, "cdi r1\n");
+                break;
+
+            case IR_LEX_CDF:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cdf\n");
+                *output = append_to_output(*output, length, "cdf r1\n");
+                break;
+
+            case IR_LEX_CDL:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cdl\n");
+                *output = append_to_output(*output, length, "cdl r1\n");
+                break;
+
+            case IR_LEX_CLI:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cli\n");
+                *output = append_to_output(*output, length, "cli r1\n");
+                break;
+
+            case IR_LEX_CLF:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> clf\n");
+                *output = append_to_output(*output, length, "clf r1\n");
+                break;
+
+            case IR_LEX_CLD:
+                parser_evaluate_expression(output, length, token1);
+                *output = append_to_output(*output, length, "; unary operation -> cld\n");
+                *output = append_to_output(*output, length, "cld r1\n");
                 break;
 
             case IR_LEX_CBI:
                 parser_evaluate_expression(output, length, token1);
                 *output = append_to_output(*output, length, "; unary operation -> cbi\n");
                 *output = append_to_output(*output, length, "cbi r1\n");
-                break;
-
-            case IR_LEX_CBF:
-                parser_evaluate_expression(output, length, token1);
-                *output = append_to_output(*output, length, "; unary operation -> cbf\n");
-                *output = append_to_output(*output, length, "cbf r1\n");
-                break;
-
-            case IR_LEX_CBW:
-                parser_evaluate_expression(output, length, token1);
-                *output = append_to_output(*output, length, "; unary operation -> cbw\n");
-                *output = append_to_output(*output, length, "cbw r1\n");
                 break;
 
             case IR_LEX_BITWISE_NOT:
@@ -315,9 +351,14 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "addf r0, r1\nmov r1, r0\n");
                 break;
 
-            case IR_LEX_BFLOAT_PLUS:
-                *output = append_to_output(*output, length, "; binary operation -> addbf\n");
-                *output = append_to_output(*output, length, "addbf r0, r1\nmov r1, r0\n");
+            case IR_LEX_DOUBLE_PLUS:
+                *output = append_to_output(*output, length, "; binary operation -> addd\n");
+                *output = append_to_output(*output, length, "addd r0, r1\nmov r1, r0\n");
+                break;
+
+            case IR_LEX_LONG_PLUS:
+                *output = append_to_output(*output, length, "; binary operation -> addl\n");
+                *output = append_to_output(*output, length, "addl r0, r1\nmov r1, r0\n");
                 break;
 
             case IR_LEX_INTEGER_MINUS:
@@ -330,9 +371,14 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "subf r0, r1\nmov r1, r0\n");
                 break;
 
-            case IR_LEX_BFLOAT_MINUS:
-                *output = append_to_output(*output, length, "; binary operation -> subbf\n");
-                *output = append_to_output(*output, length, "subbf r0, r1\nmov r1, r0\n");
+            case IR_LEX_DOUBLE_MINUS:
+                *output = append_to_output(*output, length, "; binary operation -> subd\n");
+                *output = append_to_output(*output, length, "subd r0, r1\nmov r1, r0\n");
+                break;
+
+            case IR_LEX_LONG_MINUS:
+                *output = append_to_output(*output, length, "; binary operation -> subl\n");
+                *output = append_to_output(*output, length, "subl r0, r1\nmov r1, r0\n");
                 break;
 
             case IR_LEX_INTEGER_STAR:
@@ -345,9 +391,14 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "mulf r0, r1\nmov r1, r0\n");
                 break;
 
-            case IR_LEX_BFLOAT_STAR:
-                *output = append_to_output(*output, length, "; binary operation -> mulbf\n");
-                *output = append_to_output(*output, length, "mulbf r0, r1\nmov r1, r0\n");
+            case IR_LEX_DOUBLE_STAR:
+                *output = append_to_output(*output, length, "; binary operation -> muld\n");
+                *output = append_to_output(*output, length, "muld r0, r1\nmov r1, r0\n");
+                break;
+
+            case IR_LEX_LONG_STAR:
+                *output = append_to_output(*output, length, "; binary operation -> mull\n");
+                *output = append_to_output(*output, length, "mull r0, r1\nmov r1, r0\n");
                 break;
 
             case IR_LEX_INTEGER_SLASH:
@@ -360,9 +411,14 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "divf r0, r1\nmov r1, r0\n");
                 break;
 
-            case IR_LEX_BFLOAT_SLASH:
-                *output = append_to_output(*output, length, "; binary operation -> divbf\n");
-                *output = append_to_output(*output, length, "divbf r0, r1\nmov r1, r0\n");
+            case IR_LEX_DOUBLE_SLASH:
+                *output = append_to_output(*output, length, "; binary operation -> divd\n");
+                *output = append_to_output(*output, length, "divd r0, r1\nmov r1, r0\n");
+                break;
+
+            case IR_LEX_LONG_SLASH:
+                *output = append_to_output(*output, length, "; binary operation -> divl\n");
+                *output = append_to_output(*output, length, "divl r0, r1\nmov r1, r0\n");
                 break;
 
             case IR_LEX_EQUAL_EQUAL:
@@ -376,21 +432,25 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 break;
 
             case IR_LEX_INTEGER_LESS:
+            case IR_LEX_LONG_LESS: 
                 *output = append_to_output(*output, length, "; binary operation -> less\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_INTEGER_LESS_EQUAL:
+            case IR_LEX_LONG_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> less equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\ncmovz r1, 1\n");
                 break;
                 
             case IR_LEX_INTEGER_GREATER:
+            case IR_LEX_LONG_GREATER: 
                 *output = append_to_output(*output, length, "; binary operation -> greater\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnl r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_INTEGER_GREATER_EQUAL:
+            case IR_LEX_LONG_GREATER_EQUAL: 
                 *output = append_to_output(*output, length, "; binary operation -> greater equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnl r1, 1\n");
                 break;
@@ -415,22 +475,22 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\n");
                 break;
 
-            case IR_LEX_BFLOAT_LESS:
+            case IR_LEX_DOUBLE_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat less\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovfz r1, 0\n");
                 break;
 
-            case IR_LEX_BFLOAT_LESS_EQUAL:
+            case IR_LEX_DOUBLE_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat less equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovfz r1, 1\n");
                 break;
                 
-            case IR_LEX_BFLOAT_GREATER:
+            case IR_LEX_DOUBLE_GREATER:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat greater\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnbl r1, 1\ncmovfz r1, 0\n");
                 break;
 
-            case IR_LEX_BFLOAT_GREATER_EQUAL:
+            case IR_LEX_DOUBLE_GREATER_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat greater equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnbl r1, 1\n");
                 break;

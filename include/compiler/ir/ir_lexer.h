@@ -5,67 +5,81 @@
 
 typedef enum {
     // Keywords.
-    IR_LEX_VAR = 1,                // var
-    IR_LEX_REF,                    // ref
-    IR_LEX_DEREF,                  // deref
-    IR_LEX_IF,                     // if
-    IR_LEX_ELSE,                   // else
-    IR_LEX_GOTO,                   // goto
-    IR_LEX_RETURN,                 // return
-    IR_LEX_ARG,                    // arg
-    IR_LEX_CONST,                  // const
-    IR_LEX_STATIC,                 // static
-    IR_LEX_ANON,                   // anon
-    IR_LEX_VOLATILE,               // volatile
-    IR_LEX_CALLPUSHARG,            // callpusharg
-    IR_LEX_CALLFREEARG,            // callfreearg
-    IR_LEX_CALL,                   // call
-    IR_LEX_SCOPEBEGIN,             // scopebegin
-    IR_LEX_SCOPEEND,               // scopeend
-    IR_LEX_CFI,                    // cfi
-    IR_LEX_CFB,                    // cfb
-    IR_LEX_CIF,                    // cif
-    IR_LEX_CIB,                    // cib
-    IR_LEX_CBF,                    // cbf
-    IR_LEX_CBI,                    // cbi
-    IR_LEX_CBW,                    // cbw
-    IR_LEX_ADDRESS,                // .address
-    IR_LEX_IRQBEGIN,               // irqbegin
-    IR_LEX_IRQEND,                 // irqend
-    IR_LEX_ASM,                    // asm
+    IR_LEX_VAR = 1,                 // var
+    IR_LEX_REF,                     // ref
+    IR_LEX_DEREF,                   // deref
+    IR_LEX_IF,                      // if
+    IR_LEX_ELSE,                    // else
+    IR_LEX_GOTO,                    // goto
+    IR_LEX_RETURN,                  // return
+    IR_LEX_ARG,                     // arg
+    IR_LEX_CONST,                   // const
+    IR_LEX_STATIC,                  // static
+    IR_LEX_ANON,                    // anon
+    IR_LEX_VOLATILE,                // volatile
+    IR_LEX_CALLPUSHARG,             // callpusharg
+    IR_LEX_CALLFREEARG,             // callfreearg
+    IR_LEX_CALL,                    // call
+    IR_LEX_SCOPEBEGIN,              // scopebegin
+    IR_LEX_SCOPEEND,                // scopeend
+    IR_LEX_CIF,                     // cif
+    IR_LEX_CID,                     // cid
+    IR_LEX_CIL,                     // cil
+    IR_LEX_CFI,                     // cfi
+    IR_LEX_CFD,                     // cfd
+    IR_LEX_CFL,                     // cfl
+    IR_LEX_CDI,                     // cdi
+    IR_LEX_CDF,                     // cdf
+    IR_LEX_CDL,                     // cdl
+    IR_LEX_CLI,                     // cli
+    IR_LEX_CLF,                     // clf
+    IR_LEX_CLD,                     // cld
+    IR_LEX_CBI,                     // cbi
+    IR_LEX_ADDRESS,                 // .address
+    IR_LEX_IRQBEGIN,                // irqbegin
+    IR_LEX_IRQEND,                  // irqend
+    IR_LEX_ASM,                     // asm
 
 
     // Multi-character tokens.
     IR_LEX_INTEGER_MINUS,                       // i-
     IR_LEX_FLOAT_MINUS,                         // f-
-    IR_LEX_BFLOAT_MINUS,                        // f-
+    IR_LEX_DOUBLE_MINUS,                        // d-
+    IR_LEX_LONG_MINUS,                          // l-
     IR_LEX_INTEGER_PLUS,                        // i+
     IR_LEX_FLOAT_PLUS,                          // f+
-    IR_LEX_BFLOAT_PLUS,                         // bf+
+    IR_LEX_DOUBLE_PLUS,                         // d+
+    IR_LEX_LONG_PLUS,                           // l+
     IR_LEX_INTEGER_SLASH,                       // i/
     IR_LEX_FLOAT_SLASH,                         // f/
-    IR_LEX_BFLOAT_SLASH,                        // bf/
+    IR_LEX_DOUBLE_SLASH,                        // d/
+    IR_LEX_LONG_SLASH,                          // l/
     IR_LEX_INTEGER_STAR,                        // i*
     IR_LEX_FLOAT_STAR,                          // f*
-    IR_LEX_BFLOAT_STAR,                         // bf*
+    IR_LEX_DOUBLE_STAR,                         // d*
+    IR_LEX_LONG_STAR,                           // l*
     IR_LEX_BANG_EQUAL,                          // !=
     IR_LEX_EQUAL_EQUAL,                         // ==
     IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL,      // u>=
     IR_LEX_INTEGER_GREATER_EQUAL,               // i>=
     IR_LEX_FLOAT_GREATER_EQUAL,                 // f>=
-    IR_LEX_BFLOAT_GREATER_EQUAL,                // bf>=
+    IR_LEX_DOUBLE_GREATER_EQUAL,                // d>=
+    IR_LEX_LONG_GREATER_EQUAL,                  // l>=
     IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL,         // u<=
     IR_LEX_INTEGER_LESS_EQUAL,                  // i<=
     IR_LEX_FLOAT_LESS_EQUAL,                    // f<=
-    IR_LEX_BFLOAT_LESS_EQUAL,                   // bf<=
+    IR_LEX_DOUBLE_LESS_EQUAL,                   // d<=
+    IR_LEX_LONG_LESS_EQUAL,                     // l<=
     IR_LEX_UNSIGNED_INTEGER_GREATER,            // u>
     IR_LEX_INTEGER_GREATER,                     // i>
     IR_LEX_FLOAT_GREATER,                       // f>
-    IR_LEX_BFLOAT_GREATER,                      // bf>
+    IR_LEX_DOUBLE_GREATER,                      // d>
+    IR_LEX_LONG_GREATER,                        // l>
     IR_LEX_UNSIGNED_INTEGER_LESS,               // u<
     IR_LEX_INTEGER_LESS,                        // i<
     IR_LEX_FLOAT_LESS,                          // f<
-    IR_LEX_BFLOAT_LESS,                         // bf<
+    IR_LEX_DOUBLE_LESS,                         // d<
+    IR_LEX_LONG_LESS,                           // l<
     IR_LEX_SHIFT_LEFT,                          // <<
     IR_LEX_SHIFT_RIGHT,                         // >>
 

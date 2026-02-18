@@ -185,7 +185,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_PLUS,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_PLUS,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -193,7 +193,19 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 100,
-        .description = "b+ -> binary_operator",
+        .description = "d+ -> binary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_PLUS,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l+ -> binary_operator",
     },
     {
         .context = {
@@ -221,7 +233,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_MINUS,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_MINUS,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -229,7 +241,19 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 100,
-        .description = "b- -> binary_operator",
+        .description = "d- -> binary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_MINUS,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l- -> binary_operator",
     },
     {
         .context = {
@@ -257,7 +281,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_STAR,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_STAR,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -265,7 +289,19 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 100,
-        .description = "b* -> binary_operator",
+        .description = "d* -> binary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_STAR,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l* -> binary_operator",
     },
     {
         .context = {
@@ -293,7 +329,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_SLASH,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_SLASH,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -301,7 +337,19 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 100,
-        .description = "b/ -> binary_operator",
+        .description = "d/ -> binary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_SLASH,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l/ -> binary_operator",
     },
     {
         .context = {
@@ -341,7 +389,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_GREATER,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_GREATER,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -389,7 +437,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_GREATER_EQUAL,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_GREATER_EQUAL,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -437,7 +485,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_LESS,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_LESS,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -485,7 +533,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_BFLOAT_LESS_EQUAL,
+            (IRParserTokenType_t) IR_LEX_DOUBLE_LESS_EQUAL,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_BINARY_OPERATOR,
@@ -583,30 +631,6 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     // Unary operators
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_CFI,
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_UNARY_OPERATOR,
-        .context_rule = {IR_CR_REPLACE},
-        .invert_match = {0},
-        .context_length = 1,
-        .priority = 100,
-        .description = "cfi -> unary_operator",
-    },
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_CFB,
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_UNARY_OPERATOR,
-        .context_rule = {IR_CR_REPLACE},
-        .invert_match = {0},
-        .context_length = 1,
-        .priority = 100,
-        .description = "cfb -> unary_operator",
-    },
-    {
-        .context = {
             (IRParserTokenType_t) IR_LEX_CIF,
             IR_PAR_RULE_END
         },
@@ -619,7 +643,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_CIB,
+            (IRParserTokenType_t) IR_LEX_CID,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_UNARY_OPERATOR,
@@ -628,6 +652,126 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 100,
         .description = "cib -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CIL,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cil -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CFI,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cfi -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CFD,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cfd -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CFL,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cfl -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CDI,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cdi -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CDF,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cdf -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CDL,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cdl -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CLI,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cli -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CLF,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "clf -> unary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_CLD,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_UNARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "cld -> unary_operator",
     },
     {
         .context = {
@@ -641,30 +785,8 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .priority = 100,
         .description = "cbi -> unary_operator",
     },
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_CBF,
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_UNARY_OPERATOR,
-        .context_rule = {IR_CR_REPLACE},
-        .invert_match = {0},
-        .context_length = 1,
-        .priority = 100,
-        .description = "cbf -> unary_operator",
-    },
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_CBW,
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_UNARY_OPERATOR,
-        .context_rule = {IR_CR_REPLACE},
-        .invert_match = {0},
-        .context_length = 1,
-        .priority = 100,
-        .description = "cbw -> unary_operator",
-    },
+
+
     {
         .context = {
             (IRParserTokenType_t) IR_LEX_REF,

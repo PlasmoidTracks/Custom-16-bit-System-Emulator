@@ -102,12 +102,15 @@ static int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr == OR;
     result |= instr == XOR;
     result |= instr == CIF;
-    result |= instr == CIB;
+    result |= instr == CID;
+    result |= instr == CIL;
     result |= instr == CFI;
-    result |= instr == CFB;
-    result |= instr == CBF;
+    result |= instr == CFD;
+    result |= instr == CFL;
+    result |= instr == CDI;
+    result |= instr == CDF;
+    result |= instr == CDL;
     result |= instr == CBI;
-    result |= instr == CBW;
     return result;
 }
 

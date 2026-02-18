@@ -2028,7 +2028,7 @@ void cpu_clock(CPU_t* cpu) {
                     #endif // DCFF_CMOV_EXT
 
                     #ifdef DCFF_BYTE_EXT
-                        case CBW:
+                        case CBI:
                             cpu->intermediate.result = (int16_t) ((int8_t) cpu->intermediate.data_address_reduced);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
@@ -2066,28 +2066,28 @@ void cpu_clock(CPU_t* cpu) {
                     #endif // DCFF_FLOAT16
 
                     #ifdef DCFF_BFLOAT16
-                        case ADDBF:
+                        case ADDD:
                             cpu->intermediate.result = bf16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
                             //cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case SUBBF:
+                        case SUBD:
                             cpu->intermediate.result = bf16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
                             //cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case MULBF:
+                        case MULD:
                             cpu->intermediate.result = bf16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
                             //cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case DIVBF:
+                        case DIVD:
                             cpu->intermediate.result = bf16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
                             //cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;
@@ -2102,8 +2102,14 @@ void cpu_clock(CPU_t* cpu) {
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case CIB:
+                        case CID:
                             cpu->intermediate.result = bf16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CIL:
+                            cpu->intermediate.result = fi16_from_int(((int) cpu->intermediate.data_address_reduced));
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;
@@ -2114,20 +2120,50 @@ void cpu_clock(CPU_t* cpu) {
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case CFB:
+                        case CFD:
                             cpu->intermediate.result = bf16_from_float(float_from_f16(cpu->intermediate.data_address_reduced));
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case CBI:
+                        case CFL:
+                            cpu->intermediate.result = fi16_from_long_long((long long int)(float_from_f16(cpu->intermediate.data_address_reduced)));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CDI:
                             cpu->intermediate.result = (int16_t) float_from_bf16(cpu->intermediate.data_address_reduced);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;
 
-                        case CBF:
+                        case CDF:
                             cpu->intermediate.result = f16_from_float(float_from_bf16(cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CDL:
+                            cpu->intermediate.result = fi16_from_long_long((long long int)(float_from_bf16(cpu->intermediate.data_address_reduced)));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CLI:
+                            cpu->intermediate.result = (int16_t) int_from_fi16((fint16_t) cpu->intermediate.data_address_reduced);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CLF:
+                            cpu->intermediate.result = f16_from_float((float) int_from_fi16((fint16_t) cpu->intermediate.data_address_reduced));
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+
+                        case CLD:
+                            cpu->intermediate.result = bf16_from_float((float) int_from_fi16((fint16_t) cpu->intermediate.data_address_reduced));
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;
                             break;

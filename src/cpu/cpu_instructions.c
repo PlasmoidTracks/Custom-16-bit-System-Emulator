@@ -22,11 +22,14 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     // Arithmetic Float Operations
     "addf", "subf", "mulf", "divf",
 
-    // Arithmetic BFloat Operations
-    "addbf", "subbf", "mulbf", "divbf",
+    // Arithmetic Double Operations
+    "addd", "subd", "muld", "divd",
+
+    // Arithmetic Long Operations
+    "addl", "subl", "mull", "divl",
 
     // Type Conversion Operations
-    "cif", "cib", "cfi", "cfb", "cbf", "cbi", "cbw", 
+    "cif", "cid", "cil", "cfi", "cfd", "cfl", "cdf", "cdi", "cdl", "cli", "clf", "cld", "cbi", 
 
     // Bitwise Logic
     "bws", "and", "or", "xor", "not",
@@ -68,10 +71,12 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     2, 2, 2,
     // Arithmetic Float Operations
     2, 2, 2, 2, 
-    // Arithmetic BFloat Operations
+    // Arithmetic Double Operations
+    2, 2, 2, 2, 
+    // Arithmetic Long Operations
     2, 2, 2, 2, 
     // Type Conversion Operations
-    1, 1, 1, 1, 1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Bitwise Logic
     2, 2, 2, 2, 1, 
     // Tests
@@ -106,10 +111,12 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     0, 0, 0,
     // Arithmetic Float Operations
     0, 0, 0, 0, 
-    // Arithmetic BFloat Operations
+    // Arithmetic Double Operations
+    0, 0, 0, 0, 
+    // Arithmetic Long Operations
     0, 0, 0, 0, 
     // Type Conversion Operations
-    1, 1, 1, 1, 1, 1, 1, 
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
     // Bitwise Logic
     0, 0, 0, 0, 1, 
     // Tests
@@ -145,10 +152,12 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     0, 0, 0,
     // Arithmetic Float Operations
     0, 0, 0, 0, 
-    // Arithmetic BFloat Operations
+    // Arithmetic Double Operations
+    0, 0, 0, 0, 
+    // Arithmetic Long Operations
     0, 0, 0, 0, 
     // Type Conversion Operations
-    0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Bitwise Logic
     0, 0, 0, 0, 0, 
     // Tests
@@ -184,10 +193,12 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     0, 0, 0,
     // Arithmetic Float Operations
     0, 0, 0, 0, 
-    // Arithmetic BFloat Operations
+    // Arithmetic Double Operations
+    0, 0, 0, 0, 
+    // Arithmetic Long Operations
     0, 0, 0, 0, 
     // Type Conversion Operations
-    0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     // Bitwise Logic
     0, 0, 0, 0, 0, 
     // Tests

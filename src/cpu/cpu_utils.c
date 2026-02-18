@@ -72,7 +72,7 @@ void cpu_print_register(char* name, uint16_t value) {
     char buf2[128];
     format_float_to_scientific_notation(buf1, float_from_f16((float16_t) value));
     format_float_to_scientific_notation(buf2, float_from_bf16((bfloat16_t) value));
-    printf(" \033[1;32m%s\033[0m  X: 0x%04X | S: %6d | F16: %-15s | BF16: %-15s | FI16: %13lld | C: '%s'\n",
+    printf(" \033[1;32m%s\033[0m  hex: 0x%04X | signed: %6d | float: %-15s | double: %-15s | long: %13lld | C: '%s'\n",
         name, value, (int16_t) value, buf1, buf2, long_long_from_fi16((fint16_t) value), ascii);
     free(ascii);
 }

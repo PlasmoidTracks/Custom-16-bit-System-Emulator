@@ -77,25 +77,37 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     USM,        // usm dest, src    :: dest = min((int32_t) (dest * src), 0xffff)
 
     // Arithmetic Float Operations
-    ADDF,       // addf dest, src   :: dest = dest + src (float16)
+    ADDF,       // addf dest, src   :: dest = dest + src (float16)  [add] [f]loat
     SUBF,       // subf dest, src   :: dest = dest - src (float16)
     MULF,       // mulf dest, src   :: dest = dest * src (float16)
     DIVF,       // divf dest, src   :: dest = dest / src (float16)
 
     // Arithmetic Float Operations
-    ADDBF,       // addf dest, src   :: dest = dest + src (bfloat16)
-    SUBBF,       // subf dest, src   :: dest = dest - src (bfloat16)
-    MULBF,       // mulf dest, src   :: dest = dest * src (bfloat16)
-    DIVBF,       // divf dest, src   :: dest = dest / src (bfloat16)
+    ADDD,       // addd dest, src   :: dest = dest + src (bfloat16) [add] [d]ouble
+    SUBD,       // subd dest, src   :: dest = dest - src (bfloat16)
+    MULD,       // muld dest, src   :: dest = dest * src (bfloat16)
+    DIVD,       // divd dest, src   :: dest = dest / src (bfloat16)
+
+    // Arithmetic Float Operations
+    ADDL,       // addf dest, src   :: dest = dest + src (fint16)   [add] [l]ong
+    SUBL,       // subf dest, src   :: dest = dest - src (fint16)
+    MULL,       // mulf dest, src   :: dest = dest * src (fint16)
+    DIVL,       // divf dest, src   :: dest = dest / src (fint16)
 
     // Type Conversion Operations
-    CIF,        // cif dest         :: [c]onvert [i]nteger dest -> [f]loat16 -> dest
-    CIB,        // cib dest         :: [c]onvert [i]nteger dest -> [b]float16 -> dest
-    CFI,        // cfi dest         :: [c]onvert [f]loat16 dest -> [i]nteger -> dest
-    CFB,        // cfb dest         :: [c]onvert [f]loat16 dest -> [b]float16 -> dest
-    CBF,        // cbf dest         :: [c]onvert [b]float16 dest -> [f]loat16 -> dest
-    CBI,        // cbi dest         :: [c]onvert [b]float16 dest -> [i]nteger -> dest
-    CBW,        // cbw dest         :: [c]onvert [b]yte to [w]ord by sign extension (0x??80 -> 0xff80)
+    CIF,        // cif dest         :: [c]onvert [i]nteger dest -> [f]loat -> dest
+    CID,        // cid dest         :: [c]onvert [i]nteger dest -> [d]ouble -> dest
+    CIL,        // cil dest         :: [c]onvert [i]nteger dest -> [l]ong -> dest
+    CFI,        // cfi dest         :: [c]onvert [f]loat dest -> [i]nteger -> dest
+    CFD,        // cfd dest         :: [c]onvert [f]loat dest -> [d]ouble -> dest
+    CFL,        // cfl dest         :: [c]onvert [f]loat dest -> [l]ong -> dest
+    CDI,        // cdi dest         :: [c]onvert [d]ouble dest -> [i]nteger -> dest
+    CDF,        // cdf dest         :: [c]onvert [d]ouble dest -> [f]loat -> dest
+    CDL,        // cdl dest         :: [c]onvert [d]ouble dest -> [l]ong -> dest
+    CLI,        // cli dest         :: [c]onvert [l]ong dest -> [i]nteger -> dest
+    CLF,        // clf dest         :: [c]onvert [l]ong dest -> [f]loat -> dest
+    CLD,        // cld dest         :: [c]onvert [l]ong dest -> [d]ouble -> dest
+    CBI,        // cbi dest         :: [c]onvert [b]yte to [i]nteger by sign extension (0x??80 -> 0xff80)
 
     // Bitwise Logic
     BWS,        // bws dest, src    :: Bitwise shift dest by src (left if src > 0, right if src < 0)

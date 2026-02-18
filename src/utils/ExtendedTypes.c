@@ -525,3 +525,324 @@ bfloat16_t bf16_div(bfloat16_t a, bfloat16_t b) {
 bfloat16_t bf16_neg(bfloat16_t x) { return x ^ 0x8000; }
 bfloat16_t bf16_abs(bfloat16_t x) { return x & 0x7FFF; }
 
+
+
+
+
+
+// *************************************************
+// fint16_t
+// *************************************************
+
+fint16_t fi16_from_int(int i32) {
+    const int mbits = 10;
+    fint16_t fi16;
+    
+    int sign = (i32 < 0) ? 1 : 0;
+    int abs_i32 = (i32 < 0) ? -i32 : i32;
+    
+    if (abs_i32 == 0) {
+        return 0x0000;
+    }
+    
+    int msb_pos = 0;
+    int temp = abs_i32;
+    while (temp >>= 1) {
+        msb_pos++;
+    }
+    
+    int exponent, mantissa;
+    
+    if (msb_pos < mbits) {
+        exponent = 0;
+        mantissa = abs_i32;
+    } else {
+        exponent = msb_pos - 9;
+        int shift = exponent - 1;
+        mantissa = (abs_i32 >> shift) - (1 << mbits);
+    }
+    
+    fi16 = (sign << 15) | (exponent << mbits) | mantissa;
+    
+    if (mantissa < ((1 << mbits) - 1) || exponent < 31) {
+        fint16_t fi16_plus_1 = fi16 + 1;
+        
+        int reconstructed = int_from_fi16(fi16);
+        int reconstructed_plus_1 = int_from_fi16(fi16_plus_1);
+        
+        int dist_current = abs_i32 - reconstructed;
+        if (dist_current < 0) dist_current = -dist_current;
+        
+        int dist_next = abs_i32 - reconstructed_plus_1;
+        if (dist_next < 0) dist_next = -dist_next;
+        
+        if (dist_next < dist_current) {
+            fi16 = fi16_plus_1;
+        }
+    }
+    
+    return fi16;
+}
+
+fint16_t fi16_from_long_long(long long int i64) {
+    const int mbits = 10;
+    fint16_t fi16;
+    
+    int sign = (i64 < 0) ? 1 : 0;
+    long long int abs_i64 = (i64 < 0) ? -i64 : i64;
+    
+    if (abs_i64 == 0) {
+        return 0x0000;
+    }
+    
+    int msb_pos = 0;
+    long long int temp = abs_i64;
+    while (temp >>= 1) {
+        msb_pos++;
+    }
+    
+    int exponent, mantissa;
+    
+    if (msb_pos < mbits) {
+        exponent = 0;
+        mantissa = abs_i64;
+    } else {
+        exponent = msb_pos - 9;
+        int shift = exponent - 1;
+        mantissa = (abs_i64 >> shift) - (1 << mbits);
+    }
+    
+    fi16 = (sign << 15) | (exponent << mbits) | mantissa;
+    
+    if (mantissa < ((1 << mbits) - 1) || exponent < 31) {
+        fint16_t fi16_plus_1 = fi16 + 1;
+        
+        long long int reconstructed = long_long_from_fi16(fi16);
+        long long int reconstructed_plus_1 = long_long_from_fi16(fi16_plus_1);
+        
+        long long int dist_current = abs_i64 - reconstructed;
+        if (dist_current < 0) dist_current = -dist_current;
+        
+        long long int dist_next = abs_i64 - reconstructed_plus_1;
+        if (dist_next < 0) dist_next = -dist_next;
+        
+        if (dist_next < dist_current) {
+            fi16 = fi16_plus_1;
+        }
+    }
+    
+    return fi16;
+}
+
+int int_from_fi16(fint16_t fi16) {
+    const int mbits = 10;
+    int sign = fi16 & 0x8000;
+    int exponent = (fi16 & 0x7fff) >> mbits;
+    int mantissa = fi16 & ((1 << mbits) - 1);
+    if (exponent == 0) {
+        return sign ? -mantissa : mantissa;
+    }
+    return ((mantissa + (1 << mbits)) << (exponent - 1)) * (sign ? -1 : 1);
+}
+
+long long int long_long_from_fi16(fint16_t fi16) {
+    const long long int mbits = 10;
+    long long int sign = fi16 & 0x8000;
+    long long int exponent = (fi16 & 0x7fff) >> mbits;
+    long long int mantissa = fi16 & ((1 << mbits) - 1);
+    if (exponent == 0) {
+        return sign ? -mantissa : mantissa;
+    }
+    return ((mantissa + (1 << mbits)) << (exponent - 1)) * (sign ? -1 : 1);
+}
+
+fint16_t fi16_add(fint16_t fi16_a, fint16_t fi16_b) {
+    const int mbits = 10;
+    
+    // Extract fields from both operands
+    uint16_t sign_a = (fi16_a >> 15) & 1;
+    uint16_t exp_a = (fi16_a >> mbits) & 0x1F;
+    uint16_t mant_a = fi16_a & 0x3FF;
+    
+    uint16_t sign_b = (fi16_b >> 15) & 1;
+    uint16_t exp_b = (fi16_b >> mbits) & 0x1F;
+    uint16_t mant_b = fi16_b & 0x3FF;
+    
+    // Convert to actual mantissa values (add implicit 1 for normalized)
+    uint32_t actual_mant_a = (exp_a == 0) ? mant_a : (mant_a + (1 << mbits));
+    uint32_t actual_mant_b = (exp_b == 0) ? mant_b : (mant_b + (1 << mbits));
+    
+    // Handle special case: both are subnormal
+    if (exp_a == 0 && exp_b == 0) {
+        if (sign_a == sign_b) {
+            int result_val = actual_mant_a + actual_mant_b;
+            return fi16_from_int(sign_a ? -result_val : result_val);
+        } else {
+            int result_val, result_sign;
+            if (actual_mant_a >= actual_mant_b) {
+                result_val = actual_mant_a - actual_mant_b;
+                result_sign = sign_a;
+            } else {
+                result_val = actual_mant_b - actual_mant_a;
+                result_sign = sign_b;
+            }
+            return fi16_from_int(result_sign ? -result_val : result_val);
+        }
+    }
+    
+    // Align exponents
+    uint16_t exp_result;
+    if (exp_a > exp_b) {
+        uint16_t shift = (exp_a > 0 ? exp_a - 1 : 0) - (exp_b > 0 ? exp_b - 1 : 0);
+        actual_mant_b >>= shift;
+        exp_result = exp_a;
+    } else if (exp_b > exp_a) {
+        uint16_t shift = (exp_b > 0 ? exp_b - 1 : 0) - (exp_a > 0 ? exp_a - 1 : 0);
+        actual_mant_a >>= shift;
+        exp_result = exp_b;
+    } else {
+        exp_result = exp_a;
+    }
+    
+    // Perform addition/subtraction based on signs
+    uint32_t result_mant;
+    uint16_t result_sign;
+    
+    if (sign_a == sign_b) {
+        result_mant = actual_mant_a + actual_mant_b;
+        result_sign = sign_a;
+    } else {
+        if (actual_mant_a >= actual_mant_b) {
+            result_mant = actual_mant_a - actual_mant_b;
+            result_sign = sign_a;
+        } else {
+            result_mant = actual_mant_b - actual_mant_a;
+            result_sign = sign_b;
+        }
+    }
+    
+    // Convert back to actual value
+    int result_val;
+    if (exp_result == 0) {
+        result_val = result_mant;
+    } else {
+        result_val = result_mant << (exp_result - 1);
+    }
+    
+    return fi16_from_int(result_sign ? -result_val : result_val);
+}
+
+
+fint16_t fi16_sub(fint16_t fi16_a, fint16_t fi16_b) {
+    // Negate fi16_b by flipping its sign bit
+    fint16_t fi16_b_negated = fi16_b ^ 0x8000;
+    return fi16_add(fi16_a, fi16_b_negated);
+}
+
+
+fint16_t fi16_mult(fint16_t fi16_a, fint16_t fi16_b) {
+    const int mbits = 10;
+    
+    // Handle zero
+    if (fi16_a == 0 || fi16_b == 0) {
+        return 0;
+    }
+    
+    // Extract fields
+    uint16_t sign_a = (fi16_a >> 15) & 1;
+    uint16_t exp_a = (fi16_a >> mbits) & 0x1F;
+    uint16_t mant_a = fi16_a & 0x3FF;
+    
+    uint16_t sign_b = (fi16_b >> 15) & 1;
+    uint16_t exp_b = (fi16_b >> mbits) & 0x1F;
+    uint16_t mant_b = fi16_b & 0x3FF;
+    
+    // Result sign (XOR of input signs)
+    uint16_t result_sign = sign_a ^ sign_b;
+    
+    // Get actual mantissa values and shifts
+    uint32_t actual_mant_a, shift_a;
+    if (exp_a == 0) {
+        actual_mant_a = mant_a;
+        shift_a = 0;
+    } else {
+        actual_mant_a = mant_a + (1 << mbits);
+        shift_a = exp_a - 1;
+    }
+    
+    uint32_t actual_mant_b, shift_b;
+    if (exp_b == 0) {
+        actual_mant_b = mant_b;
+        shift_b = 0;
+    } else {
+        actual_mant_b = mant_b + (1 << mbits);
+        shift_b = exp_b - 1;
+    }
+    
+    // Multiply mantissas (32-bit intermediate to avoid overflow)
+    uint32_t result_mant = actual_mant_a * actual_mant_b;
+    
+    // Combine shifts
+    uint32_t total_shift = shift_a + shift_b;
+    
+    // Compute result value (may need long long for large shifts)
+    long long int result_val = ((long long int) result_mant) << total_shift;
+    
+    return fi16_from_long_long(result_sign ? -result_val : result_val);
+}
+
+
+fint16_t fi16_div(fint16_t fi16_a, fint16_t fi16_b) {
+    const int mbits = 10;
+    
+    // Handle division by zero - return max value with appropriate sign
+    if (fi16_b == 0) {
+        return (fi16_a & 0x8000) ? 0xFFFF : 0x7FFF;
+    }
+    
+    // Handle zero dividend
+    if (fi16_a == 0) {
+        return 0;
+    }
+    
+    // Extract fields
+    uint16_t sign_a = (fi16_a >> 15) & 1;
+    uint16_t exp_a = (fi16_a >> mbits) & 0x1F;
+    uint16_t mant_a = fi16_a & 0x3FF;
+    
+    uint16_t sign_b = (fi16_b >> 15) & 1;
+    uint16_t exp_b = (fi16_b >> mbits) & 0x1F;
+    uint16_t mant_b = fi16_b & 0x3FF;
+    
+    // Result sign (XOR of input signs)
+    uint16_t result_sign = sign_a ^ sign_b;
+    
+    // Get actual values
+    int val_a, val_b;
+    if (exp_a == 0) {
+        val_a = mant_a;
+    } else {
+        val_a = (mant_a + (1 << mbits)) << (exp_a - 1);
+    }
+    
+    if (exp_b == 0) {
+        val_b = mant_b;
+    } else {
+        val_b = (mant_b + (1 << mbits)) << (exp_b - 1);
+    }
+    
+    // Perform division
+    if (val_b == 0) {
+        return result_sign ? 0xFFFF : 0x7FFF;
+    }
+    
+    int result_val = val_a / val_b;
+    
+    return fi16_from_int(result_sign ? -result_val : result_val);
+}
+
+fint16_t fi16_neg(fint16_t x) { return x ^ 0x8000; }
+fint16_t fi16_abs(fint16_t x) { return x & 0x7FFF; }
+
+
+

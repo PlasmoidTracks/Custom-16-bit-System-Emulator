@@ -13,6 +13,7 @@ Extensive testing hasnt been done yet.
 
 typedef uint16_t float16_t;
 typedef uint16_t bfloat16_t;
+typedef uint16_t fint16_t;
 
 extern float16_t f16_ZERO;
 extern bfloat16_t bf16_ZERO;
@@ -46,6 +47,18 @@ extern bfloat16_t bf16_add(bfloat16_t bf16_a, bfloat16_t bf16_b);
 extern bfloat16_t bf16_sub(bfloat16_t bf16_a, bfloat16_t bf16_b);
 extern bfloat16_t bf16_mult(bfloat16_t bf16_a, bfloat16_t bf16_b);
 extern bfloat16_t bf16_div(bfloat16_t bf16_a, bfloat16_t bf16_b);
+extern bfloat16_t bf16_neg(bfloat16_t bf16);
+extern bfloat16_t bf16_abs(bfloat16_t bf16);
+
+
+extern fint16_t fi16_from_int(int i32);
+extern fint16_t fi16_from_long_long(long long int i64);
+extern int int_from_fi16(fint16_t fi16);
+extern long long int long_long_from_fi16(fint16_t fi16);
+extern fint16_t fi16_add(fint16_t fi16_a, fint16_t fi16_b);
+extern fint16_t fi16_sub(fint16_t fi16_a, fint16_t fi16_b);
+extern fint16_t fi16_mult(fint16_t fi16_a, fint16_t fi16_b);
+extern fint16_t fi16_div(fint16_t fi16_a, fint16_t fi16_b);
 extern bfloat16_t bf16_neg(bfloat16_t bf16);
 extern bfloat16_t bf16_abs(bfloat16_t bf16);
 

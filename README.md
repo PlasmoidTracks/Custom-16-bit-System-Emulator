@@ -11,7 +11,7 @@ The stack includes:
 - A configurable 16‑bit CPU emulator (registers, flags, interrupts, MMIO, optional cache, clock ticker)
 - An assembler (`.asm → .bin`)
 - An intermediate representation (IR) frontend / compiler (`.ir → .asm`)
-- Canonicalization and macro‑lowering stages
+- Canonicalization
 - A peephole optimizer (O1)
 - A disassembler for binary inspection and debugging
 

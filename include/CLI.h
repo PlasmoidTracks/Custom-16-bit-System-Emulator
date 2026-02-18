@@ -29,9 +29,8 @@ typedef struct CompileOption_t {
     unsigned int d : 1;             // [d]isassemble
     // Optimizer
     unsigned int O : 1;             // [O]ptimization
-    // Canonicalizer and macro-expander
+    // Canonicalizer
     unsigned int no_c : 1;          // [no] [c]anonivalizer
-    unsigned int no_m : 1;          // [no] [m]acro-expander
     // IR
     unsigned int pic : 1;           // [p]osition [i]ndependent [c]ode
     unsigned int no_preamble : 1;   // [no preamble]

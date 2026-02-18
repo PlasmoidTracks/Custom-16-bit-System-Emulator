@@ -163,8 +163,7 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Self Identification and HW-Info Operations
     HWCLOCK,    // returns the currrent [h]ard[w]are [clock] count in registers r0-r4 in little endian
     HWINSTR,    // returns the currrent [h]ard[w]are [instr]uction count in registers r0-r4 in little endian
-    HWFFLAG,    // returns the [h]ard[w]are [f]eature [flag]
-
+    
     // Other
     INT,        // int dest         :: trigger [int]errupt; mem[SEGMENT_IRQ_TABLE + dest] -> pc
     HLT,        // hlt              :: [h]a[lt]s CPU execution

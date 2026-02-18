@@ -49,7 +49,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "inv", "ftc",
 
     // Self Identification and HW-Info Operations
-    "hwclock", "hwinstr", "hwfflag", 
+    "hwclock", "hwinstr", 
 
     // Other
     "int", "hlt"
@@ -90,7 +90,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 1, 
     // Self Identification and HW-Info Operations
-    0, 0, 0, 
+    0, 0, 
     // Other
     1, 0
 };
@@ -130,7 +130,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 0, 
+    0, 0, 
     // Other
     0, 0
 };
@@ -171,7 +171,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 0, 
+    0, 0, 
     // Other
     0, 0
 };
@@ -212,7 +212,7 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     // Cache Operations
     0, 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 0, 
+    0, 0, 
     // Other
     0, 0
 };

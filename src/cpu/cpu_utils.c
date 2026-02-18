@@ -102,33 +102,6 @@ void cpu_print_state(CPU_t* cpu) {
           " \033[1;32mBL\033[0m  [%d] \033[1;32mAO\033[0m  [%d]  \033[1;32mNC\033[0m  [%d]  \033[1;32mMI\033[0m  [%d]\n",
         cpu->regs.sr.Z, cpu->regs.sr.FZ, cpu->regs.sr.L, cpu->regs.sr.UL, cpu->regs.sr.FL, 
         cpu->regs.sr.BL, cpu->regs.sr.AO, cpu->regs.sr.NC, cpu->regs.sr.MI);
-
-    // Feature Flags
-    printf("\n\033[1;33m Features\033[0m\n");
-    //printf(" \033[1;32m ?   ?   B  IA  SSA USA IAE ICE\033[0m\n");
-    printf(" \033[1;32m ?    ?    HI   CE   FC   BF   F    BE\033[0m\n");
-    printf("  %d    %d    %d    %d    %d    %d    %d    %d\n",
-        (cpu->feature_flag & (1 << 15)) != 0,
-        (cpu->feature_flag & (1 << 14)) != 0,
-        (cpu->feature_flag & (1 << 13)) != 0,
-        (cpu->feature_flag & (1 << 12)) != 0,
-        (cpu->feature_flag & (1 << 11)) != 0,
-        (cpu->feature_flag & (1 << 10)) != 0,
-        (cpu->feature_flag & (1 << 9)) != 0,
-        (cpu->feature_flag & (1 << 8)) != 0
-    );
-    //printf(" \033[1;32m LE  CE  BE  F   BF  FC  CE  HI\033[0m\n");
-    printf(" \033[1;32m CE   LE  ICE  IAE  USA  SSA   IS   B\033[0m\n");
-    printf("  %d    %d    %d    %d    %d    %d    %d    %d\n",
-        (cpu->feature_flag & (1 << 7)) != 0,
-        (cpu->feature_flag & (1 << 6)) != 0,
-        (cpu->feature_flag & (1 << 5)) != 0,
-        (cpu->feature_flag & (1 << 4)) != 0,
-        (cpu->feature_flag & (1 << 3)) != 0,
-        (cpu->feature_flag & (1 << 2)) != 0,
-        (cpu->feature_flag & (1 << 1)) != 0,
-        (cpu->feature_flag & (1 << 0)) != 0
-    );
     
     // Cache
     if (!cpu->cache) {

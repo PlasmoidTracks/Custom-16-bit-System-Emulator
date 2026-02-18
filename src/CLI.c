@@ -31,7 +31,6 @@ OPTIMIZER:\n\
 \n\
 CANONICALIZER AND MACRO-EXPANDER:\n\
   -no-c                   Skip canonicalizer\n\
-  -no-m                   Skip macro expander\n\
 \n\
 IR:\n\
   -pic                    compile as position independent code\n\
@@ -41,7 +40,7 @@ EMULATOR:\n\
   -run                    execute final binary in emulator\n\
 \n\
 EXAMPLES:\n\
-  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -d -pic -no-preamble -pad-zero -noerr-overlap -overwrite-overlap\n\
+  ./main input.ir -c=ir -run -O0 -o prog.bin -save-temps -no-c -d -pic -no-preamble -pad-zero -noerr-overlap -overwrite-overlap\n\
   ./main input.asm -run -save-temps -d\n\
   ./main input.bin -d\n\
   ./main any.file -c=bin -run\n\
@@ -65,9 +64,8 @@ const CompileOption_t CO_DEFAULT = {
     .d = 0, 
     // Optimizer
     .O = 1, 
-    // Canonicalizer and macro-expander
+    // Canonicalizer
     .no_c = 0, 
-    .no_m = 0, 
     // IR
     .pic = 0, 
     .no_preamble = 0, 
@@ -121,11 +119,6 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         if (strcmp(argv[arg_index], "-no-c") == 0) {
             co.no_c = 1;
-            arg_index ++;
-            continue;
-        }
-        if (strcmp(argv[arg_index], "-no-m") == 0) {
-            co.no_m = 1;
             arg_index ++;
             continue;
         }

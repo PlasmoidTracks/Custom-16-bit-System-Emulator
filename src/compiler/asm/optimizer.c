@@ -97,6 +97,14 @@ static int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr == SUBF;
     result |= instr == MULF;
     result |= instr == DIVF;
+    result |= instr == ADDD;
+    result |= instr == SUBD;
+    result |= instr == MULD;
+    result |= instr == DIVD;
+    result |= instr == ADDL;
+    result |= instr == SUBL;
+    result |= instr == MULL;
+    result |= instr == DIVL;
     result |= instr == BWS;
     result |= instr == AND;
     result |= instr == OR;

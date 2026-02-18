@@ -2095,6 +2095,34 @@ void cpu_clock(CPU_t* cpu) {
                             break;
                     #endif // DCFF_BFLOAT16
 
+                    case ADDL:
+                        cpu->intermediate.result = fi16_add(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        //cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case SUBL:
+                        cpu->intermediate.result = fi16_sub(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        //cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case MULL:
+                        cpu->intermediate.result = fi16_mult(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        //cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
+                    case DIVL:
+                        cpu->intermediate.result = fi16_div(cpu->intermediate.data_address_reduced, cpu->intermediate.data_address_extended);
+                        //cpu_update_status_register(cpu, cpu->intermediate.result);
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                        break;
+
                     #ifdef DCFF_FLOAT_CONVERT
                         case CIF:
                             cpu->intermediate.result = f16_from_float((float) ((int16_t) cpu->intermediate.data_address_reduced));

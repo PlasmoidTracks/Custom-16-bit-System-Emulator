@@ -587,6 +587,30 @@ char* optimizer_compile(char* content) {
                             case DIVF:
                                 value = f16_div(value, value2);
                                 break;
+                            case ADDD:
+                                value = bf16_add(value, value2);
+                                break;
+                            case SUBD:
+                                value = bf16_sub(value, value2);
+                                break;
+                            case MULD:
+                                value = bf16_mult(value, value2);
+                                break;
+                            case DIVD:
+                                value = fi16_div(value, value2);
+                                break;
+                            case ADDL:
+                                value = fi16_add(value, value2);
+                                break;
+                            case SUBL:
+                                value = fi16_sub(value, value2);
+                                break;
+                            case MULL:
+                                value = fi16_mult(value, value2);
+                                break;
+                            case DIVL:
+                                value = bf16_div(value, value2);
+                                break;
                             case AND:
                                 value &= value2;
                                 break;
@@ -597,7 +621,7 @@ char* optimizer_compile(char* content) {
                                 value ^= value2;
                                 break;
                             default:
-                                log_msg(LP_ERROR, "Optimizer, I dont even know how this would be possible, yet here we are... [%s:%d]", __FILE__, __LINE__);
+                                log_msg(LP_ERROR, "Optimizer: Precomputation of arithmetic operations failed, due to unknown arithmetic instruction [%s:%d]", __FILE__, __LINE__);
                                 break;
                         }
 

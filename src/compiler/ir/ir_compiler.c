@@ -432,45 +432,45 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 break;
 
             case IR_LEX_INTEGER_LESS:
-            case IR_LEX_LONG_LESS: 
                 *output = append_to_output(*output, length, "; binary operation -> less\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_INTEGER_LESS_EQUAL:
-            case IR_LEX_LONG_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> less equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovl r1, 1\ncmovz r1, 1\n");
                 break;
                 
             case IR_LEX_INTEGER_GREATER:
-            case IR_LEX_LONG_GREATER: 
                 *output = append_to_output(*output, length, "; binary operation -> greater\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnl r1, 1\ncmovz r1, 0\n");
                 break;
 
             case IR_LEX_INTEGER_GREATER_EQUAL:
-            case IR_LEX_LONG_GREATER_EQUAL: 
                 *output = append_to_output(*output, length, "; binary operation -> greater equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnl r1, 1\n");
                 break;
 
             case IR_LEX_FLOAT_LESS:
+            case IR_LEX_LONG_LESS: 
                 *output = append_to_output(*output, length, "; binary operation -> float less\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_FLOAT_LESS_EQUAL:
+            case IR_LEX_LONG_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> float less equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovfl r1, 1\ncmovfz r1, 1\n");
                 break;
                 
             case IR_LEX_FLOAT_GREATER:
+            case IR_LEX_LONG_GREATER: 
                 *output = append_to_output(*output, length, "; binary operation -> float greater\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_FLOAT_GREATER_EQUAL:
+            case IR_LEX_LONG_GREATER_EQUAL: 
                 *output = append_to_output(*output, length, "; binary operation -> float greater equal\n");
                 *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnfl r1, 1\n");
                 break;

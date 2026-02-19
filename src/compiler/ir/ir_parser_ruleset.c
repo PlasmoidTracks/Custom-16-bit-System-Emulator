@@ -401,6 +401,18 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_GREATER,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l> -> binary_operator",
+    },
+    {
+        .context = {
             (IRParserTokenType_t) IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL,
             IR_PAR_RULE_END
         },
@@ -446,6 +458,18 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 100,
         .description = "b>= -> binary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_GREATER_EQUAL,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l>= -> binary_operator",
     },
     {
         .context = {
@@ -497,6 +521,18 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     {
         .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_LESS,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l< -> binary_operator",
+    },
+    {
+        .context = {
             (IRParserTokenType_t) IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL,
             IR_PAR_RULE_END
         },
@@ -542,6 +578,18 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 100,
         .description = "b<= -> binary_operator",
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LONG_LESS_EQUAL,
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_BINARY_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 100,
+        .description = "l<= -> binary_operator",
     },
     {
         .context = {

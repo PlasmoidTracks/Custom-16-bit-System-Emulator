@@ -896,6 +896,7 @@ char* optimizer_compile(char* content) {
                                             register_offset_admx_contains_admr_register(instruction[k].admx, admr) ||
                                             instruction[k].instruction == CALL ||
                                             instruction[k].instruction == RET ||
+                                            instruction[k].instruction == HLT || 
                                             cpu_instruction_is_jump[instruction[k].instruction]
                                         ) {
                                             valid = 0;

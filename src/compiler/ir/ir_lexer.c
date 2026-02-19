@@ -384,7 +384,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
         // first get a copy of the next "word" until the next whitespace, we just need the index of the next whitespace
         {long ws_index = index;
         while (ws_index < source_length) {
-            if (!contains(source[ws_index], "0123456789.abcdefxobABCDEF")) break;
+            if (!contains(source[ws_index], "0123456789.abcdefxobABCDEFl")) break;
             ws_index ++;
         }
         if (ws_index != index) {

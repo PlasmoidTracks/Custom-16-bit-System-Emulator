@@ -546,7 +546,7 @@ fint16_t fi16_from_int(int i32) {
     }
     
     int msb_pos = 0;
-    int temp = abs_i32;
+    unsigned int temp = abs_i32;
     while (temp >>= 1) {
         msb_pos++;
     }

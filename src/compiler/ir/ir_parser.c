@@ -81,51 +81,6 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
     int something_changed = 1;
     while (something_changed) {
 
-        // Check for errors, from parser_warning_ruleset
-        /*int error = 0;
-        for (int start = 0; start < lexer_token_count; start++) {
-            // 4) For each position, try every rule
-            for (int rule = 0; rule < 256; rule++) {
-                if (parser_warning_ruleset[rule].context[0] == IR_PAR_RULE_END)
-                    break; // No more rules
-
-                int context_len = parser_warning_ruleset[rule].context_length;
-                if (start + context_len > lexer_token_count) 
-                    continue; // Not enough tokens for this rule
-
-                // Check match (including invert_match)
-                int match = 1;
-                for (int c = 0; c < context_len; c++) {
-                    IRParserTokenType_t expected = parser_warning_ruleset[rule].context[c];
-                    IRParserTokenType_t actual   = (IRParserTokenType_t) parser_token[start + c]->token.type;
-                    int invert = parser_warning_ruleset[rule].invert_match[c];
-
-                    if ((actual == expected && invert) || (actual != expected && !invert)) {
-                        match = 0;
-                        break;
-                    }
-                }
-
-                if (!match) 
-                    continue;
-                
-                IRParserToken_t* token = parser_token[start];
-                while (token->child_count >= 1) {
-                    token = token->child[0];
-                }
-                log_msg(LP_ERROR, "%s at line %d [%s:%d]", 
-                    parser_warning_ruleset[rule].description, 
-                    token->token.line, 
-                    __FILE__, __LINE__
-                );
-
-                error = 1;
-            }
-        }
-        if (error) {
-            exit(1);
-        }*/
-
         something_changed = 0;
 
         // We'll search for the single best match across the entire token list
@@ -238,8 +193,9 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
             free(parser_token);
             parser_token       = new_token_list;
             lexer_token_count  = new_count;
-        }
-        else {
+
+        } else {
+
             // No rule found => no more matches
             // Check for matching warning ruleset
             for (int start = 0; start < lexer_token_count; start++) {
@@ -269,7 +225,7 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
                         continue;
 
                     // If we get here, we have a match.
-                    log_msg(LP_ERROR, "IR Parser: Matching warning at line %d:%d", parser_token[start]->token.line, parser_token[start]->token.column);
+                    log_msg(LP_ERROR, "IR Parser: Matching warning at line %d:%d [%s:%d]", parser_token[start]->token.line, parser_token[start]->token.column, __FILE__, __LINE__);
                     log_msg(LP_INFO, ir_parser_warning_ruleset[rule].description);
                     for (int i = start; i < ((start + context_len >= lexer_token_count) ? (lexer_token_count - 1) : (start + context_len - 1)); i++) {
                         if (i == start) {
@@ -278,6 +234,12 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
                         ir_recursion_print(parser_token[i], 0);
                     }
                     printf("\"\n");
+                    #ifdef IR_PARSER_DEBUG
+                        for (int i = 0; i < lexer_token_count; i++) {
+                            log_msg(LP_INFO, "AST root %d", i);
+                            ir_recursion(parser_token[i], 0);
+                        }
+                    #endif //IR_PARSER_DEBUG
                     return NULL;
                 }
             }

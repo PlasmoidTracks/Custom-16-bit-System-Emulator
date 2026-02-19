@@ -7,17 +7,17 @@
 
 typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Data Manipulation
-    NOP,        // Does nothing
-    MOV,        // mov dest, src    :: src -> dest
-    PUSH,       // push src         :: sp -= 2; src -> [sp]
-    POP,        // pop dest         :: [sp] -> dest; sp += 2
-    PUSHSR,     // push status reg  :: sp -= 2; sr -> [sp] 
-    POPSR,      // pop status reg   :: [sp] -> sr; sp += 2
-    LEA,        // lea dest, [src]  :: address of src -> dest
+    NOP,        // Does nothing                                         [No-Op]eration
+    MOV,        // mov dest, src            :: src -> dest              [Mov]e
+    PUSH,       // push src                 :: sp -= 2; src -> [sp]
+    POP,        // pop dest                 :: [sp] -> dest; sp += 2
+    PUSHSR,     // [push] [s]tatus [r]eg    :: sp -= 2; sr -> [sp] 
+    POPSR,      // [pop] [s]tatus [r]eg     :: [sp] -> sr; sp += 2
+    LEA,        // lea dest, [src]          :: address of src -> dest   [L]oad [E]ffective [Address]
 
     // Jumps and Calls
-    JMP,        // jmp dest         :: dest -> pc
-    JZ,         // jz dest          :: if Z == 1, dest -> pc
+    JMP,        // jmp dest         :: dest -> pc                       [J]u[mp]
+    JZ,         // jz dest          :: if Z == 1, dest -> pc            [J]ump [Z]ero
     JNZ,        // jnz dest         :: if Z == 0, dest -> pc
     JFZ,        // jfz dest         :: if FZ == 1, dest -> pc
     JNFZ,       // jnfz dest        :: if FZ == 0, dest -> pc
@@ -117,8 +117,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     NOT,        // not dest         :: dest = ~dest
 
     // Tests
-    CMP,        // cmp a, b         :: sets Z, N, UL, FL based on (a - b); does not modify operands
-    TST,        // tst val          :: sets Z and N based on val
+    CMP,        // cmp src, dest    :: sets Z, N, UL, FL based on (src - dest); does not modify operands
+    TST,        // tst src          :: sets Z and N based on src
 
     // Status Bit Manipulation
     CLZ,        // clear Z bit
@@ -167,6 +167,12 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Other
     INT,        // int dest         :: trigger [int]errupt; mem[SEGMENT_IRQ_TABLE + dest] -> pc
     HLT,        // hlt              :: [h]a[lt]s CPU execution
+
+    UNUSED00, 
+    EXT,        // Extended instruction signal
+
+    UNUSED01, 
+    EXTNOP, 
 
     // Number of defined instructions
     INSTRUCTION_COUNT, 

@@ -371,6 +371,8 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
                 disassembly.binary_index = realloc(disassembly.binary_index, allocated_space * sizeof(int));
                 disassembly.lines = allocated_space;
                 disassembly.is_data = realloc(disassembly.is_data, allocated_space * sizeof(int));
+                disassembly.admr = realloc(disassembly.admr, allocated_space * sizeof(CPU_REDUCED_ADDRESSING_MODE_t));
+                disassembly.admx = realloc(disassembly.admx, allocated_space * sizeof(CPU_EXTENDED_ADDRESSING_MODE_t));
                 for (unsigned long i = assembly_index; i < allocated_space; i++) {
                     //disassembly.code[i] = malloc(sizeof(char) * 256);
                 }
@@ -573,6 +575,8 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
             disassembly.binary_index = realloc(disassembly.binary_index, allocated_space * sizeof(int));
             disassembly.lines = allocated_space;
             disassembly.is_data = realloc(disassembly.is_data, allocated_space * sizeof(int));
+            disassembly.admr = realloc(disassembly.admr, allocated_space * sizeof(CPU_REDUCED_ADDRESSING_MODE_t));
+            disassembly.admx = realloc(disassembly.admx, allocated_space * sizeof(CPU_EXTENDED_ADDRESSING_MODE_t));
             for (unsigned long i = assembly_index; i < allocated_space; i++) {
                 //disassembly.code[i] = malloc(sizeof(char) * 256);
             }
@@ -923,7 +927,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                     }
                     
                     // and rewrite the instruciton
-                    sprintf(assembly_code.code[i], "%s%s%d%s\n", prefix_admx, ".source_label", source_label_index, postfix_admx);
+                    snprintf(assembly_code.code[i], 256, "%s%s%d%s\n", prefix_admx, ".source_label", source_label_index, postfix_admx);
 
                     source_label_index ++;
 

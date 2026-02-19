@@ -1660,7 +1660,16 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             //log_msg(LP_DEBUG, "raw data");
             continue;
         }
-        error |= safe_write(bin, index++, instruction[instruction_index].instruction | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
+
+        // writing the instruction
+        int tmp = instruction[instruction_index].instruction;
+        while (tmp > 0x7f) {
+            error |= safe_write(bin, index++, EXT | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
+            tmp -= 0x80;
+        }
+        error |= safe_write(bin, index++, tmp | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
+        
+        // writing the instruction arguments
         if (cpu_instruction_argument_count[instruction[instruction_index].instruction] > 0) {
             error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
             for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {

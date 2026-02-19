@@ -52,7 +52,13 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     "hwclock", "hwinstr", 
 
     // Other
-    "int", "hlt"
+    "int", "hlt", 
+
+    // Unused Padding Instructions
+    "unused00", "ext", 
+
+    // Extended Instructions
+    "unused01", "extnop"
 };
 
 
@@ -92,7 +98,11 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Self Identification and HW-Info Operations
     0, 0, 
     // Other
-    1, 0
+    1, 0, 
+    // Unused Padding Instructions
+    0, 0, 
+    // Extended Instructions
+    0, 0, 
 };
 
 // If an entry is one, it only uses admr, else admx
@@ -132,7 +142,11 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Self Identification and HW-Info Operations
     0, 0, 
     // Other
-    0, 0
+    0, 0, 
+    // Unused Padding Instructions
+    0, 0, 
+    // Extended Instructions
+    0, 0, 
 };
 
 
@@ -173,7 +187,11 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Self Identification and HW-Info Operations
     0, 0, 
     // Other
-    0, 0
+    0, 0, 
+    // Unused Padding Instructions
+    0, 0, 
+    // Extended Instructions
+    0, 0, 
 };
 
 
@@ -214,6 +232,10 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     // Self Identification and HW-Info Operations
     0, 0, 
     // Other
-    0, 0
+    0, 0, 
+    // Unused Padding Instructions
+    0, 0, 
+    // Extended Instructions
+    0, 0, 
 };
 

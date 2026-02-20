@@ -84,6 +84,8 @@ CPU_t* cpu_create(void) {
 
     cpu->state = CS_FETCH_INSTRUCTION;
 
+    cpu->intermediate.extension_index = 0;
+
     return cpu;
 }
 
@@ -241,8 +243,19 @@ void cpu_clock(CPU_t* cpu) {
                     // ok, we got the data for the instruction, saving it intermediatly
                     cpu->regs.sr.NC = (data & 0x80) != 0;
                     cpu->intermediate.instruction = data & 0x7F;
+
+                    if (cpu->intermediate.instruction == EXT) {
+                        #ifdef _CPU_DEEP_DEBUG_
+                        log_msg(LP_CRITICAL, "CPU (C:%d CS:%d DS:%d): Fetch was successful, loaded EXT instruction, fetching next byte...", cpu->clock, cpu->state, cpu->device.device_state);
+                        #endif
+                        cpu->regs.pc ++;
+                        cpu->intermediate.extension_index ++;
+                        break;
+                    }
+
+                    cpu->intermediate.instruction += (cpu->intermediate.extension_index * 0x80);
                     #ifdef _CPU_DEEP_DEBUG_
-                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was successful, loaded instruction %s", cpu->clock, cpu->state, cpu->device.device_state, cpu_instruction_string[cpu->intermediate.instruction]);
+                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was successful, loaded instruction %s (%d)", cpu->clock, cpu->state, cpu->device.device_state, cpu_instruction_string[cpu->intermediate.instruction], cpu->intermediate.instruction);
                     #endif
                     cpu->intermediate.argument_count = cpu_instruction_argument_count[cpu->intermediate.instruction];
 
@@ -261,12 +274,13 @@ void cpu_clock(CPU_t* cpu) {
                         #endif
                     } else {
                         #ifdef _CPU_DEEP_DEBUG_
-                        log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): Unknown instruction [%d, PC: 0x%.4x] [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, cpu->intermediate.instruction, cpu->regs.pc - 1, __FILE__, __LINE__);
+                        log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): Unknown instruction [%d, nc:%d, PC: 0x%.4x] [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, cpu->intermediate.instruction, cpu->regs.sr.NC, cpu->regs.pc - 1, __FILE__, __LINE__);
                         #endif
                         cpu->state = CS_EXCEPTION;
                         break;
                     }
 
+                    cpu->intermediate.extension_index = 0;
                     if (cpu->intermediate.argument_count == 0) {
                         cpu->regs.pc ++;
                         cpu->state = CS_EXECUTE;
@@ -2148,6 +2162,14 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->regs.r1 = cpu->instruction & ((uint64_t) 0xffff << 16);
                         cpu->regs.r2 = cpu->instruction & ((uint64_t) 0xffff << 32);
                         cpu->regs.r3 = cpu->instruction & ((uint64_t) 0xffff << 48);
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+                    
+                    // Extended instructions
+
+                    case EXTNOP:
                         cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         goto CS_FETCH_INSTRUCTION;

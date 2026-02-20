@@ -76,7 +76,7 @@ typedef enum CpuState_t {
 extern const char* cpu_state_name[CS_COUNT];
 
 typedef struct CpuIntermediate_t {
-    uint8_t instruction;
+    int instruction;
     union {
         uint8_t value;
         struct {
@@ -97,6 +97,7 @@ typedef struct CpuIntermediate_t {
     int argument_count_for_admr;
     uint16_t result;
     uint16_t irq_id;
+    int extension_index;
 } CpuIntermediate_t;
 
 

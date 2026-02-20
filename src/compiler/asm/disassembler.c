@@ -938,7 +938,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                     }
                     
                     // and rewrite the instruciton
-                    snprintf(assembly_code.code[i], 256, "%s%s%d%s\n", prefix_admx, ".source_label", source_label_index, postfix_admx);
+                    sprintf(assembly_code.code[i], "%s%s%d%s\n", prefix_admx, ".source_label", source_label_index, postfix_admx);
 
                     source_label_index ++;
 

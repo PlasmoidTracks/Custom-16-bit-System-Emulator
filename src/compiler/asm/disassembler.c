@@ -26,7 +26,16 @@ uint16_t disassembler_read_u16(uint8_t* data) {
 
 
 char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, int* instruction_bytes, DisassembleOption_t options) {
-    uint8_t instruction = binary[(*binary_index) ++];
+    int instruction = binary[(*binary_index) ++];
+    if (instruction_bytes) *instruction_bytes = 0;
+
+    int ext_count = 0;
+    while ((instruction & 0x7f) == EXT) {
+        instruction = binary[(*binary_index) ++];
+        ext_count ++;
+        if (instruction_bytes) *instruction_bytes += 1; // given that EXT is a one-byte-instruction
+    }
+
     uint8_t addressing_mode = 0;
     int one_byte_instruction = 1;
     if (valid_instruction) *valid_instruction = 1;
@@ -35,6 +44,8 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
 
     no_cache = (instruction & 0x80) != 0;
     instruction &= 0x7f;
+
+    instruction += ext_count * 0x80;
 
     if (cpu_instruction_argument_count[instruction] > 0) {
         addressing_mode = binary[(*binary_index) ++];
@@ -48,7 +59,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     }
     if (instruction == NOP) {
         if (valid_instruction) *valid_instruction = 0;
-        if (instruction_bytes) *instruction_bytes = 2 - one_byte_instruction;
+        if (instruction_bytes) *instruction_bytes += 2 - one_byte_instruction;
         if (no_cache) {return strdup("%nop");}
         return strdup("nop");  // makes it heap allocated
     }
@@ -111,7 +122,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     (*binary_index) += data_size;
 
     if (instruction_bytes) {
-        *instruction_bytes = data_size + 2 - one_byte_instruction;
+        *instruction_bytes += data_size + 2 - one_byte_instruction;
     }
 
     // should be plenty of space
@@ -1137,7 +1148,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
     free(assembly_code.code);
     free(assembly_code.admr);
     free(assembly_code.admx);
-    free(assembly_code.binary_index);
+    //free(assembly_code.binary_index);
     free(assembly_code.is_label);
 
     return assembly_code_reduced;

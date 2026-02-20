@@ -168,11 +168,13 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     INT,        // int dest         :: trigger [int]errupt; mem[SEGMENT_IRQ_TABLE + dest] -> pc
     HLT,        // hlt              :: [h]a[lt]s CPU execution
 
-    UNUSED00, 
-    EXT,        // Extended instruction signal
+    EXT = 0x7F,        // Extended instruction signal
 
-    UNUSED01, 
-    EXTNOP, 
+    // From here, instructions exceed value of 0x7f
+
+    EXTNOP = 0x80, 
+
+    EXTNOP2 = 0x100, 
 
     // Number of defined instructions
     INSTRUCTION_COUNT, 

@@ -2,240 +2,246 @@
 
 const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     // Data Manipulation
-    "nop", "mov", "push", "pop", "pushsr", "popsr", "lea",
+    [NOP] = "nop", [MOV] = "mov", [PUSH] = "push", [POP] = "pop", [PUSHSR] = "pushsr", [POPSR] = "popsr", [LEA] = "lea",
 
     // Jumps and Calls
-    "jmp", "jz", "jnz", "jfz", "jnfz", "jl", "jnl", "jul", "jnul", "jfl", "jnfl", "jbl", "jnbl", "jao", "jnao", "call", "ret",
+    [JMP] = "jmp", [JZ] = "jz", [JNZ] = "jnz", [JFZ] = "jfz", [JNFZ] = "jnfz", [JL] = "jl", [JNL] = "jnl", [JUL] = "jul", [JNUL] = "jnul", [JFL] = "jfl", [JNFL] = "jnfl", [JBL] = "jbl", [JNBL] = "jnbl", [JAO] = "jao", [JNAO] = "jnao", [CALL] = "call", [RET] = "ret",
 
     // Relative Jumps and Calls
-    "rjmp", "rjz", "rjnz", "rjfz", "rjnfz", "rjl", "rjnl", "rjul", "rjnul", "rjfl", "rjnfl", "rjbl", "rjnbl", "rjao", "rjnao", "rcall", 
+    [RJMP] = "rjmp", [RJZ] = "rjz", [RJNZ] = "rjnz", [RJFZ] = "rjfz", [RJNFZ] = "rjnfz", [RJL] = "rjl", [RJNL] = "rjnl", [RJUL] = "rjul", [RJNUL] = "rjnul", [RJFL] = "rjfl", [RJNFL] = "rjnfl", [RJBL] = "rjbl", [RJNBL] = "rjnbl", [RJAO] = "rjao", [RJNAO] = "rjnao", [RCALL] = "rcall",
 
     // Arithmetic Integer Operations
-    "add", "adc", "sub", "sbc", "mul", "div", "neg", "abs", "inc", "dec", 
+    [ADD] = "add", [ADC] = "adc", [SUB] = "sub", [SBC] = "sbc", [MUL] = "mul", [DIV] = "div", [NEG] = "neg", [ABS] = "abs", [INC] = "inc", [DEC] = "dec",
 
     // Saturated Arithmetic Signed Integer Operations
-    "ssa", "sss", "ssm",
+    [SSA] = "ssa", [SSS] = "sss", [SSM] = "ssm",
 
     // Saturated Arithmetic Unsigned Integer Operations
-    "usa", "uss", "usm",
+    [USA] = "usa", [USS] = "uss", [USM] = "usm",
 
     // Arithmetic Float Operations
-    "addf", "subf", "mulf", "divf",
+    [ADDF] = "addf", [SUBF] = "subf", [MULF] = "mulf", [DIVF] = "divf",
 
     // Arithmetic Double Operations
-    "addd", "subd", "muld", "divd",
+    [ADDD] = "addd", [SUBD] = "subd", [MULD] = "muld", [DIVD] = "divd",
 
     // Arithmetic Long Operations
-    "addl", "subl", "mull", "divl",
+    [ADDL] = "addl", [SUBL] = "subl", [MULL] = "mull", [DIVL] = "divl",
 
     // Type Conversion Operations
-    "cif", "cid", "cil", "cfi", "cfd", "cfl", "cdf", "cdi", "cdl", "cli", "clf", "cld", "cbi", 
+    [CIF] = "cif", [CID] = "cid", [CIL] = "cil", [CFI] = "cfi", [CFD] = "cfd", [CFL] = "cfl", [CDF] = "cdf", [CDI] = "cdi", [CDL] = "cdl", [CLI] = "cli", [CLF] = "clf", [CLD] = "cld", [CBI] = "cbi",
 
     // Bitwise Logic
-    "bws", "and", "or", "xor", "not",
+    [BWS] = "bws", [AND] = "and", [OR] = "or", [XOR] = "xor", [NOT] = "not",
 
     // Tests
-    "cmp", "tst",
+    [CMP] = "cmp", [TST] = "tst",
 
     // Status Bit Manipulation
-    "clz", "sez", "clfz", "sefz", "cll", "sel", "clul", "seul", 
-    "clfl", "sefl", "clbl", "sebl", "clao", "seao", "clmi", "semi", 
+    [CLZ] = "clz", [SEZ] = "sez", [CLFZ] = "clfz", [SEFZ] = "sefz", [CLL] = "cll", [SEL] = "sel", [CLUL] = "clul", [SEUL] = "seul",
+    [CLFL] = "clfl", [SEFL] = "sefl", [CLBL] = "clbl", [SEBL] = "sebl", [CLAO] = "clao", [SEAO] = "seao", [CLMI] = "clmi", [SEMI] = "semi",
 
     // Conditional Operations
-    "cmovz", "cmovnz", "cmovfz", "cmovnfz", "cmovl", "cmovnl", "cmovul", "cmovnul", 
-    "cmovfl", "cmovnfl", "cmovbl", "cmovnbl", "cmovao", "cmovnao", "cmovmi", "cmovnmi", 
+    [CMOVZ] = "cmovz", [CMOVNZ] = "cmovnz", [CMOVFZ] = "cmovfz", [CMOVNFZ] = "cmovnfz", [CMOVL] = "cmovl", [CMOVNL] = "cmovnl", [CMOVUL] = "cmovul", [CMOVNUL] = "cmovnul",
+    [CMOVFL] = "cmovfl", [CMOVNFL] = "cmovnfl", [CMOVBL] = "cmovbl", [CMOVNBL] = "cmovnbl", [CMOVAO] = "cmovao", [CMOVNAO] = "cmovnao", [CMOVMI] = "cmovmi", [CMOVNMI] = "cmovnmi",
 
     // Cache Operations
-    "inv", "ftc",
+    [INV] = "inv", [FTC] = "ftc",
 
     // Self Identification and HW-Info Operations
-    "hwclock", "hwinstr", 
+    [HWCLOCK] = "hwclock", [HWINSTR] = "hwinstr",
 
     // Other
-    "int", "hlt", 
+    [INT] = "int", [HLT] = "hlt",
 
-    // Unused Padding Instructions
-    "unused00", "ext", 
+    // Extension
+    [EXT] = "ext",
 
     // Extended Instructions
-    "unused01", "extnop"
+    [EXTNOP] = "extnop",
+    [EXTNOP2] = "extnop2",
 };
 
 
 const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Data Manipulation
-    0, 2, 1, 1, 0, 0, 2, 
+    [NOP] = 0, [MOV] = 2, [PUSH] = 1, [POP] = 1, [PUSHSR] = 0, [POPSR] = 0, [LEA] = 2, 
     // Jumps and Calls
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
+    [JMP] = 1, [JZ] = 1, [JNZ] = 1, [JFZ] = 1, [JNFZ] = 1, [JL] = 1, [JNL] = 1, [JUL] = 1, [JNUL] = 1, [JFL] = 1, [JNFL] = 1, [JBL] = 1, [JNBL] = 1, [JAO] = 1, [JNAO] = 1, [CALL] = 1, [RET] = 0, 
     // Relative Jumps
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    [RJMP] = 1, [RJZ] = 1, [RJNZ] = 1, [RJFZ] = 1, [RJNFZ] = 1, [RJL] = 1, [RJNL] = 1, [RJUL] = 1, 
+    [RJNUL] = 1, [RJFL] = 1, [RJNFL] = 1, [RJBL] = 1, [RJNBL] = 1, [RJAO] = 1, [RJNAO] = 1, [RCALL] = 1, 
     // Arithmetic Integer Operations
-    2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 
+    [ADD] = 2, [ADC] = 2, [SUB] = 2, [SBC] = 2, [MUL] = 2, [DIV] = 2, [NEG] = 1, [ABS] = 1, [INC] = 1, [DEC] = 1, 
     // Saturated Arithmetic Signed Integer Operations
-    2, 2, 2, 
+    [SSA] = 2, [SSS] = 2, [SSM] = 2, 
     // Saturated Arithmetic Unsigned Integer Operations
-    2, 2, 2,
+    [USA] = 2, [USS] = 2, [USM] = 2, 
     // Arithmetic Float Operations
-    2, 2, 2, 2, 
+    [ADDF] = 2, [SUBF] = 2, [MULF] = 2, [DIVF] = 2, 
     // Arithmetic Double Operations
-    2, 2, 2, 2, 
+    [ADDD] = 2, [SUBD] = 2, [MULD] = 2, [DIVD] = 2, 
     // Arithmetic Long Operations
-    2, 2, 2, 2, 
+    [ADDL] = 2, [SUBL] = 2, [MULL] = 2, [DIVL] = 2, 
     // Type Conversion Operations
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    [CIF] = 1, [CID] = 1, [CIL] = 1, [CFI] = 1, [CFD] = 1, [CFL] = 1, [CDF] = 1, [CDI] = 1, [CDL] = 1, [CLI] = 1, [CLF] = 1, [CLD] = 1, [CBI] = 1, 
     // Bitwise Logic
-    2, 2, 2, 2, 1, 
+    [BWS] = 2, [AND] = 2, [OR] = 2, [XOR] = 2, [NOT] = 1, 
     // Tests
-    2, 1, 
+    [CMP] = 2, [TST] = 1, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
-    2, 2, 2, 2, 2, 2, 2, 2, 
-    2, 2, 2, 2, 2, 2, 2, 2, 
+    [CMOVZ] = 2, [CMOVNZ] = 2, [CMOVFZ] = 2, [CMOVNFZ] = 2, [CMOVL] = 2, [CMOVNL] = 2, [CMOVUL] = 2, [CMOVNUL] = 2, 
+    [CMOVFL] = 2, [CMOVNFL] = 2, [CMOVBL] = 2, [CMOVNBL] = 2, [CMOVAO] = 2, [CMOVNAO] = 2, [CMOVMI] = 2, [CMOVNMI] = 2, 
     // Cache Operations
-    0, 1, 
+    [INV] = 0, [FTC] = 1, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    [HWCLOCK] = 0, [HWINSTR] = 0, 
     // Other
-    1, 0, 
-    // Unused Padding Instructions
-    0, 0, 
+    [INT] = 1, [HLT] = 0, 
+    // Extension
+    [EXT] = 0, 
     // Extended Instructions
-    0, 0, 
+    [EXTNOP] = 0, [EXTNOP2] = 0, 
 };
+
 
 // If an entry is one, it only uses admr, else admx
 const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Data Manipulation
-    0, 0, 0, 1, 0, 0, 0, 
+    [NOP] = 0, [MOV] = 0, [PUSH] = 0, [POP] = 1, [PUSHSR] = 0, [POPSR] = 0, [LEA] = 0, 
     // Jumps and Calls
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [JMP] = 0, [JZ] = 0, [JNZ] = 0, [JFZ] = 0, [JNFZ] = 0, [JL] = 0, [JNL] = 0, [JUL] = 0, [JNUL] = 0, [JFL] = 0, [JNFL] = 0, [JBL] = 0, [JNBL] = 0, [JAO] = 0, [JNAO] = 0, [CALL] = 0, [RET] = 0, 
     // Relative Jumps
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [RJMP] = 0, [RJZ] = 0, [RJNZ] = 0, [RJFZ] = 0, [RJNFZ] = 0, [RJL] = 0, [RJNL] = 0, [RJUL] = 0, 
+    [RJNUL] = 0, [RJFL] = 0, [RJNFL] = 0, [RJBL] = 0, [RJNBL] = 0, [RJAO] = 0, [RJNAO] = 0, [RCALL] = 0, 
     // Arithmetic Integer Operations
-    0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
+    [ADD] = 0, [ADC] = 0, [SUB] = 0, [SBC] = 0, [MUL] = 0, [DIV] = 0, [NEG] = 1, [ABS] = 1, [INC] = 1, [DEC] = 1, 
     // Saturated Arithmetic Signed Integer Operations
-    0, 0, 0, 
+    [SSA] = 0, [SSS] = 0, [SSM] = 0, 
     // Saturated Arithmetic Unsigned Integer Operations
-    0, 0, 0,
+    [USA] = 0, [USS] = 0, [USM] = 0, 
     // Arithmetic Float Operations
-    0, 0, 0, 0, 
+    [ADDF] = 0, [SUBF] = 0, [MULF] = 0, [DIVF] = 0, 
     // Arithmetic Double Operations
-    0, 0, 0, 0, 
+    [ADDD] = 0, [SUBD] = 0, [MULD] = 0, [DIVD] = 0, 
     // Arithmetic Long Operations
-    0, 0, 0, 0, 
+    [ADDL] = 0, [SUBL] = 0, [MULL] = 0, [DIVL] = 0, 
     // Type Conversion Operations
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    [CIF] = 1, [CID] = 1, [CIL] = 1, [CFI] = 1, [CFD] = 1, [CFL] = 1, [CDF] = 1, [CDI] = 1, [CDL] = 1, [CLI] = 1, [CLF] = 1, [CLD] = 1, [CBI] = 1, 
     // Bitwise Logic
-    0, 0, 0, 0, 1, 
+    [BWS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 1, 
     // Tests
-    0, 0, 
+    [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
+    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVBL] = 0, [CMOVNBL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
     // Cache Operations
-    0, 0, 
+    [INV] = 0, [FTC] = 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    [HWCLOCK] = 0, [HWINSTR] = 0, 
     // Other
-    0, 0, 
-    // Unused Padding Instructions
-    0, 0, 
+    [INT] = 0, [HLT] = 0, 
+    // Extension
+    [EXT] = 0, 
     // Extended Instructions
-    0, 0, 
+    [EXTNOP] = 0, [EXTNOP2] = 0, 
 };
 
 
 // If an entry is one, it is a jump instruction
 const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Data Manipulation
-    0, 0, 0, 0, 0, 0, 0, 
+    [NOP] = 0, [MOV] = 0, [PUSH] = 0, [POP] = 0, [PUSHSR] = 0, [POPSR] = 0, [LEA] = 0, 
     // Jumps and Calls
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    [JMP] = 1, [JZ] = 1, [JNZ] = 1, [JFZ] = 1, [JNFZ] = 1, [JL] = 1, [JNL] = 1, [JUL] = 1, [JNUL] = 1, [JFL] = 1, [JNFL] = 1, [JBL] = 1, [JNBL] = 1, [JAO] = 1, [JNAO] = 1, [CALL] = 1, [RET] = 1, 
     // Relative Jumps
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    [RJMP] = 1, [RJZ] = 1, [RJNZ] = 1, [RJFZ] = 1, [RJNFZ] = 1, [RJL] = 1, [RJNL] = 1, [RJUL] = 1, 
+    [RJNUL] = 1, [RJFL] = 1, [RJNFL] = 1, [RJBL] = 1, [RJNBL] = 1, [RJAO] = 1, [RJNAO] = 1, [RCALL] = 1, 
     // Arithmetic Integer Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [ADD] = 0, [ADC] = 0, [SUB] = 0, [SBC] = 0, [MUL] = 0, [DIV] = 0, [NEG] = 0, [ABS] = 0, [INC] = 0, [DEC] = 0, 
     // Saturated Arithmetic Signed Integer Operations
-    0, 0, 0, 
+    [SSA] = 0, [SSS] = 0, [SSM] = 0, 
     // Saturated Arithmetic Unsigned Integer Operations
-    0, 0, 0,
+    [USA] = 0, [USS] = 0, [USM] = 0, 
     // Arithmetic Float Operations
-    0, 0, 0, 0, 
+    [ADDF] = 0, [SUBF] = 0, [MULF] = 0, [DIVF] = 0, 
     // Arithmetic Double Operations
-    0, 0, 0, 0, 
+    [ADDD] = 0, [SUBD] = 0, [MULD] = 0, [DIVD] = 0, 
     // Arithmetic Long Operations
-    0, 0, 0, 0, 
+    [ADDL] = 0, [SUBL] = 0, [MULL] = 0, [DIVL] = 0, 
     // Type Conversion Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [CIF] = 0, [CID] = 0, [CIL] = 0, [CFI] = 0, [CFD] = 0, [CFL] = 0, [CDF] = 0, [CDI] = 0, [CDL] = 0, [CLI] = 0, [CLF] = 0, [CLD] = 0, [CBI] = 0, 
     // Bitwise Logic
-    0, 0, 0, 0, 0, 
+    [BWS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 0, 
     // Tests
-    0, 0, 
+    [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
+    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVBL] = 0, [CMOVNBL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
     // Cache Operations
-    0, 0, 
+    [INV] = 0, [FTC] = 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    [HWCLOCK] = 0, [HWINSTR] = 0, 
     // Other
-    0, 0, 
-    // Unused Padding Instructions
-    0, 0, 
+    [INT] = 0, [HLT] = 0, 
+    // Extension
+    [EXT] = 0, 
     // Extended Instructions
-    0, 0, 
+    [EXTNOP] = 0, [EXTNOP2] = 0, 
 };
 
 
 // If an entry is one, it is a relative jump instruction and will treat labels differently during assembly
 const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     // Data Manipulation
-    0, 0, 0, 0, 0, 0, 0, 
+    [NOP] = 0, [MOV] = 0, [PUSH] = 0, [POP] = 0, [PUSHSR] = 0, [POPSR] = 0, [LEA] = 0, 
     // Jumps and Calls
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [JMP] = 0, [JZ] = 0, [JNZ] = 0, [JFZ] = 0, [JNFZ] = 0, [JL] = 0, [JNL] = 0, [JUL] = 0, [JNUL] = 0, [JFL] = 0, [JNFL] = 0, [JBL] = 0, [JNBL] = 0, [JAO] = 0, [JNAO] = 0, [CALL] = 0, [RET] = 0, 
     // Relative Jumps
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    [RJMP] = 1, [RJZ] = 1, [RJNZ] = 1, [RJFZ] = 1, [RJNFZ] = 1, [RJL] = 1, [RJNL] = 1, [RJUL] = 1, 
+    [RJNUL] = 1, [RJFL] = 1, [RJNFL] = 1, [RJBL] = 1, [RJNBL] = 1, [RJAO] = 1, [RJNAO] = 1, [RCALL] = 1, 
     // Arithmetic Integer Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [ADD] = 0, [ADC] = 0, [SUB] = 0, [SBC] = 0, [MUL] = 0, [DIV] = 0, [NEG] = 0, [ABS] = 0, [INC] = 0, [DEC] = 0, 
     // Saturated Arithmetic Signed Integer Operations
-    0, 0, 0, 
+    [SSA] = 0, [SSS] = 0, [SSM] = 0, 
     // Saturated Arithmetic Unsigned Integer Operations
-    0, 0, 0,
+    [USA] = 0, [USS] = 0, [USM] = 0, 
     // Arithmetic Float Operations
-    0, 0, 0, 0, 
+    [ADDF] = 0, [SUBF] = 0, [MULF] = 0, [DIVF] = 0, 
     // Arithmetic Double Operations
-    0, 0, 0, 0, 
+    [ADDD] = 0, [SUBD] = 0, [MULD] = 0, [DIVD] = 0, 
     // Arithmetic Long Operations
-    0, 0, 0, 0, 
+    [ADDL] = 0, [SUBL] = 0, [MULL] = 0, [DIVL] = 0, 
     // Type Conversion Operations
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    [CIF] = 0, [CID] = 0, [CIL] = 0, [CFI] = 0, [CFD] = 0, [CFL] = 0, [CDF] = 0, [CDI] = 0, [CDL] = 0, [CLI] = 0, [CLF] = 0, [CLD] = 0, [CBI] = 0, 
     // Bitwise Logic
-    0, 0, 0, 0, 0, 
+    [BWS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 0, 
     // Tests
-    0, 0, 
+    [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 
+    [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
+    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVBL] = 0, [CMOVNBL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
     // Cache Operations
-    0, 0, 
+    [INV] = 0, [FTC] = 0, 
     // Self Identification and HW-Info Operations
-    0, 0, 
+    [HWCLOCK] = 0, [HWINSTR] = 0, 
     // Other
-    0, 0, 
-    // Unused Padding Instructions
-    0, 0, 
+    [INT] = 0, [HLT] = 0, 
+    // Extension
+    [EXT] = 0, 
     // Extended Instructions
-    0, 0, 
+    [EXTNOP] = 0, [EXTNOP2] = 0, 
 };
 

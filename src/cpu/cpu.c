@@ -2175,6 +2175,12 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
 
+                    case EXTNOP2:
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+
                     default:
                         #ifdef _CPU_DEEP_DEBUG_
                         log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): Unknown instruction [%d] [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, cpu->intermediate.instruction, __FILE__, __LINE__);

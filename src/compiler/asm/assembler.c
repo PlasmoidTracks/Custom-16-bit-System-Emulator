@@ -755,6 +755,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             int found = 0;
             for (int i = 0; i < INSTRUCTION_COUNT; i++) {
                 //printf("%s vs %s : %d\n", expression[expression_index].tokens[0].raw, cpu_instruction_string[i], strcmp(expression[expression_index].tokens[0].raw, cpu_instruction_string[i]));
+                if (cpu_instruction_string[i] == NULL) {
+                    continue;
+                }
                 if (strcmp(expression[expression_index].tokens[0].raw, cpu_instruction_string[i]) == 0) {
                     instruction[instruction_index].instruction = i;
                     found = 1;

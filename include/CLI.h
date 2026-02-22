@@ -36,6 +36,8 @@ typedef struct CompileOption_t {
     unsigned int no_preamble : 1;   // [no preamble]
     // Emulator
     unsigned int run : 1;           // [run]
+    // CPU
+    unsigned int cache_size;
 } CompileOption_t;
 
 extern const CompileOption_t CO_DEFAULT;

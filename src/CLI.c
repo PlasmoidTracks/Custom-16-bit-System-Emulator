@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "utils/String.h"
 #include "utils/Log.h"
@@ -71,6 +72,8 @@ const CompileOption_t CO_DEFAULT = {
     .no_preamble = 0, 
     // Emulator
     .run = 0, 
+    // CPU
+    .cache_size = 64, 
 };
 
 
@@ -99,7 +102,7 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
             co.o = 1;
             arg_index ++;
             if (argc <= arg_index) {
-                log_msg(LP_ERROR, "Compiler option '-o' has to be followed by another argument [%s:%d]", __FILE__, __LINE__);
+                log_msg(LP_ERROR, "CLI: Compiler option '-o' has to be followed by another argument [%s:%d]", __FILE__, __LINE__);
                 if (error) {*error = 1;}
                 return co;
             }
@@ -154,6 +157,27 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         char tmp[32];
         strcpy(tmp, argv[arg_index]);
+        tmp[12] = '\0';
+        if (strcmp(tmp, "-cache-size=") == 0) {
+            int cache_size = atoi(&argv[arg_index][12]);
+            if (cache_size < 0) {
+                log_msg(LP_ERROR, "CLI: Cache size is negative (actual value: %d) [%s:%d]", cache_size, __FILE__, __LINE__);
+                arg_index ++;
+                continue;
+            }
+            if (cache_size > 32768) {
+                log_msg(LP_ERROR, "CLI: Cache size is too large (actual value: %d) [%s:%d]", cache_size, __FILE__, __LINE__);
+                arg_index ++;
+                continue;
+            }
+            if (cache_size & (cache_size - 1)) {
+                log_msg(LP_WARNING, "CLI: Cache size should be a power of two (actual value: %d) [%s:%d]", cache_size, __FILE__, __LINE__);
+            }
+            co.cache_size = cache_size;
+            arg_index ++;
+            continue;
+        }
+        strcpy(tmp, argv[arg_index]);
         tmp[3] = '\0';
         if (strcmp(tmp, "-c=") == 0) {
             co.c = 1;
@@ -170,14 +194,14 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
             } else if (strcmp(type, "c") == 0) {
                 co.cft = CFT_C;
             } else {
-                log_msg(LP_ERROR, "Unkown file format \"%s\" [%s:%d]", type, __FILE__, __LINE__);
+                log_msg(LP_ERROR, "CLI: Unkown file format \"%s\" [%s:%d]", type, __FILE__, __LINE__);
                 if (error) {*error = 1;}
                 return co;
             }
             arg_index ++;
             continue;
         }
-        log_msg(LP_WARNING, "Unknown argument \"%s\" [%s:%d]", argv[arg_index], __FILE__, __LINE__);
+        log_msg(LP_WARNING, "CLI: Unknown argument \"%s\" [%s:%d]", argv[arg_index], __FILE__, __LINE__);
         arg_index ++;
     }
     
@@ -199,7 +223,7 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         } else if (strcmp(extension, "c") == 0) {
             co.cft = CFT_C;
         } else {
-            log_msg(LP_ERROR, "Unknown file format \"%s\" [%s:%d]", extension, __FILE__, __LINE__);
+            log_msg(LP_ERROR, "CLI: Unknown file format \"%s\" [%s:%d]", extension, __FILE__, __LINE__);
             if (error) {*error = 1;}
         }
     }

@@ -21,7 +21,7 @@ extern int string_is_asm_immediate(const char text[]);
 
 extern int string_is_string(const char text[]);
 
-extern uint16_t parse_immediate(const char text[]);
+extern int parse_immediate(const char text[]);
 
 #define append_to_output(output, length, text) append_to_output_ext(output, length, text, strlen(text))
 extern char* append_to_output_ext(char* output, long* const length, const char* const text, int text_len);

@@ -1015,6 +1015,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     {
                         char* string_base = expression[admx_expression_index].tokens[1].raw;
                         int value_base = parse_immediate(string_base); //(int) strtol(&string_base[1], NULL, 16);
+                        if (value_base > 0xffff) {
+                            log_msg(LP_WARNING, "Parsing expressions: Offset in indirect register offset addressing mode will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value_base, value_base & 0xffff, __FILE__, __LINE__);
+                        }
                         instruction[instruction_index].arguments[0] = value_base & 0xff;
                         instruction[instruction_index].arguments[1] = (value_base >> 8) & 0xff;
                         argument_bytes_used = 2;
@@ -1031,6 +1034,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         char* string_base = expression[admx_expression_index].tokens[1].raw;
                         char* string_scale = expression[admx_expression_index].tokens[3].raw;
                         int value_base = parse_immediate(string_base); //(int) strtol(&string_base[1], NULL, 16);
+                        if (value_base > 0xffff) {
+                            log_msg(LP_WARNING, "Parsing expressions: Scaling in indirect scaled register addressing mode will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value_base, value_base & 0xffff, __FILE__, __LINE__);
+                        }
                         int value_scale = parse_immediate(string_scale); //(int) strtol(&string_scale[1], NULL, 16);
                         if (value_scale > 0xff) {
                             log_msg(LP_WARNING, "Parsing expressions: Scaling in indirect scaled register addressing mode will be truncated! [0x%.4x -> 0x%.2x] [%s:%d]", value_scale, value_scale & 0x00ff, __FILE__, __LINE__);
@@ -1048,6 +1054,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             char* string_value = expression[admx_expression_index].tokens[2].raw;
                             //printf("%s\n", string_value);
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            if (value > 0xffff) {
+                                log_msg(LP_WARNING, "Parsing expressions: Immediate value will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value, value & 0xffff, __FILE__, __LINE__);
+                            }
                             instruction[instruction_index].arguments[0] = value & 0xff;
                             instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
                             argument_bytes_used = 2;
@@ -1055,6 +1064,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             char* string_value = expression[admx_expression_index].tokens[0].raw;
                             //printf("%s\n", string_value);
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            if (value > 0xffff) {
+                                log_msg(LP_WARNING, "Parsing expressions: Immediate value will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value, value & 0xffff, __FILE__, __LINE__);
+                            }
                             instruction[instruction_index].arguments[0] = value & 0xff;
                             instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
                             argument_bytes_used = 2;
@@ -1068,12 +1080,18 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         if (expression[admx_expression_index].token_count > 3) {
                             char* string_value = expression[admx_expression_index].tokens[3].raw;
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            if (value > 0xffff) {
+                                log_msg(LP_WARNING, "Parsing expressions: Indirect Addressing value will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value, value & 0xffff, __FILE__, __LINE__);
+                            }
                             instruction[instruction_index].arguments[0] = value & 0xff;
                             instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
                             argument_bytes_used = 2;
                         } else {
                             char* string_value = expression[admx_expression_index].tokens[1].raw;
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            if (value > 0xffff) {
+                                log_msg(LP_WARNING, "Parsing expressions: Indirect Addressing value will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value, value & 0xffff, __FILE__, __LINE__);
+                            }
                             instruction[instruction_index].arguments[0] = value & 0xff;
                             instruction[instruction_index].arguments[1] = (value >> 8) & 0xff;
                             argument_bytes_used = 2;
@@ -1101,12 +1119,18 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         if (expression[admr_expression_index].token_count > 3) {
                             char* string_value = expression[admr_expression_index].tokens[3].raw;
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            if (value > 0xffff) {
+                                log_msg(LP_WARNING, "Parsing expressions: Indirect Addressing will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value, value & 0xffff, __FILE__, __LINE__);
+                            }
                             instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
                             instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
                             argument_bytes_used += 2;
                         } else {
                             char* string_value = expression[admr_expression_index].tokens[1].raw;
                             int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+                            if (value > 0xffff) {
+                                log_msg(LP_WARNING, "Parsing expressions: Indirect Addressing will be truncated! [0x%.4x -> 0x%.4x] [%s:%d]", value, value & 0xffff, __FILE__, __LINE__);
+                            }
                             instruction[instruction_index].arguments[argument_bytes_used + 0] = value & 0xff;
                             instruction[instruction_index].arguments[argument_bytes_used + 1] = (value >> 8) & 0xff;
                             argument_bytes_used += 2;

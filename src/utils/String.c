@@ -237,7 +237,7 @@ int string_is_string(const char text[]) {
     return 0;
 }
 
-uint16_t parse_immediate(const char text[]) {
+int parse_immediate(const char text[]) {
     int length = strlen(text);
     if (length < 1) {return 0;}
     if (text[0] == '$') {
@@ -264,7 +264,7 @@ uint16_t parse_immediate(const char text[]) {
         }
     }
     if (length > 2 && text[0] == '\'' && text[2] == '\'') {
-        return (uint16_t) text[1];
+        return (int) text[1];
     }
     return strtol(&text[0], NULL, 10);;
 }

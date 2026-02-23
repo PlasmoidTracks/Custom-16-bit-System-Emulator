@@ -19,7 +19,7 @@ typedef struct CompileOption_t {
     // Files
     unsigned int c : 1;             // [c]ompile type
     unsigned int o : 1;             // [o]utput name
-    unsigned int save_temps : 1;    // [save temps]
+    unsigned int save_temps : 1;    // [save temp] file[s]
     // Assembler
     unsigned int err_csb : 1;       // [err]or on [c]ode [s]egment [b]reach
     unsigned int pad_zero : 1;      // [pad] segment breach with [zero]s

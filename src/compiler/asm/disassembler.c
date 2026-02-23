@@ -134,8 +134,11 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
         instruction_string_pointer = &instruction_string[1];
     }
 
-    strcpy(instruction_string_pointer, cpu_instruction_string[instruction]);
-    int instruction_string_index = strlen(cpu_instruction_string[instruction]);
+    int instruction_string_index = 0;
+    if (cpu_instruction_string[instruction]) {
+        strcpy(instruction_string_pointer, cpu_instruction_string[instruction]);
+        instruction_string_index = strlen(cpu_instruction_string[instruction]);
+    }
 
     if (argument_count == 0) {
         //printf("instruction_string: %s\n", instruction_string);

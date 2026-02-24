@@ -149,8 +149,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CMOVNUL,    // cmovXX dest, src    :: if UL=0 {src -> dest}
     CMOVFL,     // cmovXX dest, src    :: if FL=1 {src -> dest}
     CMOVNFL,    // cmovXX dest, src    :: if FL=0 {src -> dest}
-    CMOVBL,     // cmovXX dest, src    :: if BL=1 {src -> dest}
-    CMOVNBL,    // cmovXX dest, src    :: if BL=0 {src -> dest}
+    CMOVDL,     // cmovXX dest, src    :: if BL=1 {src -> dest}
+    CMOVNDL,    // cmovXX dest, src    :: if BL=0 {src -> dest}
     CMOVAO,     // cmovXX dest, src    :: if AO=0 {src -> dest}
     CMOVNAO,    // cmovXX dest, src    :: if AO=1 {src -> dest}
     CMOVMI,     // cmovXX dest, src    :: if MI=0 {src -> dest}

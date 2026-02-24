@@ -70,6 +70,7 @@ void cpu_print_register(char* name, uint16_t value) {
     char* ascii = cpu_ascii_to_string(value);
     char buf1[128];
     char buf2[128];
+    char buf3[128];
     char* buffer_ptr1 = buf1;
     char* buffer_ptr2 = buf2;
     if (value == 0x8000) {
@@ -80,8 +81,9 @@ void cpu_print_register(char* name, uint16_t value) {
     }
     format_float_to_scientific_notation(buffer_ptr1, float_from_f16((float16_t) value));
     format_float_to_scientific_notation(buffer_ptr2, float_from_bf16((bfloat16_t) value));
-    printf(" \033[1;32m%s\033[0m  hex: 0x%04X | int: %6d | float: %-15s | double: %-15s | long: %14lld | C: '%s'\n",
-        name, value, (int16_t) value, buf1, buf2, long_long_from_fi16((fint16_t) value), ascii);
+    format_fint_to_string(buf3, value);
+    printf(" \033[1;32m%s\033[0m  hex: 0x%04X | int: %6d | float: %-15s | double: %-15s | long: %-14s | C: '%s'\n",
+        name, value, (int16_t) value, buf1, buf2, buf3, ascii);
     free(ascii);
 }
 
@@ -106,10 +108,10 @@ void cpu_print_state(CPU_t* cpu) {
     printf(" \033[1;32mSR\033[0m  0x%04X\n", cpu->regs.sr.value);
 
     // Individual Flags
-    printf(" \033[1;32mZ/E\033[0m [%d] \033[1;32mFZ\033[0m  [%d]  \033[1;32mN/L\033[0m [%d]  \033[1;32mUL\033[0m  [%d]  \033[1;32mFL\033[0m  [%d]\n"
-          " \033[1;32mBL\033[0m  [%d] \033[1;32mAO\033[0m  [%d]  \033[1;32mNC\033[0m  [%d]  \033[1;32mMI\033[0m  [%d]\n",
+    printf(" \033[1;32mZ\033[0m  [%d]  \033[1;32mFZ\033[0m [%d]  \033[1;32mL\033[0m  [%d]  \033[1;32mUL\033[0m [%d]  \033[1;32mFL\033[0m [%d]\n"
+          " \033[1;32mDL\033[0m [%d]  \033[1;32mAO\033[0m [%d]  \033[1;32mNC\033[0m [%d]  \033[1;32mMI\033[0m [%d]\n",
         cpu->regs.sr.Z, cpu->regs.sr.FZ, cpu->regs.sr.L, cpu->regs.sr.UL, cpu->regs.sr.FL, 
-        cpu->regs.sr.BL, cpu->regs.sr.AO, cpu->regs.sr.NC, cpu->regs.sr.MI);
+        cpu->regs.sr.DL, cpu->regs.sr.AO, cpu->regs.sr.NC, cpu->regs.sr.MI);
     
     // Cache
     if (!cpu->cache) {

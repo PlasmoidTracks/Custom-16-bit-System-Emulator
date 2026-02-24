@@ -43,7 +43,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
 
     // Conditional Operations
     [CMOVZ] = "cmovz", [CMOVNZ] = "cmovnz", [CMOVFZ] = "cmovfz", [CMOVNFZ] = "cmovnfz", [CMOVL] = "cmovl", [CMOVNL] = "cmovnl", [CMOVUL] = "cmovul", [CMOVNUL] = "cmovnul",
-    [CMOVFL] = "cmovfl", [CMOVNFL] = "cmovnfl", [CMOVBL] = "cmovbl", [CMOVNBL] = "cmovnbl", [CMOVAO] = "cmovao", [CMOVNAO] = "cmovnao", [CMOVMI] = "cmovmi", [CMOVNMI] = "cmovnmi",
+    [CMOVFL] = "cmovfl", [CMOVNFL] = "cmovnfl", [CMOVDL] = "cmovdl", [CMOVNDL] = "cmovndl", [CMOVAO] = "cmovao", [CMOVNAO] = "cmovnao", [CMOVMI] = "cmovmi", [CMOVNMI] = "cmovnmi",
 
     // Cache Operations
     [INV] = "inv", [FTC] = "ftc",
@@ -94,7 +94,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 2, [CMOVNZ] = 2, [CMOVFZ] = 2, [CMOVNFZ] = 2, [CMOVL] = 2, [CMOVNL] = 2, [CMOVUL] = 2, [CMOVNUL] = 2, 
-    [CMOVFL] = 2, [CMOVNFL] = 2, [CMOVBL] = 2, [CMOVNBL] = 2, [CMOVAO] = 2, [CMOVNAO] = 2, [CMOVMI] = 2, [CMOVNMI] = 2, 
+    [CMOVFL] = 2, [CMOVNFL] = 2, [CMOVDL] = 2, [CMOVNDL] = 2, [CMOVAO] = 2, [CMOVNAO] = 2, [CMOVMI] = 2, [CMOVNMI] = 2, 
     // Cache Operations
     [INV] = 0, [FTC] = 1, 
     // Self Identification and HW-Info Operations
@@ -140,7 +140,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
-    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVBL] = 0, [CMOVNBL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
+    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVDL] = 0, [CMOVNDL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
     // Cache Operations
     [INV] = 0, [FTC] = 0, 
     // Self Identification and HW-Info Operations
@@ -186,7 +186,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
-    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVBL] = 0, [CMOVNBL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
+    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVDL] = 0, [CMOVNDL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
     // Cache Operations
     [INV] = 0, [FTC] = 0, 
     // Self Identification and HW-Info Operations
@@ -232,7 +232,7 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
-    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVBL] = 0, [CMOVNBL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
+    [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVDL] = 0, [CMOVNDL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
     // Cache Operations
     [INV] = 0, [FTC] = 0, 
     // Self Identification and HW-Info Operations

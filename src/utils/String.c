@@ -20,6 +20,17 @@ int contains(const char character, const char* const matches) {
     return 0;
 }
 
+
+void format_fint_to_string(char* const buf, fint16_t value) {
+    if (value == 0x8000) {
+        sprintf(buf, "-0");
+        return;
+    }
+
+    sprintf(buf, "%lld", long_long_from_fi16(value));
+}
+
+
 void format_float_to_scientific_notation(char* const buffer, float value) {
     if (value == 0.0) {
         sprintf(buffer, "0.0");

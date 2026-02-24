@@ -3,9 +3,13 @@
 
 #include <stdint.h>
 
+#include <ExtendedTypes.h>
+
 extern int contains(const char character, const char* const matches);
 
 extern char** split(const char* string, const char* const separators, const char* const preserved_separators);
+
+void format_fint_to_string(char* const buf, fint16_t value);
 
 extern void format_float_to_scientific_notation(char* const buffer, float value);
 

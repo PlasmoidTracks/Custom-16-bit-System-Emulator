@@ -143,8 +143,8 @@ static int is_move_operator(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr == CMOVNUL;
     result |= instr == CMOVFL;
     result |= instr == CMOVNFL;
-    result |= instr == CMOVBL;
-    result |= instr == CMOVNBL;
+    result |= instr == CMOVDL;
+    result |= instr == CMOVNDL;
     result |= instr == CMOVAO;
     result |= instr == CMOVNAO;
     result |= instr == CMOVMI;

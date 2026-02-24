@@ -477,22 +477,22 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
 
             case IR_LEX_DOUBLE_LESS:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat less\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovfz r1, 0\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovdl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_DOUBLE_LESS_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat less equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovbl r1, 1\ncmovfz r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovdl r1, 1\ncmovfz r1, 1\n");
                 break;
                 
             case IR_LEX_DOUBLE_GREATER:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat greater\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnbl r1, 1\ncmovfz r1, 0\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovndl r1, 1\ncmovfz r1, 0\n");
                 break;
 
             case IR_LEX_DOUBLE_GREATER_EQUAL:
                 *output = append_to_output(*output, length, "; binary operation -> bfloat greater equal\n");
-                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovnbl r1, 1\n");
+                *output = append_to_output(*output, length, "cmp r0, r1\nmov r1, 0\ncmovndl r1, 1\n");
                 break;
 
             case IR_LEX_UNSIGNED_INTEGER_LESS:

@@ -39,7 +39,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
 
     // Status Bit Manipulation
     [CLZ] = "clz", [SEZ] = "sez", [CLFZ] = "clfz", [SEFZ] = "sefz", [CLL] = "cll", [SEL] = "sel", [CLUL] = "clul", [SEUL] = "seul",
-    [CLFL] = "clfl", [SEFL] = "sefl", [CLBL] = "clbl", [SEBL] = "sebl", [CLAO] = "clao", [SEAO] = "seao", [CLMI] = "clmi", [SEMI] = "semi",
+    [CLFL] = "clfl", [SEFL] = "sefl", [CLDL] = "cldl", [SEDL] = "sedl", [CLAO] = "clao", [SEAO] = "seao", [CLMI] = "clmi", [SEMI] = "semi",
 
     // Conditional Operations
     [CMOVZ] = "cmovz", [CMOVNZ] = "cmovnz", [CMOVFZ] = "cmovfz", [CMOVNFZ] = "cmovnfz", [CMOVL] = "cmovl", [CMOVNL] = "cmovnl", [CMOVUL] = "cmovul", [CMOVNUL] = "cmovnul",
@@ -91,7 +91,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     [CMP] = 2, [TST] = 1, 
     // Status Bit Manipulation
     [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
-    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLDL] = 0, [SEDL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 2, [CMOVNZ] = 2, [CMOVFZ] = 2, [CMOVNFZ] = 2, [CMOVL] = 2, [CMOVNL] = 2, [CMOVUL] = 2, [CMOVNUL] = 2, 
     [CMOVFL] = 2, [CMOVNFL] = 2, [CMOVDL] = 2, [CMOVNDL] = 2, [CMOVAO] = 2, [CMOVNAO] = 2, [CMOVMI] = 2, [CMOVNMI] = 2, 
@@ -137,7 +137,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
     [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
-    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLDL] = 0, [SEDL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
     [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVDL] = 0, [CMOVNDL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
@@ -183,7 +183,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
     [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
-    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLDL] = 0, [SEDL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
     [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVDL] = 0, [CMOVNDL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 
@@ -229,7 +229,7 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
     [CLZ] = 0, [SEZ] = 0, [CLFZ] = 0, [SEFZ] = 0, [CLL] = 0, [SEL] = 0, [CLUL] = 0, [SEUL] = 0, 
-    [CLFL] = 0, [SEFL] = 0, [CLBL] = 0, [SEBL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
+    [CLFL] = 0, [SEFL] = 0, [CLDL] = 0, [SEDL] = 0, [CLAO] = 0, [SEAO] = 0, [CLMI] = 0, [SEMI] = 0, 
     // Conditional Operations
     [CMOVZ] = 0, [CMOVNZ] = 0, [CMOVFZ] = 0, [CMOVNFZ] = 0, [CMOVL] = 0, [CMOVNL] = 0, [CMOVUL] = 0, [CMOVNUL] = 0, 
     [CMOVFL] = 0, [CMOVNFL] = 0, [CMOVDL] = 0, [CMOVNDL] = 0, [CMOVAO] = 0, [CMOVNAO] = 0, [CMOVMI] = 0, [CMOVNMI] = 0, 

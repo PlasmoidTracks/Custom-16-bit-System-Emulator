@@ -1588,14 +1588,14 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
 
-                    case CLBL:
+                    case CLDL:
                         cpu->regs.sr.DL = 0;
                         cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         goto CS_FETCH_INSTRUCTION;
                         break;
 
-                    case SEBL:
+                    case SEDL:
                         cpu->regs.sr.DL = 1;
                         cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;

@@ -766,7 +766,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             }
 
             if (!found) {
-                log_msg(LP_ERROR, "Parsing expressions: Unknown instruction \"%s\" at line %d [%s:%d]", expression[expression_index].tokens[0].raw, __FILE__, __LINE__);
+                log_msg(LP_ERROR, "Parsing expressions: Unknown instruction \"%s\" [%s:%d]", expression[expression_index].tokens[0].raw, __FILE__, __LINE__);
                 return NULL;
             }
 

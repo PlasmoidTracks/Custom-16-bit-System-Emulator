@@ -49,25 +49,37 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
 
     // Multi-character tokens.
     "i-",             // IR_LEX_INTEGER_MINUS
+    "u-",             // IR_LEX_UNSIGNED_INTEGER_MINUS
     "f-",             // IR_LEX_FLOAT_MINUS
     "d-",             // IR_LEX_DOUBLE_MINUS
     "l-",             // IR_LEX_LONG_MINUS
     "i+",             // IR_LEX_INTEGER_PLUS
+    "u+",             // IR_LEX_UNSIGNED_INTEGER_PLUS
     "f+",             // IR_LEX_FLOAT_PLUS
     "d+",             // IR_LEX_DOUBLE_PLUS
     "l+",             // IR_LEX_LONG_PLUS
     "i/",             // IR_LEX_INTEGER_SLASH
+    "u/",             // IR_LEX_UNSIGNED_INTEGER_SLASH
     "f/",             // IR_LEX_FLOAT_SLASH
     "d/",             // IR_LEX_DOUBLE_SLASH
     "l/",             // IR_LEX_LONG_SLASH
     "i*",             // IR_LEX_INTEGER_STAR
+    "u*",             // IR_LEX_UNSIGNED_INTEGER_STAR
     "f*",             // IR_LEX_FLOAT_STAR
     "d*",             // IR_LEX_DOUBLE_STAR
     "l*",             // IR_LEX_LONG_STAR
-    "!=",            // IR_LEX_BANG_EQUAL
-    "==",            // IR_LEX_EQUAL_EQUAL
-    "u>=",           // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
+    "i!=",            // IR_LEX_BANG_EQUAL
+    "u!=",            // IR_LEX_BANG_EQUAL
+    "f!=",            // IR_LEX_BANG_EQUAL
+    "d!=",            // IR_LEX_BANG_EQUAL
+    "l!=",            // IR_LEX_BANG_EQUAL
+    "i==",            // IR_LEX_EQUAL_EQUAL
+    "u==",            // IR_LEX_EQUAL_EQUAL
+    "f==",            // IR_LEX_EQUAL_EQUAL
+    "d==",            // IR_LEX_EQUAL_EQUAL
+    "l==",            // IR_LEX_EQUAL_EQUAL
     "i>=",           // IR_LEX_INTEGER_GREATER_EQUAL
+    "u>=",           // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
     "f>=",           // IR_LEX_FLOAT_GREATER_EQUAL
     "d>=",           // IR_LEX_DOUBLE_GREATER_EQUAL
     "l>=",           // IR_LEX_LONG_GREATER_EQUAL
@@ -76,13 +88,13 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     "f<=",           // IR_LEX_FLOAT_LESS_EQUAL
     "d<=",           // IR_LEX_DOUBLE_LESS_EQUAL
     "l<=",           // IR_LEX_LONG_LESS_EQUAL
-    "u>",            // IR_LEX_UNSIGNED_INTEGER_GREATER
     "i>",            // IR_LEX_INTEGER_GREATER
+    "u>",            // IR_LEX_UNSIGNED_INTEGER_GREATER
     "f>",            // IR_LEX_FLOAT_GREATER
     "d>",            // IR_LEX_DOUBLE_GREATER
     "l>",            // IR_LEX_LONG_GREATER
-    "u<",            // IR_LEX_UNSIGNED_INTEGER_LESS
     "i<",            // IR_LEX_INTEGER_LESS
+    "u<",            // IR_LEX_UNSIGNED_INTEGER_LESS
     "f<",            // IR_LEX_FLOAT_LESS
     "d<",            // IR_LEX_DOUBLE_LESS
     "l<",            // IR_LEX_LONG_LESS
@@ -117,115 +129,8 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
 };
 
 
-const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT] = {
-    0,  // 0 — unused
-
-    // Keywords.
-    1,  // IR_LEX_VAR
-    1,  // IR_LEX_REF
-    1,  // IR_LEX_DEREF
-    1,  // IR_LEX_IF
-    1,  // IR_LEX_ELSE
-    1,  // IR_LEX_GOTO
-    1,  // IR_LEX_RETURN
-    1,  // IR_LEX_ARG
-    1,  // IR_LEX_CONST
-    1,  // IR_LEX_STATIC
-    1,  // IR_LEX_ANON
-    1,  // IR_LEX_VOLATILE
-    1,  // IR_LEX_CALLPUSHARG
-    1,  // IR_LEX_CALLFREEARG
-    1,  // IR_LEX_CALL
-    1,  // IR_LEX_SCOPEBEGIN
-    1,  // IR_LEX_SCOPEEND
-    1,  // IR_LEX_CIF,                     // cif
-    1,  // IR_LEX_CID,                     // cid
-    1,  // IR_LEX_CIL,                     // cil
-    1,  // IR_LEX_CFI,                     // cfi
-    1,  // IR_LEX_CFD,                     // cfd
-    1,  // IR_LEX_CFL,                     // cfl
-    1,  // IR_LEX_CDI,                     // cdi
-    1,  // IR_LEX_CDF,                     // cdf
-    1,  // IR_LEX_CDL,                     // cdl
-    1,  // IR_LEX_CLI,                     // cli
-    1,  // IR_LEX_CLF,                     // clf
-    1,  // IR_LEX_CLD,                     // cld
-    1,  // IR_LEX_CBI,                     // cbi
-    1,  // IR_LEX_ADDRESS
-    1,  // IR_LEX_IRQBEGIN
-    1,  // IR_LEX_IRQEND
-    1,  // IR_LEX_ASM
-
-
-    // Multi-character tokens.
-    1,  // IR_LEX_INTEGER_MINUS
-    1,  // IR_LEX_FLOAT_MINUS
-    1,  // IR_LEX_DOUBLE_MINUS
-    1,  // IR_LEX_LONG_MINUS
-    1,  // IR_LEX_INTEGER_PLUS
-    1,  // IR_LEX_FLOAT_PLUS
-    1,  // IR_LEX_DOUBLE_PLUS
-    1,  // IR_LEX_LONG_PLUS
-    1,  // IR_LEX_INTEGER_SLASH
-    1,  // IR_LEX_FLOAT_SLASH
-    1,  // IR_LEX_DOUBLE_SLASH
-    1,  // IR_LEX_LONG_SLASH
-    1,  // IR_LEX_INTEGER_STAR
-    1,  // IR_LEX_FLOAT_STAR
-    1,  // IR_LEX_DOUBLE_STAR
-    1,  // IR_LEX_LONG_STAR
-    1,  // IR_LEX_BANG_EQUAL
-    1,  // IR_LEX_EQUAL_EQUAL
-    1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
-    1,  // IR_LEX_INTEGER_GREATER_EQUAL
-    1,  // IR_LEX_FLOAT_GREATER_EQUAL
-    1,  // IR_LEX_DOUBLE_GREATER_EQUAL
-    1,  // IR_LEX_LONG_GREATER_EQUAL
-    1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
-    1,  // IR_LEX_INTEGER_LESS_EQUAL
-    1,  // IR_LEX_FLOAT_LESS_EQUAL
-    1,  // IR_LEX_DOUBLE_LESS_EQUAL
-    1,  // IR_LEX_LONG_LESS_EQUAL
-    1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
-    1,  // IR_LEX_INTEGER_GREATER
-    1,  // IR_LEX_FLOAT_GREATER
-    1,  // IR_LEX_DOUBLE_GREATER
-    1,  // IR_LEX_LONG_GREATER
-    1,  // IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL
-    1,  // IR_LEX_INTEGER_LESS
-    1,  // IR_LEX_FLOAT_LESS
-    1,  // IR_LEX_DOUBLE_LESS
-    1,  // IR_LEX_LONG_LESS
-    1,  // IR_LEX_SHIFT_LEFT
-    1,  // IR_LEX_SHIFT_RIGHT
-
-    // Single-character tokens.
-    1,  // IR_LEX_LEFT_BRACKET
-    1,  // IR_LEX_RIGHT_BRACKET
-    1,  // IR_LEX_COMMA
-    1,  // IR_LEX_SEMICOLON
-    1,  // IR_LEX_ASSIGN
-    1,  // IR_LEX_BITWISE_AND
-    1,  // IR_LEX_BITWISE_OR
-    1,  // IR_LEX_BITWISE_NOT
-    1,  // IR_LEX_BITWISE_XOR
-    1,  // IR_LEX_BANG
-    1,  // IR_LEX_PERCENT
-
-    // Literals.
-    0,  // IR_LEX_IDENTIFIER
-    0,  // IR_LEX_LABEL
-    0,  // IR_LEX_STRING
-    0,  // IR_LEX_CHAR_LITERAL
-    0,  // IR_LEX_NUMBER
-    0,  // IR_LEX_COMMENT
-
-    // Other.
-    0,  // IR_LEX_EOF
-    0,  // IR_LEX_UNDEFINED
-    0   // IR_LEX_RESERVED
-};
-
+// legacy, will instead be determined by ir_lexer_token_literal entry being NULL
+//const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT];
 
 
 IRLexerToken_t* ir_lexer_add_token(IRLexerToken_t* lexer_token_list, long* token_count, IRLexerToken_t token) {
@@ -414,7 +319,7 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
 
         // secondly, go through all the tokens and compare with those that have a static form, like most keywords
         for (int i = 0; i < IR_LEX_TOKEN_COUNT; i++) {
-            if (!ir_lexer_token_has_fixed_form[i]) {continue;} // not in fixed form, so we skip
+            if (!ir_lexer_token_literal[i]) {continue;} // not in fixed form, so we skip
             if (!ir_lexer_compare_keyword(source, index, ir_lexer_token_literal[i], source_length)) {continue;} // string comparison failed
             if (contains(source[index + strlen(ir_lexer_token_literal[i])], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")) {
                 // keyword cannot be continuing with another alphanumerical

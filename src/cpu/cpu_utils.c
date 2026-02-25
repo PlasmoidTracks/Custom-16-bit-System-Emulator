@@ -109,9 +109,9 @@ void cpu_print_state(CPU_t* cpu) {
 
     // Individual Flags
     printf(" \033[1;32mZ\033[0m  [%d]  \033[1;32mFZ\033[0m [%d]  \033[1;32mL\033[0m  [%d]  \033[1;32mUL\033[0m [%d]  \033[1;32mFL\033[0m [%d]\n"
-          " \033[1;32mDL\033[0m [%d]  \033[1;32mAO\033[0m [%d]  \033[1;32mNC\033[0m [%d]  \033[1;32mMI\033[0m [%d]\n",
+          " \033[1;32mDL\033[0m [%d]  \033[1;32mLL\033[0m [%d]  \033[1;32mAO\033[0m [%d]  \033[1;32mNC\033[0m [%d]  \033[1;32mMI\033[0m [%d]\n",
         cpu->regs.sr.Z, cpu->regs.sr.FZ, cpu->regs.sr.L, cpu->regs.sr.UL, cpu->regs.sr.FL, 
-        cpu->regs.sr.DL, cpu->regs.sr.AO, cpu->regs.sr.NC, cpu->regs.sr.MI);
+        cpu->regs.sr.DL, cpu->regs.sr.LL, cpu->regs.sr.AO, cpu->regs.sr.NC, cpu->regs.sr.MI);
     
     // Cache
     if (!cpu->cache) {

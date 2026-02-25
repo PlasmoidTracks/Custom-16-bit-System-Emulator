@@ -43,40 +43,52 @@ typedef enum {
 
     // Multi-character tokens.
     IR_LEX_INTEGER_MINUS,                       // i-
+    IR_LEX_UNSIGNED_INTEGER_MINUS,              // u-
     IR_LEX_FLOAT_MINUS,                         // f-
     IR_LEX_DOUBLE_MINUS,                        // d-
     IR_LEX_LONG_MINUS,                          // l-
     IR_LEX_INTEGER_PLUS,                        // i+
+    IR_LEX_UNSIGNED_INTEGER_PLUS,               // u+
     IR_LEX_FLOAT_PLUS,                          // f+
     IR_LEX_DOUBLE_PLUS,                         // d+
     IR_LEX_LONG_PLUS,                           // l+
     IR_LEX_INTEGER_SLASH,                       // i/
+    IR_LEX_UNSIGNED_INTEGER_SLASH,              // u/
     IR_LEX_FLOAT_SLASH,                         // f/
     IR_LEX_DOUBLE_SLASH,                        // d/
     IR_LEX_LONG_SLASH,                          // l/
     IR_LEX_INTEGER_STAR,                        // i*
+    IR_LEX_UNSIGNED_INTEGER_STAR,               // u*
     IR_LEX_FLOAT_STAR,                          // f*
     IR_LEX_DOUBLE_STAR,                         // d*
     IR_LEX_LONG_STAR,                           // l*
-    IR_LEX_BANG_EQUAL,                          // !=
-    IR_LEX_EQUAL_EQUAL,                         // ==
-    IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL,      // u>=
+    IR_LEX_INTEGER_BANG_EQUAL,                  // i!=
+    IR_LEX_UNSIGNED_INTEGER_BANG_EQUAL,         // u!=
+    IR_LEX_FLOAT_BANG_EQUAL,                    // f!=
+    IR_LEX_DOUBLE_BANG_EQUAL,                   // d!=
+    IR_LEX_LONG_BANG_EQUAL,                     // l!=
+    IR_LEX_INTEGER_EQUAL_EQUAL,                 // i==
+    IR_LEX_UNSIGNED_INTEGER_EQUAL_EQUAL,        // u==
+    IR_LEX_FLOAT_EQUAL_EQUAL,                   // f==
+    IR_LEX_DOUBLE_EQUAL_EQUAL,                  // d==
+    IR_LEX_LONG_EQUAL_EQUAL,                    // l==
     IR_LEX_INTEGER_GREATER_EQUAL,               // i>=
+    IR_LEX_UNSIGNED_INTEGER_GREATER_EQUAL,      // u>=
     IR_LEX_FLOAT_GREATER_EQUAL,                 // f>=
     IR_LEX_DOUBLE_GREATER_EQUAL,                // d>=
     IR_LEX_LONG_GREATER_EQUAL,                  // l>=
-    IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL,         // u<=
     IR_LEX_INTEGER_LESS_EQUAL,                  // i<=
+    IR_LEX_UNSIGNED_INTEGER_LESS_EQUAL,         // u<=
     IR_LEX_FLOAT_LESS_EQUAL,                    // f<=
     IR_LEX_DOUBLE_LESS_EQUAL,                   // d<=
     IR_LEX_LONG_LESS_EQUAL,                     // l<=
-    IR_LEX_UNSIGNED_INTEGER_GREATER,            // u>
     IR_LEX_INTEGER_GREATER,                     // i>
+    IR_LEX_UNSIGNED_INTEGER_GREATER,            // u>
     IR_LEX_FLOAT_GREATER,                       // f>
     IR_LEX_DOUBLE_GREATER,                      // d>
     IR_LEX_LONG_GREATER,                        // l>
-    IR_LEX_UNSIGNED_INTEGER_LESS,               // u<
     IR_LEX_INTEGER_LESS,                        // i<
+    IR_LEX_UNSIGNED_INTEGER_LESS,               // u<
     IR_LEX_FLOAT_LESS,                          // f<
     IR_LEX_DOUBLE_LESS,                         // d<
     IR_LEX_LONG_LESS,                           // l<
@@ -124,8 +136,6 @@ typedef struct {
 
 
 extern const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT];
-
-extern const int ir_lexer_token_has_fixed_form[IR_LEX_TOKEN_COUNT];
 
 extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* token_count);
 

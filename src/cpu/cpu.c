@@ -203,6 +203,7 @@ void cpu_update_status_register(CPU_t* cpu, uint16_t result) {
     cpu->regs.sr.UL = 0;
     cpu->regs.sr.FL = (result >> 15);
     cpu->regs.sr.DL = (result >> 15);
+    cpu->regs.sr.LL = (result >> 15);
 }
 
 void cpu_clock(CPU_t* cpu) {
@@ -1183,6 +1184,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->regs.sr.UL = (a < b);
                             cpu->regs.sr.FL = (float_from_f16(a) < float_from_f16(b));
                             cpu->regs.sr.DL = (float_from_bf16(a) < float_from_bf16(b));
+                            cpu->regs.sr.LL = (long_long_from_fi16(a) < long_long_from_fi16(b));
                             cpu->instruction ++;
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;
@@ -1482,7 +1484,7 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    case JBL:
+                    case JDL:
                         if (cpu->regs.sr.DL) {
                             cpu->regs.pc = cpu->intermediate.data_address_extended;
                         }
@@ -1491,8 +1493,26 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    case JNBL:
+                    case JNDL:
                         if (!cpu->regs.sr.DL) {
+                            cpu->regs.pc = cpu->intermediate.data_address_extended;
+                        }
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+                    
+                    case JLL:
+                        if (cpu->regs.sr.LL) {
+                            cpu->regs.pc = cpu->intermediate.data_address_extended;
+                        }
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+                    
+                    case JNLL:
+                        if (!cpu->regs.sr.LL) {
                             cpu->regs.pc = cpu->intermediate.data_address_extended;
                         }
                         cpu->instruction ++;
@@ -1597,6 +1617,20 @@ void cpu_clock(CPU_t* cpu) {
 
                     case SEDL:
                         cpu->regs.sr.DL = 1;
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+
+                    case CLLL:
+                        cpu->regs.sr.LL = 0;
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+
+                    case SELL:
+                        cpu->regs.sr.LL = 1;
                         cpu->instruction ++;
                         cpu->state = CS_FETCH_INSTRUCTION;
                         goto CS_FETCH_INSTRUCTION;
@@ -1727,7 +1761,7 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    case RJBL:
+                    case RJDL:
                         if (cpu->regs.sr.DL) {
                             cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
                         }
@@ -1736,8 +1770,26 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
-                    case RJNBL:
+                    case RJNDL:
                         if (!cpu->regs.sr.DL) {
+                            cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                        }
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+                    
+                    case RJLL:
+                        if (cpu->regs.sr.LL) {
+                            cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
+                        }
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+                    
+                    case RJNLL:
+                        if (!cpu->regs.sr.LL) {
                             cpu->regs.pc += (int16_t) cpu->intermediate.data_address_extended;
                         }
                         cpu->instruction ++;
@@ -1904,6 +1956,30 @@ void cpu_clock(CPU_t* cpu) {
 
                     case CMOVNDL:
                         if (!cpu->regs.sr.DL) {
+                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+
+                    case CMOVLL:
+                        if (cpu->regs.sr.LL) {
+                            cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                            break;
+                        }
+                        cpu->instruction ++;
+                        cpu->state = CS_FETCH_INSTRUCTION;
+                        goto CS_FETCH_INSTRUCTION;
+                        break;
+
+                    case CMOVNLL:
+                        if (!cpu->regs.sr.LL) {
                             cpu->intermediate.result = cpu->intermediate.data_address_extended;
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;

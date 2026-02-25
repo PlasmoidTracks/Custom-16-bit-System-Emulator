@@ -27,8 +27,10 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     JNUL,       // jnul dest        :: if UL == 0, dest -> pc
     JFL,        // jfl dest         :: if FL == 1, dest -> pc
     JNFL,       // jnfl dest        :: if FL == 0, dest -> pc
-    JBL,        // jfl dest         :: if BL == 1, dest -> pc
-    JNBL,       // jnfl dest        :: if BL == 0, dest -> pc
+    JDL,        // jfl dest         :: if DL == 1, dest -> pc
+    JNDL,       // jnfl dest        :: if DL == 0, dest -> pc
+    JLL,        // rjfl value      :: if FL == 1, pc + value -> pc
+    JNLL,       // rjnfl value     :: if FL == 0, pc + value -> pc
     JAO,        // jao dest         :: if AO == 1, dest -> pc
     JNAO,       // jnao dest        :: if AO == 0, dest -> pc
 
@@ -47,8 +49,10 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     RJNUL,       // rjnul value     :: if UL == 0, pc + value -> pc
     RJFL,        // rjfl value      :: if FL == 1, pc + value -> pc
     RJNFL,       // rjnfl value     :: if FL == 0, pc + value -> pc
-    RJBL,        // rjfl value      :: if BL == 1, pc + value -> pc
-    RJNBL,       // rjnfl value     :: if BL == 0, pc + value -> pc
+    RJDL,        // rjdl value      :: if DL == 1, pc + value -> pc
+    RJNDL,       // rjndl value     :: if DL == 0, pc + value -> pc
+    RJLL,        // rjll value      :: if FL == 1, pc + value -> pc
+    RJNLL,       // rjnll value     :: if FL == 0, pc + value -> pc
     RJAO,        // rjao value      :: if AO == 1, pc + value -> pc
     RJNAO,       // rjnao value     :: if AO == 0, pc + value -> pc
 
@@ -65,16 +69,6 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     ABS,        // abs dest         :: if dest < 0, dest = ~dest + 1
     INC,        // inc dest         :: dest = dest + 1
     DEC,        // dec dest         :: dest = dest - 1
-
-    // Saturated Arithmetic Signed Integer Operations
-    SSA,        // ssa dest, src    :: dest = clamp((dest + src), 0x8000, 0x7fff)
-    SSS,        // ssb dest, src    :: dest = clamp((dest - src), 0x8000, 0x7fff)
-    SSM,        // ssm dest, src    :: dest = clamp((dest * src), 0x8000, 0x7fff)
-
-    // Saturated Arithmetic Unsigned Integer Operations
-    USA,        // usa dest, src    :: dest = min((int32_t) (dest + src), 0xffff)
-    USS,        // uss dest, src    :: dest = max((int32_t) (dest - src), 0x0000)
-    USM,        // usm dest, src    :: dest = min((int32_t) (dest * src), 0xffff)
 
     // Arithmetic Float Operations
     ADDF,       // addf dest, src   :: dest = dest + src (float16)  [add] [f]loat
@@ -133,6 +127,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     SEFL,       // set FL bit
     CLDL,       // clear DL bit
     SEDL,       // set DL bit
+    CLLL,       // clear LL bit
+    SELL,       // set LL bit
     CLAO,       // clear AO bit
     SEAO,       // set AO bit
     CLMI,       // clear MI bit
@@ -151,18 +147,12 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CMOVNFL,    // cmovXX dest, src    :: if FL=0 {src -> dest}
     CMOVDL,     // cmovXX dest, src    :: if DL=1 {src -> dest}
     CMOVNDL,    // cmovXX dest, src    :: if DL=0 {src -> dest}
+    CMOVLL,     // cmovXX dest, src    :: if DL=1 {src -> dest}
+    CMOVNLL,    // cmovXX dest, src    :: if DL=0 {src -> dest}
     CMOVAO,     // cmovXX dest, src    :: if AO=0 {src -> dest}
     CMOVNAO,    // cmovXX dest, src    :: if AO=1 {src -> dest}
     CMOVMI,     // cmovXX dest, src    :: if MI=0 {src -> dest}
     CMOVNMI,    // cmovXX dest, src    :: if MI=1 {src -> dest}
-
-    // Cache Operations
-    INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid
-    FTC,        // [f]e[t]ches data into [c]ache
-
-    // Self Identification and HW-Info Operations
-    HWCLOCK,    // returns the currrent [h]ard[w]are [clock] count in registers r0-r4 in little endian
-    HWINSTR,    // returns the currrent [h]ard[w]are [instr]uction count in registers r0-r4 in little endian
     
     // Other
     INT,        // int dest         :: trigger [int]errupt; mem[SEGMENT_IRQ_TABLE + dest] -> pc
@@ -173,6 +163,24 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // From here, instructions exceed value of 0x7f
 
     EXTNOP = 0x80, 
+
+    // Cache Operations
+    INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid
+    FTC,        // [f]e[t]ches data into [c]ache
+
+    // Self Identification and HW-Info Operations
+    HWCLOCK,    // returns the currrent [h]ard[w]are [clock] count in registers r0-r4 in little endian
+    HWINSTR,    // returns the currrent [h]ard[w]are [instr]uction count in registers r0-r4 in little endian
+
+    // Saturated Arithmetic Signed Integer Operations
+    SSA,        // ssa dest, src    :: dest = clamp((dest + src), 0x8000, 0x7fff)
+    SSS,        // ssb dest, src    :: dest = clamp((dest - src), 0x8000, 0x7fff)
+    SSM,        // ssm dest, src    :: dest = clamp((dest * src), 0x8000, 0x7fff)
+
+    // Saturated Arithmetic Unsigned Integer Operations
+    USA,        // usa dest, src    :: dest = min((int32_t) (dest + src), 0xffff)
+    USS,        // uss dest, src    :: dest = max((int32_t) (dest - src), 0x0000)
+    USM,        // usm dest, src    :: dest = min((int32_t) (dest * src), 0xffff)
 
     EXTNOP2 = 0x100, 
 

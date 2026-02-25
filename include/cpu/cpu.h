@@ -134,6 +134,7 @@ typedef struct CPU_t {
                     uint16_t UL : 1;                            // [U]nsigned [L]ess
                     uint16_t FL : 1;                            // [F]loat [L]ess
                     uint16_t DL : 1;                            // [D]ouble [L]ess
+                    uint16_t LL : 1;                            // [L]ong [L]ess
                     uint16_t AO : 1;                            // [A]rithmetic [O]verflow
                     uint16_t MI : 1;                            // [M]ask [I]nterrupts          (when set, hardware interrupts from the bus will be ignored)
                     // internal

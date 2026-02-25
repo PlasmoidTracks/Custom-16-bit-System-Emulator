@@ -124,7 +124,7 @@ _malloc_address = 0xa000;
     return;
 
 
-.factorialbf
+.factoriald
     scopebegin
 
     var px;
@@ -139,20 +139,20 @@ _malloc_address = 0xa000;
     pout = deref ppout;
 
     var i;
-    i = bf2;
+    i = d2;
 
     var value;
-    value = bf1;
+    value = d1;
 
-    .factorialbf_L
+    .factoriald_L
     var condition;
-    condition = i bf> x;
-    if condition .factorialbf_end;
-    value = value bf* i;
-    i = i bf+ bf1;
-    goto .factorialbf_L;
+    condition = i d> x;
+    if condition .factoriald_end;
+    value = value d* i;
+    i = i d+ d1;
+    goto .factoriald_L;
 
-    .factorialbf_end
+    .factoriald_end
 
     deref pout = value;
 
@@ -224,7 +224,7 @@ _malloc_address = 0xa000;
     callfreearg 6;
 
     var inf_condition;
-    inf_condition = top_term == 0x7C00 ;
+    inf_condition = top_term i== 0x7C00 ;
     if inf_condition .expf_end;
 
     var bottom_term;
@@ -267,7 +267,7 @@ _malloc_address = 0xa000;
     return;
 
 
-.expbf
+.expd
     scopebegin
 
     // sum from n = 0 to n = 5 (x^n) / (n!)
@@ -285,79 +285,79 @@ _malloc_address = 0xa000;
     i = 0;
 
     var result;
-    result = bf0;
+    result = d0;
 
     var k;  // the integer part of x
     k = x;
-    k = cbi k;
-    k = cib k;
+    k = cdi k;
+    k = cid k;
 
     var l;  // the fractional part
     var condition;
-    condition = x bf> bf0;
-    if condition .expbf_L4;
+    condition = x d> d0;
+    if condition .expd_L4;
     var tmp;
-    tmp = bf0 bf- x;
-    l = tmp bf+ k;
-    l = bf0 bf- l;
-    goto .expbf_L5;
-    .expbf_L4;
-    l = x bf- k;
-    .expbf_L5;
+    tmp = d0 d- x;
+    l = tmp d+ k;
+    l = d0 d- l;
+    goto .expd_L5;
+    .expd_L4;
+    l = x d- k;
+    .expd_L5;
 
-    .expbf_L
+    .expd_L
     condition = i i>= 16;
-    if condition .expbf_end;
+    if condition .expd_end;
 
     var top_term;
     var ptop_term;
     ptop_term = ref top_term;
-    var bfloat_i;
-    bfloat_i = cib i;
-    callpusharg bfloat_i;
+    var dloat_i;
+    dloat_i = cid i;
+    callpusharg dloat_i;
     callpusharg l;
     callpusharg ptop_term;
-    call .ipowerbf;
+    call .ipowerd;
     callfreearg 6;
 
     var inf_condition;
-    inf_condition = top_term == 0x7F80 ;
-    if inf_condition .expbf_end;
+    inf_condition = top_term i== 0x7F80 ;
+    if inf_condition .expd_end;
 
     var bottom_term;
     var pbottom_term;
     pbottom_term = ref bottom_term;
-    callpusharg bfloat_i;
+    callpusharg dloat_i;
     callpusharg pbottom_term;
-    call .factorialbf;
+    call .factoriald;
     callfreearg 4;
 
     var term;
-    term = top_term bf/ bottom_term;
-    result = result bf+ term;
+    term = top_term d/ bottom_term;
+    result = result d+ term;
 
     i = i i+ 1;
-    goto .expbf_L;
+    goto .expd_L;
 
-    .expbf_end
+    .expd_end
 
     // now multiply result by e k times
-    .expbf_L2
-    condition = k bf<= bf0;
-    if condition .expbf_L3;
-    result = result bf* bf2.718281828459;
-    k = k bf- bf1;
-    goto .expbf_L2;
+    .expd_L2
+    condition = k d<= d0;
+    if condition .expd_L3;
+    result = result d* d2.718281828459;
+    k = k d- d1;
+    goto .expd_L2;
 
     // and divide result by e -k times
-    .expbf_L3
-    condition = k bf>= bf0;
-    if condition .expbf_end2;
-    result = result bf/ bf2.718281828459;
-    k = k bf+ bf1;
-    goto .expbf_L3;
+    .expd_L3
+    condition = k d>= d0;
+    if condition .expd_end2;
+    result = result d/ d2.718281828459;
+    k = k d+ d1;
+    goto .expd_L3;
 
-    .expbf_end2
+    .expd_end2
     deref pout = result;
 
     scopeend
@@ -407,7 +407,7 @@ _malloc_address = 0xa000;
     return;
 
 
-.ipowerbf
+.ipowerd
     scopebegin;
 
     var pn;
@@ -429,20 +429,20 @@ _malloc_address = 0xa000;
     // rouding n to nearest integer form
 
     var result;
-    result = bf1;
+    result = d1;
 
     //while (n > 0) {result *= x; n--}
     var condition;
-    .ipowerbf_L
-    condition = n bf<= bf0;
-    if condition .ipowerbf_end;
+    .ipowerd_L
+    condition = n d<= d0;
+    if condition .ipowerd_end;
 
-    result = result bf* x;
-    n = n bf- bf1;
+    result = result d* x;
+    n = n d- d1;
 
-    goto .ipowerbf_L;
+    goto .ipowerd_L;
 
-    .ipowerbf_end
+    .ipowerd_end
 
     deref pout = result;
 
@@ -531,7 +531,7 @@ _malloc_address = 0xa000;
     return;
 
 
-.lnbf
+.lnd
     scopebegin;
 
     // ln(x) = sum[n=1 to inf](-1^(n-1) * (x-1)^n / n) [works only for 0 < x < 2]
@@ -551,63 +551,63 @@ _malloc_address = 0xa000;
     // if x <= 0 return inf
 
     var condition;
-    condition = x bf> bf0;
-    if condition .lnbf_continue;
-    deref pout = 0x7f80; // inf in bfloat16
-    goto .lnbf_end;
-    .lnbf_continue
+    condition = x d> d0;
+    if condition .lnd_continue;
+    deref pout = 0x7f80; // inf in dloat16
+    goto .lnd_end;
+    .lnd_continue
 
     var k;
-    k = bf0;
+    k = d0;
 
     // while (x > 2.0) {k += 1.0; x /= 2.718281828459;}
-    .lnbf_L1
-    condition = x bf<= bf2;
-    if condition .lnbf_L1end;
-    k = k bf+ bf1;
-    x = x bf/ bf2.718281828459;
-    goto .lnbf_L1;
-    .lnbf_L1end
+    .lnd_L1
+    condition = x d<= d2;
+    if condition .lnd_L1end;
+    k = k d+ d1;
+    x = x d/ d2.718281828459;
+    goto .lnd_L1;
+    .lnd_L1end
 
     // ln(x') = k * sum[n=1 to inf](-1^(n-1) * (x'-1)^n / n)
     var n;
-    n = bf1;
+    n = d1;
     var alternating;
-    alternating = bf1;
+    alternating = d1;
     var result;
-    result = bf0;
+    result = d0;
 
-    .lnbf_Lsum
-    condition = n bf>= bf10;
-    if condition .lnbf_Lsum_end;
+    .lnd_Lsum
+    condition = n d>= d10;
+    if condition .lnd_Lsum_end;
 
     var x_minus_1;
-    x_minus_1 = x bf- bf1;
+    x_minus_1 = x d- d1;
     var pow;
     var ppow;
     ppow = ref pow;
     callpusharg n;
     callpusharg x_minus_1;
     callpusharg ppow;
-    call .ipowerbf;
+    call .ipowerd;
     callfreearg 6;
 
     var intermediate;
-    intermediate = alternating bf* pow;
-    intermediate = intermediate bf/ n;
-    result = result bf+ intermediate;
+    intermediate = alternating d* pow;
+    intermediate = intermediate d/ n;
+    result = result d+ intermediate;
 
-    alternating = alternating bf* 0xbf80;    // -1.0
-    n = n bf+ bf1;
-    goto .lnbf_Lsum;
+    alternating = alternating d* 0xd80;    // -1.0
+    n = n d+ d1;
+    goto .lnd_Lsum;
 
-    .lnbf_Lsum_end
+    .lnd_Lsum_end
 
-    result = result bf+ k;
+    result = result d+ k;
 
     deref pout = result;
 
-    .lnbf_end
+    .lnd_end
     scopeend;
     return;
 
@@ -638,7 +638,7 @@ _malloc_address = 0xa000;
     k = cif k;
 
     var condition;
-    condition = n != k;
+    condition = n i!= k;
     if condition .powerf_skip;
 
     callpusharg k;
@@ -673,7 +673,7 @@ _malloc_address = 0xa000;
     return;
 
 
-.powerbf
+.powerd
     scopebegin;
 
     // x^n = e^(ln(x) * n)
@@ -695,20 +695,20 @@ _malloc_address = 0xa000;
 
     var k;  // the integer part of x
     k = n;
-    k = cbi k;
-    k = cib k;
+    k = cdi k;
+    k = cid k;
 
     var condition;
-    condition = n != k;
-    if condition .powerbf_skip;
+    condition = n i!= k;
+    if condition .powerd_skip;
 
     callpusharg k;
     callpusharg x;
     callpusharg pout;
-    call .ipowerbf;
+    call .ipowerd;
     callfreearg 6;
-    goto .powerbf_end;
-    .powerbf_skip
+    goto .powerd_end;
+    .powerd_skip
 
     var lnx;
     var plnx;
@@ -716,19 +716,19 @@ _malloc_address = 0xa000;
 
     callpusharg x;
     callpusharg plnx;
-    call .lnbf;
+    call .lnd;
     callfreearg 4;
 
-    lnx = lnx bf* n;
+    lnx = lnx d* n;
 
     callpusharg lnx;
     callpusharg plnx;
-    call .expbf;
+    call .expd;
     callfreearg 4;
 
     deref pout = lnx;
 
-    .powerbf_end
+    .powerd_end
 
     scopeend;
     return;

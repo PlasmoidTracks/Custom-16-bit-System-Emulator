@@ -552,13 +552,13 @@ void parser_evaluate_expression(char** output, long* length, IRParserToken_t* ex
                 break;
 
             case IR_LEX_SHIFT_RIGHT:
-                *output = append_to_output(*output, length, "; binary operation -> shl\n");
-                *output = append_to_output(*output, length, "bws r0, r1\nmov r1, r0\n");
+                *output = append_to_output(*output, length, "; binary operation -> ubs\n");
+                *output = append_to_output(*output, length, "ubs r0, r1\nmov r1, r0\n");
                 break;
 
             case IR_LEX_SHIFT_LEFT:
-                *output = append_to_output(*output, length, "; binary operation -> shl\n");
-                *output = append_to_output(*output, length, "neg r1\nbws r0, r1\nmov r1, r0\n");
+                *output = append_to_output(*output, length, "; binary operation -> ubs\n");
+                *output = append_to_output(*output, length, "neg r1\nubs r0, r1\nmov r1, r0\n");
                 break;
 
             case IR_LEX_BITWISE_AND:

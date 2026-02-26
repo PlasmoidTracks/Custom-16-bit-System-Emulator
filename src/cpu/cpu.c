@@ -1230,12 +1230,26 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_WRITEBACK_LOW;
                         break;
 
-                    case BWS: {
+                    case UBS: {
                             int16_t shift = (int16_t) cpu->intermediate.data_address_extended;
-                            if (shift > 0)
-                                cpu->intermediate.result = cpu->intermediate.data_address_reduced >> shift;
-                            else 
+                            if (shift > 0) {
+                                cpu->intermediate.result = (cpu->intermediate.data_address_reduced >> shift);
+                            } else {
                                 cpu->intermediate.result = cpu->intermediate.data_address_reduced << (-shift);
+                            }
+                            //cpu_update_status_register(cpu, cpu->intermediate.result);
+                            cpu->state = CS_WRITEBACK_LOW;
+                            goto CS_WRITEBACK_LOW;
+                        }
+                        break;
+
+                    case SBS: {
+                            int16_t shift = (int16_t) cpu->intermediate.data_address_extended;
+                            if (shift > 0) {
+                                cpu->intermediate.result = (cpu->intermediate.data_address_reduced >> shift) | (0xffff << ((16 - shift) < 0 ? 0 : (16 - shift)));
+                            } else {
+                                cpu->intermediate.result = cpu->intermediate.data_address_reduced << (-shift);
+                            }
                             //cpu_update_status_register(cpu, cpu->intermediate.result);
                             cpu->state = CS_WRITEBACK_LOW;
                             goto CS_WRITEBACK_LOW;

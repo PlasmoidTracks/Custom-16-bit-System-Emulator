@@ -104,7 +104,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     CBI,        // cbi dest         :: [c]onvert [b]yte to [i]nteger by sign extension (0x??80 -> 0xff80)
 
     // Bitwise Logic
-    BWS,        // bws dest, src    :: Bitwise shift dest by src (left if src > 0, right if src < 0)
+    UBS,        // ubs dest, src    :: [U]nsigned [B]it [S]hift dest by src (left if src > 0, right if src < 0)
+    SBS,        // sbs dest, src    :: [S]igned [B]it [S]hift dest by src (left if src > 0, right if src < 0) (sign-bit is copied over on right shift)
     AND,        // and dest, src    :: dest = dest & src
     OR,         // or dest, src     :: dest = dest | src
     XOR,        // xor dest, src    :: dest = dest ^ src

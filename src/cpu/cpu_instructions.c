@@ -32,7 +32,7 @@ const char* cpu_instruction_string[INSTRUCTION_COUNT] = {
     [CIF] = "cif", [CID] = "cid", [CIL] = "cil", [CFI] = "cfi", [CFD] = "cfd", [CFL] = "cfl", [CDF] = "cdf", [CDI] = "cdi", [CDL] = "cdl", [CLI] = "cli", [CLF] = "clf", [CLD] = "cld", [CBI] = "cbi",
 
     // Bitwise Logic
-    [BWS] = "bws", [AND] = "and", [OR] = "or", [XOR] = "xor", [NOT] = "not",
+    [UBS] = "ubs", [SBS] = "sbs", [AND] = "and", [OR] = "or", [XOR] = "xor", [NOT] = "not",
 
     // Tests
     [CMP] = "cmp", [TST] = "tst",
@@ -86,7 +86,7 @@ const int cpu_instruction_argument_count[INSTRUCTION_COUNT] = {
     // Type Conversion Operations
     [CIF] = 1, [CID] = 1, [CIL] = 1, [CFI] = 1, [CFD] = 1, [CFL] = 1, [CDF] = 1, [CDI] = 1, [CDL] = 1, [CLI] = 1, [CLF] = 1, [CLD] = 1, [CBI] = 1, 
     // Bitwise Logic
-    [BWS] = 2, [AND] = 2, [OR] = 2, [XOR] = 2, [NOT] = 1, 
+    [UBS] = 2, [SBS] = 2, [AND] = 2, [OR] = 2, [XOR] = 2, [NOT] = 1, 
     // Tests
     [CMP] = 2, [TST] = 1, 
     // Status Bit Manipulation
@@ -132,7 +132,7 @@ const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT] = {
     // Type Conversion Operations
     [CIF] = 1, [CID] = 1, [CIL] = 1, [CFI] = 1, [CFD] = 1, [CFL] = 1, [CDF] = 1, [CDI] = 1, [CDL] = 1, [CLI] = 1, [CLF] = 1, [CLD] = 1, [CBI] = 1, 
     // Bitwise Logic
-    [BWS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 1, 
+    [UBS] = 0, [SBS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 1, 
     // Tests
     [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
@@ -178,7 +178,7 @@ const int cpu_instruction_is_jump[INSTRUCTION_COUNT] = {
     // Type Conversion Operations
     [CIF] = 0, [CID] = 0, [CIL] = 0, [CFI] = 0, [CFD] = 0, [CFL] = 0, [CDF] = 0, [CDI] = 0, [CDL] = 0, [CLI] = 0, [CLF] = 0, [CLD] = 0, [CBI] = 0, 
     // Bitwise Logic
-    [BWS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 0, 
+    [UBS] = 0, [SBS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 0, 
     // Tests
     [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation
@@ -224,7 +224,7 @@ const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT] = {
     // Type Conversion Operations
     [CIF] = 0, [CID] = 0, [CIL] = 0, [CFI] = 0, [CFD] = 0, [CFL] = 0, [CDF] = 0, [CDI] = 0, [CDL] = 0, [CLI] = 0, [CLF] = 0, [CLD] = 0, [CBI] = 0, 
     // Bitwise Logic
-    [BWS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 0, 
+    [UBS] = 0, [SBS] = 0, [AND] = 0, [OR] = 0, [XOR] = 0, [NOT] = 0, 
     // Tests
     [CMP] = 0, [TST] = 0, 
     // Status Bit Manipulation

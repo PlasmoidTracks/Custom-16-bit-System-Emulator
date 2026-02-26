@@ -105,7 +105,8 @@ static int is_arithmetic_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr == SUBL;
     result |= instr == MULL;
     result |= instr == DIVL;
-    result |= instr == BWS;
+    result |= instr == SBS;
+    result |= instr == UBS;
     result |= instr == AND;
     result |= instr == OR;
     result |= instr == XOR;
@@ -425,7 +426,8 @@ char* optimizer_compile(char* content) {
                     instruction[i + 1].instruction == MULF ||
                     instruction[i + 1].instruction == DIVF ||
                     instruction[i + 1].instruction == CMP ||
-                    instruction[i + 1].instruction == BWS ||
+                    instruction[i + 1].instruction == SBS ||
+                    instruction[i + 1].instruction == UBS ||
                     instruction[i + 1].instruction == AND ||
                     instruction[i + 1].instruction == OR ||
                     instruction[i + 1].instruction == XOR

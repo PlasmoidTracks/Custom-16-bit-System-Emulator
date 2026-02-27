@@ -1167,7 +1167,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
                         int is_valid_instruction = 0;
                         for (int i = 0; i < INSTRUCTION_COUNT; i++) {
                             //printf("%s vs %s : %d\n", expression[expression_index].tokens[0].raw, cpu_instruction_string[i], strcmp(expression[expression_index].tokens[0].raw, cpu_instruction_string[i]));
-                            if (strcmp(expr->tokens[0].raw, cpu_instruction_string[i]) == 0) {
+                            if (strcmp(expr->tokens[0].raw, instruction_encoding[i].instruction_string) == 0) {
                                 is_valid_instruction = 1;
                                 break;
                             }

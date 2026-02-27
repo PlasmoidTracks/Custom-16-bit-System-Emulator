@@ -256,9 +256,9 @@ void cpu_clock(CPU_t* cpu) {
 
                     cpu->intermediate.instruction += (cpu->intermediate.extension_index * 0x80);
                     #ifdef _CPU_DEEP_DEBUG_
-                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was successful, loaded instruction %s (%d)", cpu->clock, cpu->state, cpu->device.device_state, cpu_instruction_string[cpu->intermediate.instruction], cpu->intermediate.instruction);
+                    log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Fetch was successful, loaded instruction %s (%d)", cpu->clock, cpu->state, cpu->device.device_state, instruction_encoding[cpu->intermediate.instruction].instruction_string, cpu->intermediate.instruction);
                     #endif
-                    cpu->intermediate.argument_count = cpu_instruction_argument_count[cpu->intermediate.instruction];
+                    cpu->intermediate.argument_count = instruction_encoding[cpu->intermediate.instruction].argument_count;
 
                     if (cpu->intermediate.instruction < INSTRUCTION_COUNT) {
                         cpu->last_instruction = (CPU_INSTRUCTION_MNEMONIC_t) cpu->intermediate.instruction;
@@ -267,7 +267,7 @@ void cpu_clock(CPU_t* cpu) {
                             log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:0): %s - nc: %d - sp: %.4x", 
                                 cpu->clock, cpu->state, cpu->device.device_state, 
                                 cpu->regs.pc, 
-                                cpu_instruction_string[cpu->intermediate.instruction], 
+                                instruction_encoding[cpu->intermediate.instruction].instruction_string, 
                                 cpu->regs.sr.NC, 
                                 cpu->regs.sp
                             );
@@ -321,7 +321,7 @@ void cpu_clock(CPU_t* cpu) {
                             log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:2): %s %s, %s - nc: %d - sp: %.4x", 
                                 cpu->clock, cpu->state, cpu->device.device_state, 
                                 cpu->regs.pc - 1, 
-                                cpu_instruction_string[cpu->intermediate.instruction], 
+                                instruction_encoding[cpu->intermediate.instruction].instruction_string, 
                                 cpu_reduced_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_reduced], 
                                 cpu_extended_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_extended], 
                                 cpu->regs.sr.NC, 
@@ -335,12 +335,12 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->state = CS_EXCEPTION;
                         }
                     } else {
-                        if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
+                        if (instruction_encoding[cpu->intermediate.instruction].single_operant_writeback) {
                             #ifdef _CPU_DEBUG_
                                 log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:1 sow): %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, cpu->state, cpu->device.device_state, 
                                     cpu->regs.pc - 1, 
-                                    cpu_instruction_string[cpu->intermediate.instruction], 
+                                    instruction_encoding[cpu->intermediate.instruction].instruction_string, 
                                     cpu_reduced_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_reduced], 
                                     cpu->regs.sr.NC, 
                                     cpu->regs.sp
@@ -357,7 +357,7 @@ void cpu_clock(CPU_t* cpu) {
                                 log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:1): %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, cpu->state, cpu->device.device_state, 
                                     cpu->regs.pc - 1, 
-                                    cpu_instruction_string[cpu->intermediate.instruction], 
+                                    instruction_encoding[cpu->intermediate.instruction].instruction_string, 
                                     cpu_extended_addressing_mode_string[cpu->intermediate.addressing_mode.addressing_mode_extended], 
                                     cpu->regs.sr.NC, 
                                     cpu->regs.sp
@@ -380,7 +380,7 @@ void cpu_clock(CPU_t* cpu) {
                             cpu_reduced_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_reduced] +
                             cpu_extended_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_extended];
                     } else if (cpu->intermediate.argument_count == 1) {
-                        if (cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
+                        if (instruction_encoding[cpu->intermediate.instruction].single_operant_writeback) {
                             cpu->intermediate.argument_bytes_to_load = cpu_reduced_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_reduced];
                         } else {
                             cpu->intermediate.argument_bytes_to_load = cpu_extended_addressing_mode_bytes[cpu->intermediate.addressing_mode.addressing_mode_extended];
@@ -436,7 +436,7 @@ void cpu_clock(CPU_t* cpu) {
                             printf("%.2x ", (uint8_t) cpu->intermediate.argument_data_raw[i]);
                         } printf("\n");*/
                         int admc;
-                        if (!cpu_instruction_single_operand_writeback[cpu->intermediate.instruction]) {
+                        if (!instruction_encoding[cpu->intermediate.instruction].single_operant_writeback) {
                             admc = cpu_extended_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_extended];
                         } else {
                             admc = cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced];

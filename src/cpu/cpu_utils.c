@@ -128,7 +128,7 @@ void cpu_print_state(CPU_t* cpu) {
     printf(" \033[1;32mcpi\033[0m      %2.3f\n", (double) cpu->clock / (double) cpu->instruction);
     printf(" \033[1;32mstate\033[0m    %d [%s]\n", cpu->state, cpu_state_name[cpu->state]);
     if (cpu->last_instruction < INSTRUCTION_COUNT) {
-        printf(" \033[1;32mLast Instruction\033[0m %s (%d)\n", cpu_instruction_string[cpu->last_instruction], (int) cpu->last_instruction);
+        printf(" \033[1;32mLast Instruction\033[0m %s (%d)\n", instruction_encoding[cpu->last_instruction].instruction_string, (int) cpu->last_instruction);
     } else {
         printf(" \033[1;32mLast Instruction\033[0m ??? (%d)\n", (int) cpu->last_instruction);
     }

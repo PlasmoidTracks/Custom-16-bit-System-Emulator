@@ -675,7 +675,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         if (instruction[i].instruction == (CPU_INSTRUCTION_MNEMONIC_t) -1 || instruction[i].instruction == NOP) {
                             continue;
                         }
-                        if (cpu_instruction_argument_count[instruction[i].instruction] == 0) {
+                        if (instruction_encoding[instruction[i].instruction].argument_count == 0) {
                             address -= 1;
                         }
                     }
@@ -754,11 +754,11 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             // 1. identify instruction
             int found = 0;
             for (int i = 0; i < INSTRUCTION_COUNT; i++) {
-                //printf("%s vs %s : %d\n", expression[expression_index].tokens[0].raw, cpu_instruction_string[i], strcmp(expression[expression_index].tokens[0].raw, cpu_instruction_string[i]));
-                if (cpu_instruction_string[i] == NULL) {
+                //printf("%s vs %s : %d\n", expression[expression_index].tokens[0].raw, instruction_encoding[i].instruction_string, strcmp(expression[expression_index].tokens[0].raw, instruction_encoding[i].instruction_string));
+                if (instruction_encoding[i].instruction_string[0] == '\0') {    // can be savely assumed to be '\0' for undefined mnemonics, thanks to C99. 
                     continue;
                 }
-                if (strcmp(expression[expression_index].tokens[0].raw, cpu_instruction_string[i]) == 0) {
+                if (strcmp(expression[expression_index].tokens[0].raw, instruction_encoding[i].instruction_string) == 0) {
                     instruction[instruction_index].instruction = i;
                     found = 1;
                     break;
@@ -776,7 +776,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             } 
 
             // 2. get instruction argument count
-            int argument_count = cpu_instruction_argument_count[instruction[instruction_index].instruction];
+            int argument_count = instruction_encoding[instruction[instruction_index].instruction].argument_count;
             //log_msg(LP_INFO, "Parsing expressions: instruction \"%s\" takes %d arguments", cpu_instruction_string[instruction[instruction_index].instruction], argument_count);
             expression_index ++;
 
@@ -784,7 +784,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].admx = ADMX_NONE;
             instruction[instruction_index].admr = ADMR_NONE;
             int admr_expression_index = expression_index;
-            if (argument_count == 2 || cpu_instruction_single_operand_writeback[instruction[instruction_index].instruction]) {
+            if (argument_count == 2 || instruction_encoding[instruction[instruction_index].instruction].single_operant_writeback) {
                 
                 instruction[instruction_index].expression[instruction[instruction_index].expression_count] = expression[expression_index];
                 instruction[instruction_index].expression_count ++;
@@ -856,7 +856,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             }
 
             int admx_expression_index = expression_index;
-            if (argument_count >= 1 && !cpu_instruction_single_operand_writeback[instruction[instruction_index].instruction]) {
+            if (argument_count >= 1 && !instruction_encoding[instruction[instruction_index].instruction].single_operant_writeback) {
 
                 instruction[instruction_index].expression[instruction[instruction_index].expression_count] = expression[expression_index];
                 instruction[instruction_index].expression_count ++;
@@ -1146,7 +1146,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             instruction[instruction_index].address = byte_index;
 
             byte_index += 2 + argument_bytes_used;
-            if (cpu_instruction_argument_count[instruction[instruction_index].instruction] == 0) {
+            if (instruction_encoding[instruction[instruction_index].instruction].argument_count == 0) {
                 // compensate for one-byte instructions
                 byte_index -= 1;
             }
@@ -1371,7 +1371,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
         for (int exp = expression_count - 1; exp >= 0; exp --) {
             switch (instruction[i].expression[exp].type) {
                 case EXPR_IMMEDIATE:
-                    if ((int) instruction[i].instruction != -1 && (int) instruction[i].instruction < INSTRUCTION_COUNT && !cpu_instruction_is_relative_jump[instruction[i].instruction]) {
+                    if ((int) instruction[i].instruction != -1 && (int) instruction[i].instruction < INSTRUCTION_COUNT && !instruction_encoding[instruction[i].instruction].is_relative_jump_instruction) {
                         // here the first two bytes are guaranteed to be the label destination
                         if (instruction[i].expression[exp].tokens[0].type == TT_LABEL) {
                             // find corresponding label
@@ -1697,7 +1697,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
         error |= safe_write(bin, index++, tmp | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
         
         // writing the instruction arguments
-        if (cpu_instruction_argument_count[instruction[instruction_index].instruction] > 0) {
+        if (instruction_encoding[instruction[instruction_index].instruction].argument_count > 0) {
             error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
             for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
                 error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);

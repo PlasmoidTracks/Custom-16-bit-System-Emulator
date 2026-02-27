@@ -47,7 +47,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
 
     instruction += ext_count * 0x80;
 
-    if (cpu_instruction_argument_count[instruction] > 0) {
+    if (instruction_encoding[instruction].argument_count > 0) {
         addressing_mode = binary[(*binary_index) ++];
         one_byte_instruction = 0;
     }
@@ -76,7 +76,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
 
     //printf("admr: %s, admx: %s\n", cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
 
-    int argument_count = cpu_instruction_argument_count[instruction];
+    int argument_count = instruction_encoding[instruction].argument_count;
 
     int data_size = 0;
 
@@ -93,7 +93,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
             return "";
         }
     } else if (argument_count == 1) {
-        if (cpu_instruction_single_operand_writeback[instruction]) {
+        if (instruction_encoding[instruction].single_operant_writeback) {
             if (admx != 0) {
                 //log_msg(LP_DEBUG, "Instructions with one writeback argument (admr), but set admx is not realistic. Assuming it is raw data instead");
                 if (valid_instruction) *valid_instruction = 0;
@@ -135,9 +135,9 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     }
 
     int instruction_string_index = 0;
-    if (cpu_instruction_string[instruction]) {
-        strcpy(instruction_string_pointer, cpu_instruction_string[instruction]);
-        instruction_string_index = strlen(cpu_instruction_string[instruction]);
+    if (instruction_encoding[instruction].instruction_string[0] != '\0') {
+        strcpy(instruction_string_pointer, instruction_encoding[instruction].instruction_string);
+        instruction_string_index = strlen(instruction_encoding[instruction].instruction_string);
     }
 
     if (argument_count == 0) {
@@ -155,7 +155,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
 
     
 
-    if (argument_count == 2 || (argument_count == 1 && cpu_instruction_single_operand_writeback[instruction])) {
+    if (argument_count == 2 || (argument_count == 1 && instruction_encoding[instruction].single_operant_writeback)) {
         // next up: admr
         switch (admr) {
             case ADMR_R0: reg = "r0"; goto admr_write_register;
@@ -223,7 +223,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 break;
         }
     } 
-    if (argument_count == 2 || (argument_count == 1 && !cpu_instruction_single_operand_writeback[instruction])) {
+    if (argument_count == 2 || (argument_count == 1 && !instruction_encoding[instruction].single_operant_writeback)) {
         if (argument_count == 2) {
             instruction_string_pointer[instruction_string_index++] = ',';
             instruction_string_pointer[instruction_string_index++] = ' ';
@@ -644,14 +644,14 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             int found_jump_instruction = 0;
             int is_relative_jump = 0;
             for (int instruction_index = 0; instruction_index < INSTRUCTION_COUNT; instruction_index++) {
-                if (cpu_instruction_is_jump[instruction_index] == 1 && cpu_instruction_argument_count[instruction_index] == 1) {
-                    if (strcmp(words[0], cpu_instruction_string[instruction_index]) == 0) {
+                if (instruction_encoding[instruction_index].is_jump_instruction && instruction_encoding[instruction_index].argument_count == 1) {
+                    if (strcmp(words[0], instruction_encoding[instruction_index].instruction_string) == 0) {
                         //log_msg(LP_CRITICAL, "jump op: \"%s\"", cpu_instruction_string[instruction_index]);
                         found_jump_instruction = 1;
-                        is_relative_jump = cpu_instruction_is_relative_jump[instruction_index];
+                        is_relative_jump = instruction_encoding[instruction_index].is_relative_jump_instruction;
 
                         // FOR SAFETY, AS ITS NOT FULLY IMPLEMETNED YET: 
-                        if (cpu_instruction_is_relative_jump[instruction_index]) {found_jump_instruction = 0;}
+                        if (instruction_encoding[instruction_index].is_relative_jump_instruction) {found_jump_instruction = 0;}
 
                         break;
                     }
@@ -789,7 +789,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             break;
         }
         // Now for every instruction, check if its a jump through a dedicated table plus has an argument. Then compare strings
-        if (strcmp(words[0], cpu_instruction_string[MOV]) != 0) {
+        if (strcmp(words[0], instruction_encoding[MOV].instruction_string) != 0) {
             //log_msg(LP_INFO, "was not mov instruction: %s", words[0]);
             int windex = 0;
             while (words[windex]) {

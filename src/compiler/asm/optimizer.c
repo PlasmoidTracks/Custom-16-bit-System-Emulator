@@ -245,7 +245,7 @@ char* optimizer_compile(char* content) {
                                 instruction[j].instruction == RET || 
                                 (!(instruction[j].instruction == MOV || instruction[j].instruction == LEA) && (instruction[j].admr == admr)) ||
                                 ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && is_same_indirect_adm(admr, instruction[j].admx)) ||
-                                cpu_instruction_is_jump[instruction[j].instruction] ||
+                                instruction_encoding[instruction[j].instruction].is_jump_instruction ||
                                 (admr == ADMR_R0 && instruction[j].admr == ADMR_IND_R0) ||
                                 is_same_adm(admr, instruction[j].admx) ||
                                 (instruction[j].admx == ADMX_IMM16 && instruction[j].expression[2].tokens[0].type == TT_LABEL) ||
@@ -319,7 +319,7 @@ char* optimizer_compile(char* content) {
                         if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0) {
                             if (instruction[i].admr == instruction[i + 1].admr) {
                                 instruction[i + 1].instruction = MOV;
-                                sprintf(instruction[i + 1].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
+                                sprintf(instruction[i + 1].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
                                 remove_instruction(instruction, &instruction_count, i);
                                 i --;
                                 changes_applied = 1;
@@ -394,7 +394,7 @@ char* optimizer_compile(char* content) {
                 if (instruction[i].instruction == LEA && instruction[i + 1].instruction == MOV) {
                     if (instruction[i].admr == instruction[i + 1].admr && is_same_indirect_adm(instruction[i + 1].admr, instruction[i + 1].admx)) {
                         //log_msg(LP_DEBUG, "Optimizer: replaced two step dereference with one step dereference (line %d)", i);
-                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
+                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
                         instruction[i].instruction = MOV;
                         remove_instruction(instruction, &instruction_count, i + 1);
                         changes_applied = 1;
@@ -468,7 +468,7 @@ char* optimizer_compile(char* content) {
                         for (int j = 1; j < 5; j++) {
                             instruction[i].expression[2].tokens[j].raw = malloc(32);
                         }
-                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[LEA]);                             // replace "MOV" with "LEA"
+                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[LEA].instruction_string);                             // replace "MOV" with "LEA"
                         sprintf(instruction[i].expression[2].tokens[3].raw, "%s", instruction[i].expression[2].tokens[0].raw);              // add "rM" in "[rM + x]"
                         sprintf(instruction[i].expression[2].tokens[0].raw, "[");                                                           // add "[" in "[rM + x]"
                         sprintf(instruction[i].expression[2].tokens[2].raw, "+");                                                           // add "+" in "[rM + x]"
@@ -514,7 +514,7 @@ char* optimizer_compile(char* content) {
                             parse_immediate(instruction[i + 1].expression[2].tokens[0].raw) != 0
                         ) {
                             instruction[i].instruction = LEA;
-                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[LEA]);
+                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[LEA].instruction_string);
                             instruction[i].admx = ADMX_IND16;
                             
                             instruction[i].expression[2].tokens[1].raw = malloc(16);
@@ -720,7 +720,7 @@ char* optimizer_compile(char* content) {
                 if (instruction[i].instruction == SUB && instruction[i].admr == ADMR_SP && instruction[i].admx == ADMX_IMM16) {
                     int j = i + 1;
                     while (j < instruction_count - 2) {
-                        if (instruction[j].instruction == CALL || instruction[j].instruction == RET || cpu_instruction_is_jump[instruction[j].instruction]) {
+                        if (instruction[j].instruction == CALL || instruction[j].instruction == RET || instruction_encoding[instruction[j].instruction].is_jump_instruction) {
                             break;
                         }
                         if (instruction[j].admr == ADMR_SP) {
@@ -730,7 +730,7 @@ char* optimizer_compile(char* content) {
                             if (instruction[j + 1].instruction == MOV && instruction[j + 1].admr == ADMR_IND_R0) {
 
                                 instruction[j + 1].instruction = PUSH;
-                                sprintf(instruction[j + 1].expression[0].tokens[0].raw, "%s", cpu_instruction_string[PUSH]);
+                                sprintf(instruction[j + 1].expression[0].tokens[0].raw, "%s", instruction_encoding[PUSH].instruction_string);
                                 for (int t = 0; t < instruction[j + 1].expression[2].token_count; t++) {
                                     if (!instruction[j + 1].expression[1].tokens[t].raw) {instruction[j + 1].expression[1].tokens[t].raw = malloc(16);}
                                     sprintf(instruction[j + 1].expression[1].tokens[t].raw, "%s", instruction[j + 1].expression[2].tokens[t].raw);
@@ -872,7 +872,7 @@ char* optimizer_compile(char* content) {
                             if (instruction[j].instruction == CALL || 
                                 instruction[j].instruction == RET || 
                                 ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && instruction[j].admr == admr) ||
-                                cpu_instruction_is_jump[instruction[j].instruction] ||
+                                instruction_encoding[instruction[j].instruction].is_jump_instruction ||
                                 (instruction[j].admx == ADMX_IMM16 && instruction[j].expression[2].tokens[0].type == TT_LABEL) ||
                                 (instruction[j].admr == admr && (is_same_indirect_adm(admr, instruction[j].admx) || register_offset_admx_contains_admr_register(instruction[j].admx, admr))) ||
                                 instruction[j].instruction == HLT ||
@@ -899,7 +899,7 @@ char* optimizer_compile(char* content) {
                                             instruction[k].instruction == CALL ||
                                             instruction[k].instruction == RET ||
                                             instruction[k].instruction == HLT || 
-                                            cpu_instruction_is_jump[instruction[k].instruction]
+                                            instruction_encoding[instruction[k].instruction].is_jump_instruction
                                         ) {
                                             valid = 0;
                                             break;
@@ -1079,8 +1079,8 @@ char* optimizer_compile(char* content) {
                 ) {
                     if (instruction[i].expression[2].token_count == 3) {    // if more than 3, then its something like "[.L + $xyz]"
                         //log_msg(LP_DEBUG, "Optimizer: replaced lea with direct move instruction (line %d)", i);
-                        instruction[i].expression[0].tokens[0].raw = realloc(instruction[i].expression[0].tokens[0].raw, strlen(cpu_instruction_string[MOV]) + 1);
-                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[MOV]);
+                        instruction[i].expression[0].tokens[0].raw = realloc(instruction[i].expression[0].tokens[0].raw, strlen(instruction_encoding[MOV].instruction_string) + 1);
+                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
                         instruction[i].instruction = MOV;
                         if (instruction[i].admx == ADMX_IND16) {
                             instruction[i].admx = ADMX_IMM16;
@@ -1353,7 +1353,7 @@ char* optimizer_compile(char* content) {
                         if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0 && string_is_immediate(instruction[i].expression[2].tokens[0].raw)) {
                             // now also check if any conditional instruction is present before another statur-register changing operation is done
                             //log_msg(LP_DEBUG, "Optimizer: replaced 0-mov with xor operation (rationale: reduce size of executable) (line %d)", i);
-                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", cpu_instruction_string[XOR]);
+                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[XOR].instruction_string);
                             sprintf(instruction[i].expression[2].tokens[0].raw, "%s", instruction[i].expression[1].tokens[0].raw);
                             instruction[i].instruction = XOR;
                             instruction[i].admx = ADMX_R0 + instruction[i].admr - ADMR_R0;

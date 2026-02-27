@@ -190,16 +190,15 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
 } CPU_INSTRUCTION_MNEMONIC_t;
 
 
-extern const char* cpu_instruction_string[INSTRUCTION_COUNT];
+typedef struct {
+    CPU_INSTRUCTION_MNEMONIC_t mnemonic;
+    char instruction_string[16];
+    int argument_count;
+    int single_operant_writeback;           // If an entry is one, it only uses admr, else admx
+    int is_jump_instruction;                // If an entry is one, it is a jump instruction
+    int is_relative_jump_instruction;       // If an entry is one, it is a relative jump instruction and will treat labels differently during assembly
+} CPU_INSTRUCTION_ENCODING_t;
 
-extern const int cpu_instruction_argument_count[INSTRUCTION_COUNT];
-
-// this list marks all instructions, that write back to memory, but only uses one argument
-// which means that the instruction should be locked to using admr only
-extern const int cpu_instruction_single_operand_writeback[INSTRUCTION_COUNT];
-
-extern const int cpu_instruction_is_jump[INSTRUCTION_COUNT];
-
-extern const int cpu_instruction_is_relative_jump[INSTRUCTION_COUNT];
+extern const CPU_INSTRUCTION_ENCODING_t instruction_encoding[INSTRUCTION_COUNT];
 
 #endif

@@ -64,16 +64,6 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
             .child_count = 0,
             .parent = NULL,
         };
-        /*log_msg(LP_INFO,
-            "token[%d], l/c/i : %d/%d/%d, length:%d, %s, \"%s\"",
-            i,
-            parser_token[i]->token.line,
-            parser_token[i]->token.column,
-            parser_token[i]->token.index,
-            parser_token[i]->token.length,
-            ir_token_name[parser_token[i]->token.type],
-            parser_token[i]->token.raw
-        );*/
     }
 
 

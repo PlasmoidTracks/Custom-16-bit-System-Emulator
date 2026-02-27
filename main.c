@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
             free(optimized_asm);
         }
     }
-
+    
 
     long binary_size = 0;
     uint16_t* segment = NULL;
@@ -146,14 +146,11 @@ int main(int argc, char* argv[]) {
         if (!co.save_temps && co.cft > CFT_BIN && (!co.no_c || co.O)) {
             remove(filename);
         }
-        
         if (!bin) {
             log_msg(LP_ERROR, "Main: Assembler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 0;
         }
-        
     } else if (co.cft == CFT_BIN) {
-
         bin = (uint8_t*) read_file(co.binary_filename, &binary_size);
 
         if (!bin) {

@@ -831,11 +831,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
                     default:
                         log_msg(LP_ERROR, "Assembler: Parsing expressions: Unknown admr \"%s\" [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
-                        /*int index = 0;
-                        while (expression[expression_index].tokens[index].raw) {
-                            log_msg(LP_INFO, "expression token %d: \"%s\"", index, expression[expression_index].tokens[index].raw);
-                            index ++;
-                        }*/
                         break;
                 }
                 if ((int) admr == -1) {
@@ -1716,16 +1711,6 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 
     free(written);
 
-    // trim final binary down
-    /*while (index > 0) {
-        if (bin[index - 1] == 0) {
-            index --;
-            continue;
-        }
-        break;
-    }
-    *binary_size = index;*/
-
     //*binary_size = 0xffff; //index;
     //bin = realloc(bin, (size_t) index);
     return bin;
@@ -1753,58 +1738,27 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
 
     // split text into lines
     char** line = assembler_split_to_separate_lines(content);
-    //int index = 0;
-    //while (line[index]) {
-        //printf("%s\n", line[index++]);
-    //}
 
     // remove comments from lines
     assembler_remove_comments(&line);
-    //index = 0;
-    //while (line[index]) {
-        //printf("%s\n", line[index++]);
-    //}
 
     // split into separate words
     int word_count;
     char** word = assembler_split_to_words(line, &word_count);
-    //index = 0;
-    //while (word[index]) {
-        //printf("%s\n", word[index++]);
-    //}
 
     // tokenize
     int token_count = 0;
     Token_t* token = assembler_parse_words(word, word_count, &token_count);
-    for (int i = 0; i < token_count; i++) {
-        //printf("Token %d: [%s], \"%s\"\n", i + 1, (int) token[i].type == -1 ? "?" : token_type_string[token[i].type], token[i].raw);
-    }
 
     // build expression array
     int expression_count = 0;
     Expression_t* expression = assembler_parse_token(token, token_count, &expression_count);
-    for (int i = 0; i < expression_count; i++) {
-        //printf("Expression %d: \"%s\"\n", i + 1, (int) expression[i].type == -1 ? "?" : expression_type_string[expression[i].type]);
-    }
 
     // ToDo, resolve all include and incbin directives, then restart
 
     // build instruction array
     int instruction_count = 0;
     Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, segment, segment_count, options);
-    for (int i = 0; i < instruction_count; i++) {
-        /*if ((int) instruction[i].instruction >= 0) {
-            printf("Instruction %d: \"%s\" (%d) [pos: %d] - ", i + 1, cpu_instruction_string[instruction[i].instruction > INSTRUCTION_COUNT ? 0 : instruction[i].instruction], instruction[i].instruction, instruction[i].address);
-            for (int e = 0; e < instruction[i].expression_count; e++) {
-                for (int t = 0; t < instruction[i].expression[e].token_count; t++) {
-                    printf("%s ", instruction[i].expression[e].tokens[t].raw);
-                }
-            }
-            printf("\n");
-        } else {
-            printf("Instruction %d: \"Not an instr.\"\n", i + 1);
-        }*/
-    }
 
     // resolve label
     instruction = assembler_resolve_labels(instruction, instruction_count);
@@ -1812,9 +1766,7 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     // to machine code
     uint8_t* machine_code = assembler_parse_instruction(instruction, instruction_count, binary_size, options);
 
-
     // free
-
     int windex = 0;
     while (word[windex]) {
         free(word[windex++]);
@@ -1823,7 +1775,6 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     free(token);
     free(expression);
     free(instruction);
-
 
     return machine_code;
 }

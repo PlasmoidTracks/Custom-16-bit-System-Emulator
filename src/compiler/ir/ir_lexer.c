@@ -447,11 +447,4 @@ extern IRLexerToken_t* ir_lexer_parse(char* source, long source_length, long* to
     return lexer_token_list;
 }
 
-/*
-First pass: LexerTokenize / throw out whitespaces
-
-
-*/
-
-
 

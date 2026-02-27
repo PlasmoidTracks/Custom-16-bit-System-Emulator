@@ -42,67 +42,12 @@ CCANParserToken_t** ccan_parser_parse(CCANLexerToken_t* lexer_token, long lexer_
             .child_count = 0,
             .parent = NULL,
         };
-        /*log_msg(LP_INFO,
-            "token[%d], l/c/i : %d/%d/%d, length:%d, %s, \"%s\"",
-            i,
-            parser_token[i]->token.line,
-            parser_token[i]->token.column,
-            parser_token[i]->token.index,
-            parser_token[i]->token.length,
-            ccan_token_name[parser_token[i]->token.type],
-            parser_token[i]->token.raw
-        );*/
     }
 
 
     // 2) Loop until no rule can be applied
     int something_changed = 1;
     while (something_changed) {
-
-        // Check for errors, from parser_warning_ruleset
-        /*int error = 0;
-        for (int start = 0; start < lexer_token_count; start++) {
-            // 4) For each position, try every rule
-            for (int rule = 0; rule < 256; rule++) {
-                if (parser_warning_ruleset[rule].context[0] == CCAN_PAR_RULE_END)
-                    break; // No more rules
-
-                int context_len = parser_warning_ruleset[rule].context_length;
-                if (start + context_len > lexer_token_count) 
-                    continue; // Not enough tokens for this rule
-
-                // Check match (including invert_match)
-                int match = 1;
-                for (int c = 0; c < context_len; c++) {
-                    CCANParserTokenType_t expected = parser_warning_ruleset[rule].context[c];
-                    CCANParserTokenType_t actual   = (CCANParserTokenType_t) parser_token[start + c]->token.type;
-                    int invert = parser_warning_ruleset[rule].invert_match[c];
-
-                    if ((actual == expected && invert) || (actual != expected && !invert)) {
-                        match = 0;
-                        break;
-                    }
-                }
-
-                if (!match) 
-                    continue;
-                
-                CCANParserToken_t* token = parser_token[start];
-                while (token->child_count >= 1) {
-                    token = token->child[0];
-                }
-                log_msg(LP_ERROR, "%s at line %d [%s:%d]", 
-                    parser_warning_ruleset[rule].description, 
-                    token->token.line, 
-                    __FILE__, __LINE__
-                );
-
-                error = 1;
-            }
-        }
-        if (error) {
-            exit(1);
-        }*/
 
         something_changed = 0;
 

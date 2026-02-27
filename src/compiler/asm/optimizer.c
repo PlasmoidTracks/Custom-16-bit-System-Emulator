@@ -18,9 +18,6 @@
 #define OPT_DEBUG
 #undef OPT_DEBUG
 
-/*
-CRITICAL BUG: Labels inside .data segments are not present in the output!!!
-*/
 
 static int is_same_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
@@ -859,14 +856,7 @@ char* optimizer_compile(char* content) {
                         int j = i + 1;
                         //printf("origin: admr: %s, admx: %s\n", cpu_reduced_addressing_mode_string[instruction[i].admr], cpu_extended_addressing_mode_string[instruction[i].admx]);
                         while (j < instruction_count - 1) {
-                            /*printf("%d: ", j - i);
-                            for (int e = 0; e < instruction[j].expression_count; e++) {
-                                for (int t = 0; t < instruction[j].expression[e].token_count; t++) {
-                                    printf("%s ", instruction[j].expression[e].tokens[t].raw);
-                                }
-                            }
-                            printf("admr: %s, admx: %s", cpu_reduced_addressing_mode_string[instruction[j].admr], cpu_extended_addressing_mode_string[instruction[j].admx]);
-                            printf("\n");*/
+                            
                             CPU_EXTENDED_ADDRESSING_MODE_t admx_j = instruction[j].admx;
 
                             if (instruction[j].instruction == CALL || 
@@ -1212,130 +1202,6 @@ char* optimizer_compile(char* content) {
             // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             // :::::::::::::::::::::::::::::::::::::::::::::: O2 optimizations ::::::::::::::::::::::::::::::::::::::::::::::
             // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-            // lea rN, ?
-            // ...
-            // mov ??, rN
-            // =>
-            // lea rN, ?
-            // ...
-            // lea ??, ?
-            /*if (i < instruction_count) {
-                if (instruction[i].instruction == LEA && is_register_admr(instruction[i].admr)) {
-                    int j = i + 1;
-                    while (j < instruction_count - 1) {
-                        if (instruction[j].instruction == CALL || instruction[j].instruction == RET || cpu_instruction_is_jump[instruction[j].instruction]) {
-                            break;
-                        }
-                        if (instruction[j].admr == instruction[i].admr) {
-                            break;
-                        }
-                        if (instruction[j].instruction == MOV && is_same_adm(instruction[i].admr, instruction[j].admx)) {
-
-                            instruction[j].instruction = LEA;
-                            sprintf(instruction[j].expression[0].tokens[0].raw, "%s", cpu_instruction_string[LEA]);
-                            for (int t = 0; t < instruction[i].expression[2].token_count; t++) {
-                                if (!instruction[j].expression[2].tokens[t].raw) {instruction[j].expression[2].tokens[t].raw = malloc(16);}
-                                sprintf(instruction[j].expression[2].tokens[t].raw, "%s", instruction[i].expression[2].tokens[t].raw);
-                                instruction[j].expression[2].tokens[t].type = instruction[i].expression[2].tokens[t].type;
-                            }
-                            instruction[j].expression[2].token_count = instruction[i].expression[2].token_count;
-                            
-                            changes_applied = 1;
-                            #ifdef OPT_DEBUG
-                                log_msg(LP_DEBUG, "Optimizer: applied {lea rN, ?; ...; mov ??, rN} => {lea rN, ?; ...; lea ??, ?} [%s:%d]", __FILE__, __LINE__);
-                            #endif
-                            break;
-                        }
-                        j ++;
-                    }
-                }
-            }
-            if (changes_applied) break;*/
-
-
-            // mov rN, x
-            // mov rM, rN
-            // =>
-            // (removed)
-            // mov rM, x
-            // given that rN is overwritten soon / not used anymore until next reset
-            /*if (i < instruction_count - 1) {
-                if (instruction[i].instruction == MOV || instruction[i].instruction == LEA) {
-                    if (is_register_admr(instruction[i].admr)) {
-                        CPU_REDUCED_ADDRESSING_MODE_t admr = instruction[i].admr;
-                        int j = i + 1;
-                        //printf("origin: admr: %s, admx: %s\n", cpu_reduced_addressing_mode_string[instruction[i].admr], cpu_extended_addressing_mode_string[instruction[i].admx]);
-                        while (j < instruction_count - 1) {
-                            CPU_EXTENDED_ADDRESSING_MODE_t admx_j = instruction[j].admx;
-
-                            if (((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && (instruction[j].admr == admr || (admr == ADMR_R0 && instruction[j].admr == ADMR_IND_R0))) ||
-                                cpu_instruction_is_jump[instruction[j].instruction] ||
-                                (instruction[j].admr == admr && (is_same_indirect_adm(admr, admx_j) || register_offset_admx_contains_admr_register(admx_j, admr))) ||
-                                (is_arithmetic_operation(instruction[j].instruction) && instruction[j].admr == admr) ||
-                                register_offset_admx_contains_admr_register(admx_j, admr) || 
-                                ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && is_same_adm(instruction[j].admr, instruction[i].admx)) ||
-                                (is_move_operator(instruction[j].instruction) && instruction[j].admr == admr)
-                            ) {
-                                    break;
-                            }
-                            
-                            if (((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && is_same_adm(admr, admx_j)) || 
-                                instruction[j].instruction == HLT ||
-                                instruction[j].instruction == CALL
-                            ) {
-                                if (1) {
-
-                                    // now need to validate that rN is unused until reset
-                                    int k = j + 1;
-                                    int valid = 1;
-                                    while (k < instruction_count - i) {
-                                        if (
-                                            is_same_adm(admr, instruction[k].admx) ||
-                                            is_same_indirect_adm(admr, instruction[k].admx) ||
-                                            register_offset_admx_contains_admr_register(instruction[k].admx, admr) ||
-                                            instruction[k].instruction == CALL ||
-                                            instruction[k].instruction == RET ||
-                                            cpu_instruction_is_jump[instruction[k].instruction]
-                                        ) {
-                                            valid = 0;
-                                            break;
-                                        }
-                                        if (instruction[k].instruction == MOV || instruction[k].instruction == LEA) {
-                                            if (instruction[k].admr == admr) {
-                                                valid = 1;
-                                                break;
-                                            }
-                                        }
-                                        k++;
-                                    }
-
-                                    if (valid) {
-                                        instruction[j].admx = instruction[i].admx;
-                                        for (int t = 0; t < instruction[i].expression[2].token_count; t++) {
-                                            if (!instruction[j].expression[2].tokens[t].raw) {
-                                                instruction[j].expression[2].tokens[t].raw = malloc(16);
-                                            }
-                                            sprintf(instruction[j].expression[2].tokens[t].raw, "%s", instruction[i].expression[2].tokens[t].raw);
-                                        }
-                                        instruction[j].expression[2].token_count = instruction[i].expression[2].token_count;
-                                        remove_instruction(instruction, &instruction_count, i);
-                                        i --;
-                                        changes_applied = 1;
-                                        #ifdef OPT_DEBUG
-                                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, x; ...(%d); mov rM, rN} => {-; ...; mov rM, x} [%s:%d]", j - i, __FILE__, __LINE__);
-                                        #endif
-                                        break;
-                                    }
-                                }
-                            }
-
-                            j++;
-                        }
-                    }
-                }
-            }
-            if (changes_applied) break;*/
 
 
             // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

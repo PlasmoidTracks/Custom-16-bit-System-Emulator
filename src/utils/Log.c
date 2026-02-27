@@ -192,7 +192,3 @@ void log_count(void) {
     }
 }
 
-
-/*
-setting LOG_LEVEL to one of the Log priorities, the log_msg function will only log messages of higher or equal priority as the log level
-*/

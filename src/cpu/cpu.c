@@ -431,10 +431,6 @@ void cpu_clock(CPU_t* cpu) {
                     cpu->regs.pc ++;
 
                     if (cpu->intermediate.argument_data_raw_index >= cpu->intermediate.argument_bytes_to_load) {
-                        /*log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Done reading all bytes", cpu->clock, cpu->state, cpu->device.device_state);
-                        for (int i = 0; i < cpu->intermediate.argument_bytes_to_load; i++) {
-                            printf("%.2x ", (uint8_t) cpu->intermediate.argument_data_raw[i]);
-                        } printf("\n");*/
                         int admc;
                         if (!instruction_encoding[cpu->intermediate.instruction].single_operant_writeback) {
                             admc = cpu_extended_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_extended];
@@ -969,22 +965,6 @@ void cpu_clock(CPU_t* cpu) {
                 cpu->regs.sr.MNI = 0;
                 int admc = cpu_reduced_addressing_mode_category[cpu->intermediate.addressing_mode.addressing_mode_reduced];
                 switch (admc) {
-                    /*case ADMC_IMM:
-                        {
-                            int admr = cpu->intermediate.addressing_mode.addressing_mode_reduced;
-                            switch (admr) {
-                                case ADMR_IMM16:
-                                    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): IMM16", cpu->clock, cpu->state, cpu->device.device_state);
-                                    cpu->intermediate.data_address_reduced = (uint8_t) cpu->intermediate.argument_data_raw[cpu->intermediate.argument_count_for_admr];
-                                    cpu->intermediate.data_address_reduced |= (cpu->intermediate.argument_data_raw[cpu->intermediate.argument_count_for_admr + 1] << 8);
-                                    break;
-                                default:
-                                    log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): unknown immediate extended addressing mode [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
-                                    break;
-                            }
-                            cpu->state = CS_EXECUTE;
-                        }
-                        break;*/
                     
                     case ADMC_REG:
                         {
@@ -1089,11 +1069,6 @@ void cpu_clock(CPU_t* cpu) {
         
         // =======================================================================================
         case CS_EXECUTE: 
-            /*printf("amdx add: %.4x, admr add: %.4x, amdx data: %.4x, admr data: %.4x\n", 
-                cpu->intermediate.argument_address_extended, 
-                cpu->intermediate.argument_address_reduced, 
-                cpu->intermediate.data_address_extended, 
-                cpu->intermediate.data_address_reduced);*/
             {
                 CS_EXECUTE:
                 #ifdef _CPU_DEEP_DEBUG_

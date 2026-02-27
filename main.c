@@ -7,15 +7,16 @@
 #include "utils/String.h"
 #include "utils/Log.h"
 
+#include "cpu/cpu_utils.h"
+
 #include "compiler/ccan/ccan_lexer.h"
 #include "compiler/ccan/ccan_parser.h"
-#include "compiler/asm/assembler.h"
 
-#include "cpu/cpu_utils.h"
 #include "compiler/ir/ir_compiler.h"
+
+#include "compiler/asm/assembler.h"
 #include "compiler/asm/canonicalizer.h"
 #include "compiler/asm/optimizer.h"
-#include "compiler/asm/macro_code_expansion.h"
 #include "compiler/asm/disassembler.h"
 
 #include "modules/system.h"
@@ -23,7 +24,7 @@
 
 
 #define HW_WATCH
-#undef HW_WATCH
+//#undef HW_WATCH
 
 
 int main(int argc, char* argv[]) {
@@ -120,21 +121,6 @@ int main(int argc, char* argv[]) {
             data_export(filename, optimized_asm, strlen(optimized_asm));
             free(optimized_asm);
         }
-
-        if (!co.no_m) {
-            // expanding asm to macro code (basically emulating higher level asm instructions with more lower level instructions)
-            char* expanded_asm = macro_code_expand_from_file(filename, cpu_generate_feature_flag());
-            if (!expanded_asm) {
-                log_msg(LP_ERROR, "Main: Macro expander returned NULL [%s:%d]", __FILE__, __LINE__);
-                return 1;
-            }
-            if (!co.save_temps) {
-                remove(filename);
-            }
-            filename = append_filename(filename, ".exp");
-            data_export(filename, expanded_asm, strlen(expanded_asm));
-            free(expanded_asm);
-        }
     }
 
 
@@ -157,7 +143,7 @@ int main(int argc, char* argv[]) {
             )
         );
 
-        if (!co.save_temps && co.cft > CFT_BIN && (!co.no_c || co.O || !co.no_m)) {
+        if (!co.save_temps && co.cft > CFT_BIN && (!co.no_c || co.O)) {
             remove(filename);
         }
         
@@ -187,7 +173,7 @@ int main(int argc, char* argv[]) {
 
     if (co.d) {
         disassembler_decompile_to_file(bin, "disassemble.asm", binary_size, segment, segment_count, 
-            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
+            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (DO_ADD_RAW_BYTES)));
     }
     
     free(segment);
@@ -197,8 +183,8 @@ int main(int argc, char* argv[]) {
     
         // Hardware setup
         System_t* system = system_create(
-            1, 
-            64, 
+            co.cache_size != 0, 
+            co.cache_size, 
             1, 
             1000.0
         );
@@ -236,7 +222,7 @@ int main(int argc, char* argv[]) {
         }
 
         cpu_print_state(system->cpu);
-        cpu_print_stack(system->cpu, system->ram, 20);
+        //cpu_print_stack(system->cpu, system->ram, 20);
         //cpu_print_cache(system->cpu);
 
         system_delete(&system);

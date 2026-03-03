@@ -596,7 +596,7 @@ char* optimizer_compile(char* content) {
                                 value = bf16_mult(value, value2);
                                 break;
                             case DIVD:
-                                value = fi16_div(value, value2);
+                                value = bf16_div(value, value2);
                                 break;
                             case ADDL:
                                 value = fi16_add(value, value2);
@@ -608,7 +608,7 @@ char* optimizer_compile(char* content) {
                                 value = fi16_mult(value, value2);
                                 break;
                             case DIVL:
-                                value = bf16_div(value, value2);
+                                value = fi16_div(value, value2);
                                 break;
                             case AND:
                                 value &= value2;

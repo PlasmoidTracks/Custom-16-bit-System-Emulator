@@ -261,7 +261,7 @@ int parse_immediate(const char text[]) {
         return bf16_from_float(strtof(&text[1], NULL));
     }
     if (text[0] == 'l') {
-        return fi16_from_int(strtof(&text[1], NULL));
+        return fi16_from_long_long(strtof(&text[1], NULL));
     }
     if (length > 1 && text[0] == '0') {
         if (text[1] == 'x') {

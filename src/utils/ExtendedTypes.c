@@ -38,7 +38,8 @@ typedef enum {
    FLOAT32 -> FLOAT16
    ============================================================ */
 float16_t f16_from_float(float f32) {
-    uint32_t bits = *(uint32_t*)&f32;
+    void* tmp = &f32;
+    uint32_t bits = *(uint32_t*)tmp;
     uint32_t sign = bits >> 31;
     int exp32 = (bits >> 23) & 0xFF;
     uint32_t mant32 = bits & 0x7FFFFF;
@@ -114,7 +115,8 @@ float float_from_f16(float16_t f16) {
     }
 
     uint32_t bits = (sign << 31) | (exp32 << 23) | mant32;
-    return *(float*)&bits;
+    void* tmp = &bits;
+    return *(float*)tmp;
 }
 
 /* ============================================================
@@ -306,7 +308,8 @@ typedef enum {
    FLOAT32 -> BFLOAT16  (round-to-nearest-even)
    ============================================================ */
 bfloat16_t bf16_from_float(float f32) {
-    uint32_t bits = *(uint32_t*)&f32;
+    void* tmp = &f32;
+    uint32_t bits = *(uint32_t*)tmp;
     uint32_t lsb = (bits >> 16) & 1;
     uint32_t rounding_bias = 0x7FFF + lsb;
     bits += rounding_bias;
@@ -318,7 +321,8 @@ bfloat16_t bf16_from_float(float f32) {
    ============================================================ */
 float float_from_bf16(bfloat16_t bf16) {
     uint32_t bits = ((uint32_t)bf16) << 16;
-    return *(float*)&bits;
+    void* tmp = &bits;
+    return *(float*)tmp;
 }
 
 /* ============================================================

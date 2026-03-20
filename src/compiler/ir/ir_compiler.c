@@ -1106,7 +1106,7 @@ char* ir_compile(char* source, long source_length, IRCompileOption_t options) {
             case IR_PAR_INLINE_ASM: {
                 code_output = append_to_output(code_output, &code_output_len, "; inline assembly\n");
                 const char* asm = parser_token[parser_token_index]->child[1]->token.raw;
-                char inline_asm[strlen(asm) + 16];
+                char inline_asm[strlen(asm) + 256];
                 strncpy(inline_asm, asm + 1, strlen(asm) - 2);
                 inline_asm[strlen(asm) - 2] = '\0';
                 char** splits = split(inline_asm, " ,\t%", "%");

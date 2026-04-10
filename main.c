@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "utils/IO.h"
 #include "utils/String.h"
@@ -24,7 +25,7 @@
 
 
 #define HW_WATCH
-//#undef HW_WATCH
+#undef HW_WATCH
 
 
 int main(int argc, char* argv[]) {
@@ -183,7 +184,7 @@ int main(int argc, char* argv[]) {
             co.cache_size != 0, 
             co.cache_size, 
             1, 
-            1000.0
+            100.0
         );
 
         if (!system) {
@@ -209,6 +210,13 @@ int main(int argc, char* argv[]) {
             ram_write(system->ram, i, bin[i]);
         }
 
+        uint32_t frequency = 1000000;
+
+        struct timeval tv;
+        gettimeofday(&tv,NULL);
+        uint64_t t = tv.tv_sec * 1000000 + tv.tv_usec;
+        double dt = 0;
+
         // Execution step
         for (long long int i = 0; i < 10000000 && system->cpu->state != CS_HALT && system->cpu->state != CS_EXCEPTION; i++) {
             #ifdef HW_WATCH
@@ -216,6 +224,16 @@ int main(int argc, char* argv[]) {
             #else
                 system_clock(system);
             #endif
+            while(1) {
+                gettimeofday(&tv,NULL);
+                dt += (double) (tv.tv_sec * 1000000 + tv.tv_usec - t);
+                t = tv.tv_sec * 1000000 + tv.tv_usec;
+                if (dt < (1000000.0 / frequency)) {
+                    continue;
+                }
+                dt -= (1000000.0 / frequency);
+                break;
+            }
         }
 
         cpu_print_state(system->cpu);

@@ -11,10 +11,12 @@ These values can be used as operands anywhere immediates are accepted:
 - Hex:      $1234, 0x1234   mov r0, $ffff / mov r0, 0xffff
 - Octal:    0o1234          mov r0, 0o741
 - Binary:   0b10101010      mov r0, 0b11100
-- Float16:  f1.25           mov r0, f1.25
-  - float16 also includes negative values, like f-1.25
-- BFloat16: bf1.25          mov r0, bf1.25
-  - bfloat16 also includes negative values, like bf-1.25
+- Float:    f1.25           mov r0, f1.25
+  - float/float16 also includes negative values, like f-1.25
+- Double:   d1.25           mov r0, d1.25
+  - double/bfloat16 also includes negative values, like bf-1.25
+- Long: l1000190509056      mov r0, l1000190509056
+  - long also includes negative values, like l-123404288
 
 Syntax
 ------

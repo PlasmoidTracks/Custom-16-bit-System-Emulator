@@ -1,7 +1,7 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -D_FILE_OFFSET_BITS=64 -Iinclude -Iinclude/utils -march=native -Wall -Werror=format-security -Werror=implicit-function-declaration -std=c11 -fpie -march=native \
-         -Wextra -pedantic -fstack-protector-all -Wshadow -Wstrict-prototypes -Werror=return-type -pthread -finstrument-functions -D_GNU_SOURCE
+         -Wextra -pedantic -fstack-protector-all -Wshadow -Wstrict-prototypes -Werror=return-type -pthread -finstrument-functions -D_GNU_SOURCE -lc
 LIBS = -Llib 
 
 # Directories

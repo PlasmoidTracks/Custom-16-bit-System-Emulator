@@ -28,9 +28,10 @@ void cpu_print_cache(CPU_t* cpu) {
             cpu->cache->address[i], 
             cpu->cache->data[i], 
             cpu->cache->state[i].valid, 
-            cpu->cache->state[i].dirty, 
-            cpu->cache->state[i].uses, 
-            cpu->cache->state[i].age);
+            0,//cpu->cache->state[i].dirty, 
+            0,//cpu->cache->state[i].uses, 
+            0//cpu->cache->state[i].age
+        );
     }
     printf("\033[1;34m================================================\033[0m\n\n");
 }

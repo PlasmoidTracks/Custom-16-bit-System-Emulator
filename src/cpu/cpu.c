@@ -111,8 +111,9 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Attempting to request memory at address 0x%.4x", cpu->clock, cpu->state, cpu->device.device_state, address);
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking cache first", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
-    int success = cache_read(cpu->cache, address, data, cpu->regs.sr.NC);
-    if (success) return 1;
+    if (!cpu->regs.sr.NC) {
+        if (cache_read(cpu->cache, address, data)) return 1;
+    }
     #ifdef _CPU_DEEP_DEBUG_
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tCache miss", cpu->clock, cpu->state, cpu->device.device_state);
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking device response", cpu->clock, cpu->state, cpu->device.device_state);
@@ -122,7 +123,7 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
             #ifdef _CPU_DEEP_DEBUG_
             log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): \tThe device responded with the wrong address. Making new request [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
             #endif
-        cpu->device.address = address;
+            cpu->device.address = address;
             cpu->device.processed = 0;
             cpu->device.device_state = DS_FETCH;
             return 0;
@@ -137,7 +138,9 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
         #ifdef _CPU_DEEP_DEBUG_
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Requesting write to cache", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
-        cache_write(cpu->cache, cpu->device.address, (uint8_t*) &response, sizeof(response), cpu->regs.sr.NC);
+        if (!cpu->regs.sr.NC) {
+            cache_write(cpu->cache, cpu->device.address, (uint8_t*) &response, sizeof(response));
+        }
 
         *data = (uint8_t) response;
         #ifdef _CPU_DEEP_DEBUG_
@@ -192,7 +195,10 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
     cpu->device.processed = 0;
     cpu->device.device_state = DS_STORE;
 
-    int accept_dirty_write = cache_write(cpu->cache, cpu->device.address, (uint8_t*) &data, 1, cpu->regs.sr.NC);
+    int accept_dirty_write = 0;
+    if (!cpu->regs.sr.NC) {
+        accept_dirty_write = cache_write(cpu->cache, cpu->device.address, (uint8_t*) &data, 1);
+    }
     return accept_dirty_write;
 }
 
@@ -264,7 +270,7 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->last_instruction = (CPU_INSTRUCTION_MNEMONIC_t) cpu->intermediate.instruction;
                         #ifdef _CPU_DEBUG_
                         if (cpu->intermediate.argument_count == 0) {
-                            log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:0): %s - nc: %d - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (argc:0): %s - nc: %d - sp: %.4x", 
                                 cpu->clock, cpu->state, cpu->device.device_state, 
                                 cpu->regs.pc, 
                                 instruction_encoding[cpu->intermediate.instruction].instruction_string, 
@@ -318,7 +324,7 @@ void cpu_clock(CPU_t* cpu) {
 
                     if (cpu->intermediate.argument_count == 2) {
                         #ifdef _CPU_DEBUG_
-                            log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:2): %s %s, %s - nc: %d - sp: %.4x", 
+                            log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (argc:2): %s %s, %s - nc: %d - sp: %.4x", 
                                 cpu->clock, cpu->state, cpu->device.device_state, 
                                 cpu->regs.pc - 1, 
                                 instruction_encoding[cpu->intermediate.instruction].instruction_string, 
@@ -337,7 +343,7 @@ void cpu_clock(CPU_t* cpu) {
                     } else {
                         if (instruction_encoding[cpu->intermediate.instruction].single_operant_writeback) {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:1 sow): %s %s - nc: %d - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (argc:1 single_operant_writeback): %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, cpu->state, cpu->device.device_state, 
                                     cpu->regs.pc - 1, 
                                     instruction_encoding[cpu->intermediate.instruction].instruction_string, 
@@ -354,7 +360,7 @@ void cpu_clock(CPU_t* cpu) {
                             }
                         } else {
                             #ifdef _CPU_DEBUG_
-                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (ac:1): %s %s - nc: %d - sp: %.4x", 
+                                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): PC %.4x - instruction (argc:1): %s %s - nc: %d - sp: %.4x", 
                                     cpu->clock, cpu->state, cpu->device.device_state, 
                                     cpu->regs.pc - 1, 
                                     instruction_encoding[cpu->intermediate.instruction].instruction_string, 

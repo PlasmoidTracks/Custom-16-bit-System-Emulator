@@ -44,31 +44,25 @@ void cache_delete(Cache_t** cache) {
     *cache = NULL;
 }
 
-int cache_read(Cache_t* cache, uint16_t address, uint8_t* data, int skipRead) {
+int cache_read(Cache_t* cache, uint16_t address, uint8_t* data) {
     if (!cache) return 0;
-    if (skipRead) {
-        return 0;
-    }
 
     uint16_t cache_address = address & (cache->capacity - 1);
 
-    cache->state[cache_address].age += (cache->state[cache_address].age == 0xff) ? 0 : 1;
-    if (!cache->state[cache_address].valid || cache->address[cache_address] != address || cache->state[cache_address].dirty) {
+    //cache->state[cache_address].age += (cache->state[cache_address].age == 0xff) ? 0 : 1;
+    if (!cache->state[cache_address].valid || cache->address[cache_address] != address /*|| cache->state[cache_address].dirty*/) {
         cache->miss ++;
         return 0;
     }
     *data = cache->data[cache_address];
-    cache->state[cache_address].uses += (cache->state[cache_address].uses == 0xff) ? 0 : 1;
+    //cache->state[cache_address].uses += (cache->state[cache_address].uses == 0xff) ? 0 : 1;
     cache->hit ++;
     
     return 1;
 }
 
-int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size, int skipWrite) {
+int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size) {
     if (!cache) return 0;
-    if (skipWrite) {
-        return 0;
-    }
 
     uint16_t cache_address = address & (cache->capacity - 1);
 
@@ -76,10 +70,10 @@ int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_siz
         int index = (cache_address + byte) % cache->capacity;
         cache->address[index] = address + byte;
         cache->data[index] = data[byte];
-        cache->state[index].dirty = 0;
+        //cache->state[index].dirty = 0;
         cache->state[index].valid = 1;
-        cache->state[index].uses = (byte == 0); // only set use to 1 for the first byte, else 0. Why? I forgor
-        cache->state[index].age = 0;
+        //cache->state[index].uses = (byte == 0); // only set use to 1 for the first byte, else 0. Why? I forgor
+        //cache->state[index].age = 0;
     }
 
     return 0;

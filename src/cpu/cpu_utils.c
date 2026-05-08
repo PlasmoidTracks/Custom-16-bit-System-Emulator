@@ -83,7 +83,7 @@ void cpu_print_register(char* name, uint16_t value) {
     format_float_to_scientific_notation(buffer_ptr1, float_from_f16((float16_t) value));
     format_float_to_scientific_notation(buffer_ptr2, float_from_bf16((bfloat16_t) value));
     format_fint_to_string(buf3, value);
-    printf(" \033[1;32m%s\033[0m  hex: 0x%04X | int: %6d | float: %-15s | double: %-15s | long: %-14s | C: '%s'\n",
+    printf(" \033[1;32m%s\033[0m  0x%04X | %6d | %-15s | %-15s | %14s | '%s'\n",
         name, value, (int16_t) value, buf1, buf2, buf3, ascii);
     free(ascii);
 }
@@ -94,6 +94,7 @@ void cpu_print_state(CPU_t* cpu) {
 
     // General Registers with Multiple Representations
     printf("\033[1;33m Registers\033[0m\n");
+    printf("\033[1;34m     hex         int   float             double                      long   char \033[0m\n");
 
     cpu_print_register("R0", cpu->regs.r0);
     cpu_print_register("R1", cpu->regs.r1);
@@ -134,7 +135,7 @@ void cpu_print_state(CPU_t* cpu) {
         printf(" \033[1;32mLast Instruction\033[0m ??? (%d)\n", (int) cpu->last_instruction);
     }
 
-    printf("\033[1;35m========================================\033[0m\n\n");
+    printf("\033[1;35m=========================================\033[0m\n\n");
 }
 
 void cpu_print_state_compact(CPU_t* cpu) {
@@ -151,9 +152,13 @@ void cpu_print_state_compact(CPU_t* cpu) {
 void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
     if (!cpu || count <= 0) return;
 
-    printf("\n\033[1;36m=============================== CPU STACK ===============================\033[0m\n");
-    printf(" \033[1;33m   Addr   |  Hex   |  Int   |     Float16     |    BFloat16     | Regs \033[0m\n");
-    printf("-------------------------------------------------------------------------\n");
+    printf("\n\033[1;36m=============================================== CPU STACK ===============================================\033[0m\n");
+    #ifdef __RAM_DEBUG
+        printf(" \033[1;33m   Addr   |  Hex   |  Int   |      Float      |     Double      |       Long      |   DEBUG r/w   | Regs \033[0m\n");
+    #else
+        printf(" \033[1;33m   Addr   |  Hex   |  Int   |      Float      |     Double      |       Long      | Regs \033[0m\n");
+    #endif
+    printf("---------------------------------------------------------------------------------------------------------\n");
 
     for (int i = 0; i < count; ++i) {
         uint16_t address = SEGMENT_STACK - i * 2;
@@ -176,22 +181,38 @@ void cpu_print_stack(CPU_t* cpu, RAM_t* ram, int count) {
 
         char buf1[128];
         char buf2[128];
+        char buf3[128];
         format_float_to_scientific_notation(buf1, float_from_f16((float16_t) value));
         format_float_to_scientific_notation(buf2, float_from_bf16((bfloat16_t) value));
+        format_fint_to_string(buf3, (fint16_t) value);
 
-        if (len > 0) {
-            printf("  \033[1;32m0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s | <-- %s \033[0m",
-                address - 1, address & 0x000f, value, signed_val, buf1, buf2, reg_label);
-        } else {
-            printf("  0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s |",
-                address - 1, address & 0x000f, value, signed_val, buf1, buf2);
-        }
+        #ifdef __RAM_DEBUG
+            if (len > 0) {
+                printf("  \033[1;32m0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s | %-15s |    %d/%d    | <-- %s \033[0m",
+                    address - 1, address & 0x000f, value, signed_val, buf1, buf2, buf3, 
+                    ram->debug.reads[address], ram->debug.writes[address], reg_label
+                );
+            } else {
+                printf("  0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s | %-15s | %-6d/%6d |",
+                    address - 1, address & 0x000f, value, signed_val, buf1, buf2, buf3, 
+                    ram->debug.reads[address], ram->debug.writes[address]
+                );
+            }
+        #else
+            if (len > 0) {
+                printf("  \033[1;32m0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s | %-15s | <-- %s \033[0m",
+                    address - 1, address & 0x000f, value, signed_val, buf1, buf2, buf3, reg_label);
+            } else {
+                printf("  0x%04X/%.1X | 0x%04X | %-6d | %-15s | %-15s | %-15s |",
+                    address - 1, address & 0x000f, value, signed_val, buf1, buf2, buf3);
+            }
+        #endif
         if (i < count - 1) {printf("\n");}
 
         free(ascii);
     }
 
-    printf("\n\033[1;36m=========================================================================\033[0m\n");
+    printf("\n\033[1;36m=========================================================================================================\033[0m\n");
 }
 
 void cpu_print_stack_compact(CPU_t* cpu, RAM_t* ram, int count) {

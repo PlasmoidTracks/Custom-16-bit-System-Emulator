@@ -216,6 +216,7 @@ int string_is_asm_immediate(const char text[]) {
     if (length > 1 && text[0] == 'f' && string_is_float(&text[1])) return 1;
     if (length > 1 && text[0] == 'd' && string_is_float(&text[1])) return 1;
     if (length > 1 && text[0] == 'l' && string_is_numeral(&text[1])) return 1;
+    if (length > 1 && text[0] == 'i' && string_is_numeral(&text[1])) return 1;
     if (text[0] == '0') {
         if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
         if (length > 2 && (text[1] == 'o' || text[1] == 'b') && string_is_numeral(&text[2])) return 1;
@@ -234,6 +235,7 @@ int string_is_immediate(const char text[]) {
     if (length > 1 && text[0] == '$' && string_is_hex_numeral(&text[1])) return 1;
     if (length > 1 && text[0] == 'f' && string_is_float(&text[1])) return 1;
     if (length > 1 && text[0] == 'd' && string_is_float(&text[1])) return 1;
+    if (length > 1 && text[0] == 'i' && string_is_numeral(&text[1])) return 1;
     if (length > 1 && text[0] == 'l' && string_is_numeral(&text[1])) return 1;
     if (text[0] == '0') {
         if (length > 2 && (text[1] == 'x') && string_is_hex_numeral(&text[2])) return 1;
@@ -262,6 +264,9 @@ int parse_immediate(const char text[]) {
     }
     if (text[0] == 'l') {
         return fi16_from_long_long(strtof(&text[1], NULL));
+    }
+    if (text[0] == 'i') {
+        return strtol(&text[1], NULL, 10);
     }
     if (length > 1 && text[0] == '0') {
         if (text[1] == 'x') {

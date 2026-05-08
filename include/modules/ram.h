@@ -5,16 +5,31 @@
 
 #include "device.h"
 
-typedef struct RAM_t {
-    uint64_t clock;
-    
-    uint32_t capacity;
-    uint8_t *data;
+#define __RAM_DEBUG
+#undef __RAM_DEBUG
 
+
+#ifdef __RAM_DEBUG
+    typedef struct {
+        uint32_t* reads;
+        uint32_t* writes;
+    } __RAM_DEBUG_t;
+#endif //__RAM_DEBUG
+
+typedef struct RAM_t {
     Device_t device;
+
+    uint64_t clock;
+    uint8_t* data;
+
+    #ifdef __RAM_DEBUG
+        __RAM_DEBUG_t debug;
+    #endif
 
     uint64_t reads;
     uint64_t writes;
+    
+    uint32_t capacity;
 } RAM_t;
 
 

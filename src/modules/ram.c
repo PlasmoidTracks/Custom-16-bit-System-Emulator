@@ -11,16 +11,23 @@ RAM_t* ram_create(uint32_t capacity) {
         &ram->device, 
         listening_region_create(0x0000, 0x7fff, 1, 1)
     );
-    /*device_add_listening_region(
-        &ram->device, 
-        listening_region_create(0xa000, 0xefff, 1, 1)
-    );*/
+
     ram->capacity = capacity;
     //log_msg(LP_INFO, "setting ram cap to %.4x and is now %.4x\n", capacity, ram->capacity);
     ram->data = malloc(sizeof(uint8_t) * capacity);
     for (uint32_t i = 0; i < capacity; i++) {
         ram->data[i] = 0x00; //rand8();
     }
+
+    #ifdef __RAM_DEBUG
+        ram->debug.reads = malloc(sizeof(uint32_t) * capacity);
+        ram->debug.writes = malloc(sizeof(uint32_t) * capacity);
+        for (uint32_t i = 0; i < capacity; i++) {
+            ram->debug.reads[i] = 0;
+            ram->debug.writes[i] = 0;
+        }
+    #endif
+
     ram->clock = 0ULL;
 
     ram->reads = 0;
@@ -32,6 +39,11 @@ RAM_t* ram_create(uint32_t capacity) {
 void ram_delete(RAM_t** ram) {
     if (!ram) {return;}
     free((*ram)->data);
+    #ifdef __RAM_DEBUG
+        free((*ram)->debug.reads);
+        free((*ram)->debug.writes);
+        free((*ram)->debug.last_refresh);
+    #endif
     free(*ram);
     *ram = NULL;
 }
@@ -42,7 +54,13 @@ uint8_t ram_read(RAM_t* ram, uint16_t address) {
         return 0x00;
     }
     ram->reads += 1ULL;
-    return ram->data[address % ram->capacity];
+    uint16_t hw_address = address % ram->capacity;
+
+    #ifdef __RAM_DEBUG
+        ram->debug.reads[hw_address] ++;
+    #endif
+
+    return ram->data[hw_address];
 }
 
 void ram_write(RAM_t* ram, uint16_t address, uint8_t data) {
@@ -51,7 +69,12 @@ void ram_write(RAM_t* ram, uint16_t address, uint8_t data) {
         return;
     }
     ram->writes += 1ULL;
-    ram->data[address % ram->capacity] = data;
+    uint16_t hw_address = address % ram->capacity;
+
+    #ifdef __RAM_DEBUG
+        ram->debug.writes[hw_address] ++;
+    #endif
+    ram->data[hw_address] = data;
 }
 
 void ram_clock(RAM_t* ram) {

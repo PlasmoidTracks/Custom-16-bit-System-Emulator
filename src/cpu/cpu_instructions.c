@@ -5,6 +5,7 @@ const CPU_INSTRUCTION_ENCODING_t instruction_encoding[INSTRUCTION_COUNT] = {
     // Data Manipulation
     [NOP] = {NOP, "nop", 0, 0, 0, 0},
     [MOV] = {MOV, "mov", 2, 0, 0, 0},
+    [MOVB] = {MOVB, "movb", 2, 0, 0, 0}, 
     [PUSH] = {PUSH, "push", 1, 0, 0, 0},
     [POP] = {POP, "pop", 1, 1, 0, 0},
     [PUSHSR] = {PUSHSR, "pushsr", 0, 0, 0, 0},

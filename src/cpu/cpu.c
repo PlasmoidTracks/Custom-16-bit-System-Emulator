@@ -1093,6 +1093,13 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->state = CS_WRITEBACK_LOW;
                         goto CS_WRITEBACK_LOW;
                         break;
+                
+                    case MOVB:
+                        cpu->intermediate.result = (cpu->intermediate.data_address_extended & 0x00ff) | (cpu->intermediate.data_address_extended << 8); // janky, just to get the behavior to be consistent between register and ram usage
+                        cpu->intermediate.argument_address_reduced -= 1;
+                        cpu->state = CS_WRITEBACK_HIGH;
+                        goto CS_WRITEBACK_HIGH;
+                        break;
 
                     case PUSH:
                         cpu->intermediate.result = cpu->intermediate.data_address_extended;
@@ -2288,26 +2295,26 @@ void cpu_clock(CPU_t* cpu) {
                     case ADMC_REG:
                         switch (cpu->intermediate.addressing_mode.addressing_mode_reduced) {
                             case ADMR_R0:
-                                cpu->regs.r0 = cpu->intermediate.result;
+                                cpu->regs.r0 = (cpu->regs.r0 & 0x00ff) | (cpu->intermediate.result & 0xff00);
                                 break;
                             case ADMR_R1:
-                                cpu->regs.r1 = cpu->intermediate.result;
+                                cpu->regs.r1 = (cpu->regs.r1 & 0x00ff) | (cpu->intermediate.result & 0xff00);
                                 break;
                             case ADMR_R2:
-                                cpu->regs.r2 = cpu->intermediate.result;
+                                cpu->regs.r2 = (cpu->regs.r2 & 0x00ff) | (cpu->intermediate.result & 0xff00);
                                 break;
                             case ADMR_R3:
-                                cpu->regs.r3 = cpu->intermediate.result;
+                                cpu->regs.r3 = (cpu->regs.r3 & 0x00ff) | (cpu->intermediate.result & 0xff00);
                                 break;
                             case ADMR_SP:
-                                cpu->regs.sp = cpu->intermediate.result;
+                                cpu->regs.sp = (cpu->regs.sp & 0x00ff) | (cpu->intermediate.result & 0xff00);
                                 break;
                             default:
                                 break;
                         }
                         cpu->instruction ++;
-                        cpu->state = CS_FETCH_INSTRUCTION;
-                        goto CS_FETCH_INSTRUCTION;
+                        cpu->state = CS_WRITEBACK_HIGH;
+                        goto CS_WRITEBACK_HIGH;
                         break;
 
                     case ADMC_NONE:
@@ -2350,19 +2357,19 @@ void cpu_clock(CPU_t* cpu) {
                         // TODO: switch case and write to register
                         switch (cpu->intermediate.addressing_mode.addressing_mode_reduced) {
                             case ADMR_R0:
-                                cpu->regs.r0 = cpu->intermediate.result;
+                                cpu->regs.r0 = (cpu->regs.r0 & 0xff00) | (cpu->intermediate.result & 0x00ff);
                                 break;
                             case ADMR_R1:
-                                cpu->regs.r1 = cpu->intermediate.result;
+                                cpu->regs.r1 = (cpu->regs.r1 & 0xff00) | (cpu->intermediate.result & 0x00ff);
                                 break;
                             case ADMR_R2:
-                                cpu->regs.r0 = cpu->intermediate.result;
+                                cpu->regs.r2 = (cpu->regs.r2 & 0xff00) | (cpu->intermediate.result & 0x00ff);
                                 break;
                             case ADMR_R3:
-                                cpu->regs.r1 = cpu->intermediate.result;
+                                cpu->regs.r3 = (cpu->regs.r3 & 0xff00) | (cpu->intermediate.result & 0x00ff);
                                 break;
                             case ADMR_SP:
-                                cpu->regs.sp = cpu->intermediate.result;
+                                cpu->regs.sp = (cpu->regs.sp & 0xff00) | (cpu->intermediate.result & 0x00ff);
                                 break;
                             default:
                                 break;

@@ -7,17 +7,19 @@
 
 typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Data Manipulation
-    NOP,        // Does nothing                                         [No-Op]eration
-    MOV,        // mov dest, src            :: src -> dest              [Mov]e
+    NOP,        // Does nothing                                                 [N]o [OP]eration
+    MOV,        // mov dest, src            :: src -> dest                      [MOV]e
+    MOVB,       // movb dest, src           :: (8-bits) src -> (8-bits) dest    [MOV]e [B]yte
     PUSH,       // push src                 :: sp -= 2; src -> [sp]
     POP,        // pop dest                 :: [sp] -> dest; sp += 2
     PUSHSR,     // [push] [s]tatus [r]eg    :: sp -= 2; sr -> [sp] 
     POPSR,      // [pop] [s]tatus [r]eg     :: [sp] -> sr; sp += 2
-    LEA,        // lea dest, [src]          :: address of src -> dest   [L]oad [E]ffective [Address]
+    LEA,        // lea dest, [src]          :: address of src -> dest           [L]oad [E]ffective [A]ddress
+
 
     // Jumps and Calls
-    JMP,        // jmp dest         :: dest -> pc                       [J]u[mp]
-    JZ,         // jz dest          :: if Z == 1, dest -> pc            [J]ump [Z]ero
+    JMP,        // jmp dest         :: dest -> pc                               [J]u[MP]
+    JZ,         // jz dest          :: if Z == 1, dest -> pc                    [J]ump [Z]ero
     JNZ,        // jnz dest         :: if Z == 0, dest -> pc
     JFZ,        // jfz dest         :: if FZ == 1, dest -> pc
     JNFZ,       // jnfz dest        :: if FZ == 0, dest -> pc
@@ -32,13 +34,13 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     JLL,        // rjfl value      :: if FL == 1, pc + value -> pc
     JNLL,       // rjnfl value     :: if FL == 0, pc + value -> pc
     JAO,        // jao dest         :: if AO == 1, dest -> pc
-    JNAO,       // jnao dest        :: if AO == 0, dest -> pc
+    JNAO,       // jnao dest        :: if AO == 0, dest -> pc                   [J]ump [N]ot [A]rithmetic [O]verflow
 
     CALL,       // call dest        :: sp -= 2; pc -> [sp]; dest -> pc
     RET,        // ret              :: [sp] -> pc; sp += 2
 
     // Relative Jumps and Calls
-    RJMP,        // rjmp value      :: pc + value -> pc
+    RJMP,        // rjmp value      :: pc + value -> pc                         [R]elative [J]u[MP]
     RJZ,         // rjz value       :: if Z == 1, pc + value -> pc
     RJNZ,        // rjnz value      :: if Z == 0, pc + value -> pc
     RJFZ,        // rjfz value      :: if FZ == 1, pc + value -> pc

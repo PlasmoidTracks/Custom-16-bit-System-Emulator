@@ -1244,6 +1244,14 @@ char* optimizer_compile(char* content) {
                 char tmp[32];
                 sprintf(tmp, ".address $%.4X", instr.address);
                 output = append_to_output(output, &output_len, tmp);
+            } else if (instr.expression[0].type == EXPR_STORE_ADDRESS) {
+                char tmp[32];
+                sprintf(tmp, ".store_address");
+                output = append_to_output(output, &output_len, tmp);
+            } else if (instr.expression[0].type == EXPR_RESTORE_ADDRESS) {
+                char tmp[32];
+                sprintf(tmp, ".restore_address");
+                output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_RESERVE) {
                 char tmp[32];
                 sprintf(tmp, ".reserve %s", instr.expression[0].tokens[1].raw);

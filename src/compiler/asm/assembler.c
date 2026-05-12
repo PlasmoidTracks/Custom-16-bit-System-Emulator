@@ -1249,7 +1249,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 if (instruction[instruction_index_since_last_address_change].is_address) {
                     //if (instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_STORE_ADDRESS
                     // && instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_RESTORE_ADDRESS) {
-                            address = instruction[instruction_index_since_last_address_change].address - 2;
+                            address = instruction[instruction_index_since_last_address_change].address - 2; // + (instruction_encoding[instruction[i].instruction].argument_count == 0);
+                            if (address < 0) address = 0;
                             if (segment && segment_count) {
                                 // Allocate or reallocate the segment buffer
                                 uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
@@ -1272,8 +1273,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     }
                     if (instruction[i].expression[0].type == EXPR_DATA) {
                         if (instruction[i].expression[0].tokens[0].type == TT_DW) {
+                            //log_msg(LP_DEBUG, "address adjusted by data 2b: %.4x", instruction[i].expression[0].tokens[0].raw, address);
                             address += 2;
                         } else if (instruction[i].expression[0].tokens[0].type == TT_DB) {
+                            //log_msg(LP_DEBUG, "address adjusted by data 1b: %.4x", instruction[i].expression[0].tokens[0].raw, address);
                             address += 1;
                         } else {
                             log_msg(LP_ERROR, "Unknown data define width");
@@ -1282,9 +1285,11 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     }
                     address += instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0);
                     // above was adjusted for the case of 1-byte encoded instructions
+                    //log_msg(LP_DEBUG, "address adjusted by instruction (%s) increase of (%d) width: %.4x", instruction[i].expression[0].tokens[0].raw, instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0), address);
                     byte_index = address;
                 }
                 jump_label[jump_label_index].value = address;
+                //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %.4x", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
                 jump_label_index ++;
                 if (jump_label_index >= MAX_LABELS) {
                     log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d) [%s:%d]", MAX_LABELS, __FILE__, __LINE__);

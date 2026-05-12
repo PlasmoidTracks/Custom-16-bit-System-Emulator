@@ -1252,6 +1252,10 @@ char* optimizer_compile(char* content) {
                 char tmp[32];
                 sprintf(tmp, ".restore_address");
                 output = append_to_output(output, &output_len, tmp);
+            } else if (instr.expression[0].type == EXPR_PAD) {
+                char tmp[32];
+                sprintf(tmp, ".pad %s", instr.expression[0].tokens[1].raw);
+                output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_RESERVE) {
                 char tmp[32];
                 sprintf(tmp, ".reserve %s", instr.expression[0].tokens[1].raw);

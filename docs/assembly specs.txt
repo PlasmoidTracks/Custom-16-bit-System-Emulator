@@ -18,6 +18,8 @@ These values can be used as operands anywhere immediates are accepted:
 - Long: l1000190509056      mov r0, l1000190509056
   - long also includes negative values, like l-123404288
 
+
+
 Syntax
 ------
 Instructions and their operands can be written in any format, as long as they are separated by a space or a newline. 
@@ -28,6 +30,7 @@ Comments can be written after a semicolon character ';', that extend up until th
 - "mov r0, r1 ; THIS HERE IS A COMMENT AND WILL BE IGNORED"
 
 
+
 No-Cache Modifier
 ------
 Instructions can have a no-cache modifier, simply by prepending a '%' to the instruction, like this:
@@ -36,6 +39,7 @@ Or by using the 'nc' specifier
 - "nc mov r0 [$1234]"
 This has the effect, that the memory fetching and writing does read or write to cache. 
 This is useful for addresses that may change during consecutive reads from the same address, like external registers. 
+
 
 
 Addressing Modes
@@ -58,6 +62,7 @@ Used as source in instructions.
 - Indirect Register:                    [r0], [r1], [sp], [pc], etc.
 - Indirect Register + Immediate Offset: [$1234 + r0], [$1234 + sp], etc.
 - Indirect Register + Scaled Offset:    [$1234 + $56 * r0], [$0080 + $02 * pc]
+
 
 
 Labels
@@ -87,10 +92,10 @@ Labels
   - .data
   - *.func        ; so instead of a reference, it will write the address .func resolves to
 
-
 Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed. 
 There is an exception for relative jump instructions using labels as an immediate 16-bit value (i.e. "rjmp .label"). 
 Here labels are not resolved to their absolute address representation, but instead to the relative address. 
+
 
 
 Address Control
@@ -115,9 +120,6 @@ Address Control
   Needs a preceeding store, this is not checked. 
   Multiple restores will yield the same result. 
 
-
-
-[NOT IMPLEMENTED]
 - Memory padding:
   - .pad $10
   Pads the current address to the next multiple of the value. 
@@ -126,7 +128,7 @@ Address Control
   - .pad $fff0
   Negative values will change the case where the current address already falls inside the padding. 
   Instead, it will force a gap of the aboslute padding value, in this case 16 bytes. 
-[~NOT IMPLEMENTED]
+
 
 
 Segments
@@ -152,13 +154,13 @@ Segments
   setting the address of the next instruction to right after the binary
 
 
+
 Other stuff
 -----------
 - Arguments can also be '_', thus instructions like mov _, _ are valid during compilation. 
   - This will just translate to null arguments and will result in illegal instructions when executed. 
   - This is done to allow the decompiled comments to also be valid when uncommented. 
   - This is to allow for instructions to also fully encode raw data. 
-
 
 mov r0, [$1234 + r0] can also be written as:
 - mov r0, [r0 + $1234]
@@ -168,4 +170,4 @@ mov r0, [$1234 + $12 * r0] can also be written as:
 - mov r0, [$12 * r0 + $1234]
 - mov r0, [r0 * $12 + $1234]
 
-The disassembler should avoid labelling sources where the source is in a code segment. Only in data segments
+The disassembler should avoid labelling sources where the source is in a code segment. Only in data segments. 

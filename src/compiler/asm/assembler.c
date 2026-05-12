@@ -40,6 +40,7 @@ const char* token_type_string[] = {
     [TT_ADDRESS]                    = "address",
     [TT_STORE_ADDRESS]              = "store_address",
     [TT_RESTORE_ADDRESS]            = "restore_address",
+    [TT_PAD]                        = "pad", 
     [TT_SEGMENT_CODE]               = "segment_code",
     [TT_SEGMENT_DATA]               = "segment_data",
     [TT_RESERVE]                    = "reserve",
@@ -66,8 +67,9 @@ const char* expression_type_string[] = {
     [EXPR_RESERVE]                  = "reserve", 
     [EXPR_INCBIN]                   = "incbin", 
     [EXPR_ADDRESS]                  = "address", 
-    [EXPR_STORE_ADDRESS]             = "save_address", 
+    [EXPR_STORE_ADDRESS]            = "save_address", 
     [EXPR_RESTORE_ADDRESS]          = "restore_address", 
+    [EXPR_PAD]                      = "pad", 
     [EXPR_DATA]                     = "data", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
     [EXPR_DEREF_LABEL]              = "deref label", 
@@ -156,6 +158,8 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
                 token[i].type = TT_STORE_ADDRESS;
             } else if (strcmp(&word[i][1], "restore_address") == 0) {
                 token[i].type = TT_RESTORE_ADDRESS;
+            } else if (strcmp(&word[i][1], "pad") == 0) {
+                token[i].type = TT_PAD;
             } else if (strcmp(&word[i][1], "code") == 0) {
                 token[i].type = TT_SEGMENT_CODE;
             } else if (strcmp(&word[i][1], "data") == 0) {
@@ -519,7 +523,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression_index ++;
         }
 
-        // .stashaddress
+        // .store_address
         else if (token_index + 0 < token_count &&
             tokens[token_index + 0].type == TT_STORE_ADDRESS) {
 
@@ -530,7 +534,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression_index ++;
         }
 
-        // .popaddress
+        // .restore_address
         else if (token_index + 0 < token_count &&
             tokens[token_index + 0].type == TT_RESTORE_ADDRESS) {
                 
@@ -538,6 +542,19 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression[expression_index].tokens[0] = tokens[token_index];
                 expression[expression_index].token_count = 1;
                 token_index += 1;
+                expression_index ++;
+        }
+
+        // .pad $0010
+        else if (token_index + 1 < token_count &&
+            tokens[token_index + 0].type == TT_PAD &&
+            tokens[token_index + 1].type == TT_IMMEDIATE) {
+
+                expression[expression_index].type = EXPR_PAD;
+                expression[expression_index].tokens[0] = tokens[token_index + 0];
+                expression[expression_index].tokens[1] = tokens[token_index + 1];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
@@ -744,6 +761,26 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     instruction[instruction_index].address = value;
 
                     byte_index = value;
+
+                    //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                    
+                    instruction_index ++;
+
+                    while (instruction_index >= allocated_instructions) {
+                        allocated_instructions *= 2;
+                        instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                        //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                    }
+                    
+                    expression_index ++;
+                    continue;
+                } else if (expression[expression_index].type == EXPR_PAD) {
+                    instruction[instruction_index].is_address = 1;
+
+                    char* string_value = expression[expression_index].tokens[1].raw;
+                    int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+
+                    instruction[instruction_index].address = value;
 
                     //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                     
@@ -1345,6 +1382,26 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 
                 expression_index ++;
                 continue;
+            } else if (expression[expression_index].type == EXPR_PAD) {
+                instruction[instruction_index].is_address = 1;
+
+                char* string_value = expression[expression_index].tokens[1].raw;
+                int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
+
+                instruction[instruction_index].address = value;
+
+                //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                
+                instruction_index ++;
+
+                while (instruction_index >= allocated_instructions) {
+                    allocated_instructions *= 2;
+                    instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                    //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                }
+                
+                expression_index ++;
+                continue;
             } else if (expression[expression_index].type == EXPR_STORE_ADDRESS) {
                 instruction[instruction_index].is_address = 1;
                 
@@ -1684,6 +1741,7 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_ADDRESS:
                 case EXPR_STORE_ADDRESS:
                 case EXPR_RESTORE_ADDRESS:
+                case EXPR_PAD:
                 case EXPR_SEGMENT_CODE:
                 case EXPR_SEGMENT_DATA:
                 case EXPR_RESERVE:
@@ -1750,12 +1808,23 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                 case EXPR_ADDRESS:
                     index = instruction[instruction_index].address;
                     break;
+                
+                case EXPR_PAD: {
+                    uint16_t pad = instruction[instruction_index].address;
+                    if (!(pad && (!(pad & (pad - 1))))) {
+                        log_msg(LP_ERROR, ".pad is not a power of 2 [%s:%d]", __FILE__, __LINE__);
+                        return NULL;
+                    }
+                    index = ((index - 1) & ~(pad - 1)) + pad;
+                    break;
+                }
 
                 case EXPR_STORE_ADDRESS:
                     stashed_address = index;
                     stash_calls ++;
                     if (stash_calls > 1) {
                         log_msg(LP_WARNING, ".store_address was called before the last stored address was restored. Nested stores and restores are not implemented that way");
+                        error = 1;
                     }
                     break;
 
@@ -1931,7 +2000,7 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     int expression_count = 0;
     Expression_t* expression = assembler_parse_token(token, token_count, &expression_count);
 
-    // ToDo, resolve all include and incbin directives, then restart
+    // ToDo, resolve all include and incbin directives, then restart. No, lol
 
     // build instruction array
     int instruction_count = 0;

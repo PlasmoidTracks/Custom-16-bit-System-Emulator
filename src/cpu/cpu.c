@@ -1106,8 +1106,19 @@ void cpu_clock(CPU_t* cpu) {
                         cpu->state = CS_PUSH_HIGH;
                         goto CS_PUSH_HIGH;
                         break;
+                
+                    case PUSHB:
+                        cpu->intermediate.result = cpu->intermediate.data_address_extended;
+                        cpu->state = CS_PUSH_LOW;
+                        goto CS_PUSH_LOW;
+                        break;
 
                     case POP:
+                        cpu->state = CS_POP_LOW;
+                        goto CS_POP_LOW;
+                        break;
+                
+                    case POPB:
                         cpu->state = CS_POP_LOW;
                         goto CS_POP_LOW;
                         break;
@@ -2438,6 +2449,10 @@ void cpu_clock(CPU_t* cpu) {
                     #ifdef _CPU_DEEP_DEBUG_
                     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): intermediate result: %.4x", cpu->clock, cpu->state, cpu->device.device_state, cpu->intermediate.result);
                     #endif
+                    if (cpu->intermediate.instruction == POPB) {
+                        cpu->state = CS_WRITEBACK_LOW;
+                        goto CS_WRITEBACK_LOW;
+                    }
                     cpu->state = CS_POP_HIGH;
                     goto CS_POP_HIGH;
                 }

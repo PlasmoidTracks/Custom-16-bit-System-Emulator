@@ -9,7 +9,6 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Data Manipulation
     NOP,        // Does nothing                                                 [N]o [OP]eration
     MOV,        // mov dest, src            :: src -> dest                      [MOV]e
-    MOVB,       // movb dest, src           :: (8-bits) src -> (8-bits) dest    [MOV]e [B]yte
     PUSH,       // push src                 :: sp -= 2; src -> [sp]
     POP,        // pop dest                 :: [sp] -> dest; sp += 2
     PUSHSR,     // [push] [s]tatus [r]eg    :: sp -= 2; sr -> [sp] 
@@ -166,6 +165,10 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // From here, instructions exceed value of 0x7f
 
     EXTNOP = 0x80, 
+
+    MOVB,       // movb dest, src           :: (8-bits) src -> (8-bits) dest    [MOV]e [B]yte
+    PUSHB,      // pushb
+    POPB, 
 
     // Cache Operations
     INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid

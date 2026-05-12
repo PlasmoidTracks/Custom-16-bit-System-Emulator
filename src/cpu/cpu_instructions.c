@@ -5,7 +5,6 @@ const CPU_INSTRUCTION_ENCODING_t instruction_encoding[INSTRUCTION_COUNT] = {
     // Data Manipulation
     [NOP] = {NOP, "nop", 0, 0, 0, 0},
     [MOV] = {MOV, "mov", 2, 0, 0, 0},
-    [MOVB] = {MOVB, "movb", 2, 0, 0, 0}, 
     [PUSH] = {PUSH, "push", 1, 0, 0, 0},
     [POP] = {POP, "pop", 1, 1, 0, 0},
     [PUSHSR] = {PUSHSR, "pushsr", 0, 0, 0, 0},
@@ -159,6 +158,11 @@ const CPU_INSTRUCTION_ENCODING_t instruction_encoding[INSTRUCTION_COUNT] = {
     [CMOVNAO] = {CMOVNAO, "cmovnao", 2, 0, 0, 0},
     [CMOVMI] = {CMOVMI, "cmovmi", 2, 0, 0, 0},
     [CMOVNMI] = {CMOVNMI, "cmovnmi", 2, 0, 0, 0},
+
+
+    [MOVB] = {MOVB, "movb", 2, 0, 0, 0}, 
+    [PUSHB] = {PUSHB, "pushb", 1, 0, 0, 0}, 
+    [POPB] = {POPB, "popb", 1, 1, 0, 0}, 
 
     // Cache Operations
     [INV] = {INV, "inv", 0, 0, 0, 0},

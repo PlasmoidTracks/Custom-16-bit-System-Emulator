@@ -125,9 +125,6 @@ Address Control
   Pads the current address to the next multiple of the value. 
   The value must be a power of 2. 
   If the current address falls on a fitting address, the padding does nothing. 
-  - .pad $fff0
-  Negative values will change the case where the current address already falls inside the padding. 
-  Instead, it will force a gap of the aboslute padding value, in this case 16 bytes. 
 
 
 

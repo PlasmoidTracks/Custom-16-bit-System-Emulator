@@ -63,6 +63,7 @@ const char* expression_type_string[] = {
     [EXPR_ADDRESS]                  = "address", 
     [EXPR_DATA]                     = "data", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
+    [EXPR_DEREF_LABEL]              = "deref label", 
 };
 
 
@@ -98,7 +99,7 @@ char** assembler_split_to_words(char* lines[], int* token_count) {
     int count = 0;
     int index = 0;
     while (lines[index]) {
-        char** line_token_string = split(lines[index], "\t, []%", "[]%");
+        char** line_token_string = split(lines[index], "\t, []%*", "[]%*");
         free(lines[index]);
         int index2 = 0;
         while (line_token_string[index2]) {
@@ -217,6 +218,19 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 }
                 expression[expression_index].token_count = 3;
                 token_index += 3;
+                expression_index ++;
+        }
+        // * .label
+        if (token_index + 1 < token_count &&
+            tokens[token_index + 0].type == TT_STAR &&
+            tokens[token_index + 1].type == TT_LABEL) {
+
+                expression[expression_index].type = EXPR_DEREF_LABEL;
+                for (int j = 0; j < 2; j++) {
+                    expression[expression_index].tokens[j] = tokens[token_index + j];
+                }
+                expression[expression_index].token_count = 2;
+                token_index += 2;
                 expression_index ++;
         }
 
@@ -744,6 +758,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     continue;
                 } else if (expression[expression_index].type == EXPR_INCBIN) {
                     log_msg(LP_ERROR, "Parsing expressions: .incbin may only be used within .data segments, not inside .code segments");
+                    return NULL;
+                } else if (expression[expression_index].type == EXPR_DEREF_LABEL) {
+                    log_msg(LP_ERROR, "Parsing expressions: label dereferences may only be used within .data segments, not inside .code segments");
                     return NULL;
                 } else {
                     log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
@@ -1326,6 +1343,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 //filename[strlen(filename) - 1] = '\0';
                 //byte_index += file_size(filename);
                 //free(filename);
+            } else if (expression[expression_index].type == EXPR_DEREF_LABEL) {
+
             } else if (expression[expression_index].type == EXPR_NONE) {
 
             } else {
@@ -1542,6 +1561,29 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                         argument_byte_index ++;
                     }
                     break;
+                
+                case EXPR_DEREF_LABEL: {
+                    // find corresponding label
+                    int corresponding_label_found = -1;
+                    for (int j = 0; j < jump_label_index; j++) {
+                        if (strcmp(instruction[i].expression[exp].tokens[1].raw, jump_label[j].name) == 0) {
+                            if (corresponding_label_found == -1) {
+                                corresponding_label_found = j;
+                            } else {
+                                log_msg(LP_ERROR, "Label \"%s\" is not unique [%s:%d]", instruction[i].expression[exp].tokens[1].raw, __FILE__, __LINE__);
+                                exit(1);
+                                break;
+                            }
+                        }
+                    }
+                    if (corresponding_label_found == -1) {
+                        log_msg(LP_ERROR, "Solving label: Unable to find corresponding label: \"%s\" [%s:%d]", instruction[i].expression[exp].tokens[1].raw, __FILE__, __LINE__);
+                        exit(1);
+                        break;
+                    }
+                    instruction[i].raw_data = jump_label[corresponding_label_found].value;
+                    break;
+                }
 
                 case EXPR_NONE:
                 case EXPR_REGISTER:
@@ -1631,6 +1673,16 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             //log_msg(LP_DEBUG, "label");
             continue;
         }
+        if (instruction[instruction_index].expression[0].type == EXPR_DEREF_LABEL) {
+            error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+            error |= safe_write(bin, index++, instruction[instruction_index].raw_data >> 8, written, options);
+            if (index > *binary_size) {
+                *binary_size = index;
+            }
+            instruction_index ++;
+            //log_msg(LP_DEBUG, "seg code");
+            continue;
+        } 
         if (instruction[instruction_index].expression[0].type == EXPR_INCBIN) {
             char* filename = calloc(strlen(instruction[instruction_index].expression[0].tokens[1].raw) - 1, 1);
             memcpy(filename, instruction[instruction_index].expression[0].tokens[1].raw + 1, strlen(instruction[instruction_index].expression[0].tokens[1].raw + 1));

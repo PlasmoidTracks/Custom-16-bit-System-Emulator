@@ -76,9 +76,17 @@ Labels
   - rjmp .label   ; here '.label' resolves to $0004
   - jmp .label    ; here '.label' resolves to the absolute address
   - .label
-- labels can also be offset inside an operand
+- Labels can also be offset inside an operand
   - mov r0, .label + 1234
   - mov r0, [.label + 1234]
+- Labels may also be dereferenced inside .data segments:
+  - .code
+  - .func
+  - hlt
+  - .address 0xfe02
+  - .data
+  - *.func        ; so instead of a reference, it will write the address .func resolves to
+
 
 Labels resolve to 16-bit addresses during compilation and can be used anywhere an immediate is allowed. 
 There is an exception for relative jump instructions using labels as an immediate 16-bit value (i.e. "rjmp .label"). 
@@ -94,6 +102,18 @@ Address Control
 - Memory reservation:
   - .reserve $100
   Skips the next $100 bytes, basically jumping in address space by the relative amount. 
+
+[NOT IMPLEMENTED]
+- Memory padding:
+  - .pad $10
+  Pads the current address to the next multiple of the value. 
+  The value must be a power of 2. 
+  If the current address falls on a fitting address, the padding does nothing. 
+  - .pad $fff0
+  Negative values will change the case where the current address already falls inside the padding. 
+  Instead, it will force a gap of the aboslute padding value, in this case 16 bytes. 
+[~NOT IMPLEMENTED]
+
 
 Segments
 --------

@@ -58,6 +58,7 @@ typedef enum {
     EXPR_ADDRESS, 
     EXPR_DATA,
     EXPR_TEXT_DEFINITION, 
+    EXPR_DEREF_LABEL, 
 } ExpressionType_t;
 
 

@@ -640,7 +640,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
     typedef enum {CODE, DATA} Mode_t;
 
     Mode_t mode = CODE;
-    int current_byte_align = 0; // switches between 0 and 1, with alignment 1, to show which byte to write to, since I can only do 16-bit else
 
     int exceeding_boundary_error = 0;
 
@@ -1242,24 +1241,27 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
                 strcpy(jump_label[jump_label_index].name, expression[expression_index].tokens[0].raw);
                 int address = 0;
-
+                
                 int instruction_index_since_last_address_change = instruction_index;
                 while (instruction_index_since_last_address_change > 0 && !instruction[instruction_index_since_last_address_change].is_address) {
                     instruction_index_since_last_address_change --;
                 }
                 if (instruction[instruction_index_since_last_address_change].is_address) {
-                    address = instruction[instruction_index_since_last_address_change].address - 2;
-                    if (segment && segment_count) {
-                        // Allocate or reallocate the segment buffer
-                        uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
-                        if (!new_segment) {
-                            fprintf(stderr, "Memory allocation for segment failed\n");
-                            exit(1);
-                        }
-                        *segment = new_segment;
-                        (*segment)[*segment_count] = instruction[instruction_index_since_last_address_change].address;
-                        (*segment_count)++;
-                    }
+                    //if (instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_STORE_ADDRESS
+                    // && instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_RESTORE_ADDRESS) {
+                            address = instruction[instruction_index_since_last_address_change].address - 2;
+                            if (segment && segment_count) {
+                                // Allocate or reallocate the segment buffer
+                                uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
+                                if (!new_segment) {
+                                    fprintf(stderr, "Memory allocation for segment failed\n");
+                                    exit(1);
+                                }
+                                *segment = new_segment;
+                                (*segment)[*segment_count] = instruction[instruction_index_since_last_address_change].address;
+                                (*segment_count)++;
+                            }
+                    //}
                 }
 
                 for (int i = instruction_index_since_last_address_change; i < instruction_index; i++) {
@@ -1267,15 +1269,22 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         instruction[i].expression[0].type == EXPR_SEGMENT_DATA ||
                         instruction[i].expression[0].tokens[0].type == TT_LABEL) {
                         continue;
-                    } 
-                    address += instruction[i].argument_bytes + 2;
+                    }
+                    if (instruction[i].expression[0].type == EXPR_DATA) {
+                        if (instruction[i].expression[0].tokens[0].type == TT_DW) {
+                            address += 2;
+                        } else if (instruction[i].expression[0].tokens[0].type == TT_DB) {
+                            address += 1;
+                        } else {
+                            log_msg(LP_ERROR, "Unknown data define width");
+                        }
+                        continue;
+                    }
+                    address += instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0);
+                    // above was adjusted for the case of 1-byte encoded instructions
                     byte_index = address;
                 }
                 jump_label[jump_label_index].value = address;
-                if (current_byte_align == 1) {
-                    jump_label[jump_label_index].value += 1; // accomodate for shift by 1 byte
-                }
-                //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
                 jump_label_index ++;
                 if (jump_label_index >= MAX_LABELS) {
                     log_msg(LP_ERROR, "Parsing expressions: Label count is over the maximum limit (%d) [%s:%d]", MAX_LABELS, __FILE__, __LINE__);
@@ -1288,9 +1297,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             } else if (expression[expression_index].type == EXPR_SEGMENT_CODE) {
                 instruction_index ++;
                 mode = CODE;
-                /*if (current_byte_align) {
-                    instruction_index += 1;
-                }*/
                 expression_index += 1;
                 continue;
             } else if (expression[expression_index].type == EXPR_DATA) {
@@ -1384,6 +1390,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             } else if (expression[expression_index].type == EXPR_TEXT_DEFINITION) {
                 char* string_value = expression[expression_index].tokens[1].raw;
                 string_value[strlen(string_value) - 1] = '\0';  // this makes the output implicitly null terminated
+                int current_byte_align = 0;
                 for (size_t i = 1; i < strlen(string_value) + 1; i++) {
                     printf("%d: %.2x\n", instruction_index, (uint8_t) string_value[i]);
                     uint8_t value = 0x00;
@@ -1415,7 +1422,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     }
                     byte_index ++;
                 }
-                current_byte_align = 0;
                 expression_index ++;
                 continue;
                 //exit(1);
@@ -1449,10 +1455,6 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
             }
         }
-    }
-
-    if (current_byte_align) { // here if the last assembly line is a 1-aligned byte data that is not aligned to 2
-        //instruction_index ++;
     }
 
     *instruction_count = instruction_index;

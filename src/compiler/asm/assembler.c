@@ -20,6 +20,9 @@ Label_t const_label[MAX_LABELS];
 int jump_label_index = 0;
 int const_label_index = 0;
 
+uint16_t stashed_address = 0x0000;
+int stash_calls = 0;        // +1 for every store and -1 for every restore. If the value ever goes beyond [0, 1], a warning is shown
+
 
 const char* token_type_string[] = {
     [TT_INSTRUCTION]                = "instruction",
@@ -35,6 +38,8 @@ const char* token_type_string[] = {
     [TT_BRACKET_CLOSE]              = "bracket_close", 
     [TT_LABEL]                      = "label",
     [TT_ADDRESS]                    = "address",
+    [TT_STORE_ADDRESS]              = "store_address",
+    [TT_RESTORE_ADDRESS]            = "restore_address",
     [TT_SEGMENT_CODE]               = "segment_code",
     [TT_SEGMENT_DATA]               = "segment_data",
     [TT_RESERVE]                    = "reserve",
@@ -61,6 +66,8 @@ const char* expression_type_string[] = {
     [EXPR_RESERVE]                  = "reserve", 
     [EXPR_INCBIN]                   = "incbin", 
     [EXPR_ADDRESS]                  = "address", 
+    [EXPR_STORE_ADDRESS]             = "save_address", 
+    [EXPR_RESTORE_ADDRESS]          = "restore_address", 
     [EXPR_DATA]                     = "data", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
     [EXPR_DEREF_LABEL]              = "deref label", 
@@ -145,6 +152,10 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
         if (word[i][0] == '.') {
             if (strcmp(&word[i][1], "address") == 0) {
                 token[i].type = TT_ADDRESS;
+            } else if (strcmp(&word[i][1], "store_address") == 0) {
+                token[i].type = TT_STORE_ADDRESS;
+            } else if (strcmp(&word[i][1], "restore_address") == 0) {
+                token[i].type = TT_RESTORE_ADDRESS;
             } else if (strcmp(&word[i][1], "code") == 0) {
                 token[i].type = TT_SEGMENT_CODE;
             } else if (strcmp(&word[i][1], "data") == 0) {
@@ -508,6 +519,28 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression_index ++;
         }
 
+        // .stashaddress
+        else if (token_index + 0 < token_count &&
+            tokens[token_index + 0].type == TT_STORE_ADDRESS) {
+
+                expression[expression_index].type = EXPR_STORE_ADDRESS;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
+                expression_index ++;
+        }
+
+        // .popaddress
+        else if (token_index + 0 < token_count &&
+            tokens[token_index + 0].type == TT_RESTORE_ADDRESS) {
+                
+                expression[expression_index].type = EXPR_RESTORE_ADDRESS;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
+                expression_index ++;
+        }
+
         // .data
         else if (token_index + 0 < token_count &&
             tokens[token_index + 0].type == TT_SEGMENT_DATA) {
@@ -715,6 +748,32 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
                     //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
                     
+                    instruction_index ++;
+
+                    while (instruction_index >= allocated_instructions) {
+                        allocated_instructions *= 2;
+                        instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                        //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                    }
+                    
+                    expression_index ++;
+                    continue;
+                } else if (expression[expression_index].type == EXPR_STORE_ADDRESS) {
+                    instruction[instruction_index].is_address = 1;
+                    
+                    instruction_index ++;
+
+                    while (instruction_index >= allocated_instructions) {
+                        allocated_instructions *= 2;
+                        instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                        //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                    }
+                    
+                    expression_index ++;
+                    continue;
+                } else if (expression[expression_index].type == EXPR_RESTORE_ADDRESS) {
+                    instruction[instruction_index].is_address = 1;
+
                     instruction_index ++;
 
                     while (instruction_index >= allocated_instructions) {
@@ -1275,6 +1334,32 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 
                 expression_index ++;
                 continue;
+            } else if (expression[expression_index].type == EXPR_STORE_ADDRESS) {
+                instruction[instruction_index].is_address = 1;
+                
+                instruction_index ++;
+
+                while (instruction_index >= allocated_instructions) {
+                    allocated_instructions *= 2;
+                    instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                    //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                }
+                
+                expression_index ++;
+                continue;
+            } else if (expression[expression_index].type == EXPR_RESTORE_ADDRESS) {
+                instruction[instruction_index].is_address = 1;
+                
+                instruction_index ++;
+
+                while (instruction_index >= allocated_instructions) {
+                    allocated_instructions *= 2;
+                    instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                    //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                }
+                
+                expression_index ++;
+                continue;
             } else if (expression[expression_index].type == EXPR_RESERVE) {
                 instruction[instruction_index].is_address = 1;
 
@@ -1590,6 +1675,8 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_INSTRUCTION:
                 case EXPR_INDIRECT_REGISTER:
                 case EXPR_ADDRESS:
+                case EXPR_STORE_ADDRESS:
+                case EXPR_RESTORE_ADDRESS:
                 case EXPR_SEGMENT_CODE:
                 case EXPR_SEGMENT_DATA:
                 case EXPR_RESERVE:
@@ -1648,9 +1735,35 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
     //printf("instruction_count: %d\n", instruction_count);
     while (instruction_index < instruction_count) {
         //log_msg(LP_DEBUG, "%d/%d", instruction_index, instruction_count);
+        //log_msg(LP_DEBUG, "%s %s", expression_type_string[instruction[instruction_index].expression[0].type], instruction[instruction_index].expression[0].tokens[0].raw);
         if (instruction[instruction_index].is_address) {
             //log_msg(LP_INFO, "Parsing instruction: Jumping in address from 0x%.4x to 0x%.4x", index, instruction[instruction_index].address);
-            index = instruction[instruction_index].address;
+            //log_msg(LP_DEBUG, "%s %s", expression_type_string[instruction[instruction_index].expression[0].type], instruction[instruction_index].expression[0].tokens[0].raw);
+            switch (instruction[instruction_index].expression[0].type) {
+                case EXPR_ADDRESS:
+                    index = instruction[instruction_index].address;
+                    break;
+
+                case EXPR_STORE_ADDRESS:
+                    stashed_address = index;
+                    stash_calls ++;
+                    if (stash_calls > 1) {
+                        log_msg(LP_WARNING, ".store_address was called before the last stored address was restored. Nested stores and restores are not implemented that way");
+                    }
+                    break;
+
+                case EXPR_RESTORE_ADDRESS:
+                    index = stashed_address;
+                    stash_calls --;
+                    if (stash_calls < 0) {
+                        log_msg(LP_WARNING, ".restore_address was called before a new address was stored");
+                    }
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Encountered unknown addressing expression \"%s\"", expression_type_string[instruction[instruction_index].expression[0].type]);
+                    break;
+            }
             instruction_index ++;
             if (index > *binary_size) {
                 *binary_size = index;
@@ -1754,6 +1867,11 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
         if (index > *binary_size) {
             *binary_size = index;
         }
+    }
+
+
+    if (stash_calls != 0) {
+        log_msg(LP_WARNING, "Number of .store_address and .restore_address do not match");
     }
     
     if (error && (options & AO_ERROR_ON_OVERLAP)) {

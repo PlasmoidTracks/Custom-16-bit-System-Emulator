@@ -103,6 +103,20 @@ Address Control
   - .reserve $100
   Skips the next $100 bytes, basically jumping in address space by the relative amount. 
 
+- Storing the current address
+  - .store_address
+  This saves the current address in the stash. 
+  Multiple stores will overwrite the old value. 
+  Useful for inline insertions of instructions at a different location. 
+
+- Restoring the stashed address
+  - .restore_address
+  Sets the current address to the stashed value. 
+  Needs a preceeding store, this is not checked. 
+  Multiple restores will yield the same result. 
+
+
+
 [NOT IMPLEMENTED]
 - Memory padding:
   - .pad $10

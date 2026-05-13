@@ -1286,8 +1286,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 if (instruction[instruction_index_since_last_address_change].is_address) {
                     //if (instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_STORE_ADDRESS
                     // && instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_RESTORE_ADDRESS) {
-                            address = instruction[instruction_index_since_last_address_change].address - 2; // + (instruction_encoding[instruction[i].instruction].argument_count == 0);
-                            if (address < 0) address = 0;
+                            address = instruction[instruction_index_since_last_address_change].address - 2 + (instruction_encoding[instruction_index_since_last_address_change].argument_count == 0);
+                            //if (address < 0) address = 0;
                             if (segment && segment_count) {
                                 // Allocate or reallocate the segment buffer
                                 uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));

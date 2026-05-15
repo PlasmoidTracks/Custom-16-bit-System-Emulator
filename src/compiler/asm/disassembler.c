@@ -608,6 +608,20 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
             sprintf(&tmp[strlen(tmp)], "\n");
             sprintf(disassembly.code[assembly_index], "%s", tmp);
             assembly_index++;
+
+            while (assembly_index >= allocated_space) {
+                allocated_space *= 2;
+                //log_msg(LP_DEBUG, "Disassembler: Increased allocated space");
+                disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));
+                disassembly.binary_index = realloc(disassembly.binary_index, allocated_space * sizeof(int));
+                disassembly.lines = allocated_space;
+                disassembly.is_data = realloc(disassembly.is_data, allocated_space * sizeof(int));
+                disassembly.admr = realloc(disassembly.admr, allocated_space * sizeof(CPU_REDUCED_ADDRESSING_MODE_t));
+                disassembly.admx = realloc(disassembly.admx, allocated_space * sizeof(CPU_EXTENDED_ADDRESSING_MODE_t));
+                for (unsigned long i = assembly_index; i < allocated_space; i++) {
+                    //disassembly.code[i] = malloc(sizeof(char) * 256);
+                }
+            }
         }
         sprintf(disassembly.code[assembly_index], "%s\n", instruction);
         free(instruction);
@@ -1039,7 +1053,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                 skip_admr = 1;
                 sprintf(postfix_admr, "%s", words[1]);
                 source = parse_immediate(words[1]);
-                log_msg(LP_INFO, "Disassembler: Skipping admr");
+                //log_msg(LP_INFO, "Disassembler: Skipping admr [%s:%d]", __FILE__, __LINE__);
                 break;
         }
 

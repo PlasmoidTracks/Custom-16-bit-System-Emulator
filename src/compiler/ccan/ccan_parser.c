@@ -96,10 +96,13 @@ CCANParserToken_t** ccan_parser_parse(CCANLexerToken_t* lexer_token, long lexer_
         // 5) If we found a rule to apply, apply it. Otherwise, we are done.
         if (best_rule_index >= 0) {
             something_changed = 1;
-            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
+            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d) [%s:%d]",
                     ccan_parser_ruleset[best_rule_index].description,
                     best_rule_priority,
-                    best_rule_startpos);
+                    best_rule_startpos, 
+                    __FILE__, 
+                    __LINE__
+            );
 
             // Create the new parser token node
             CCANParserToken_t* new_token = malloc(sizeof(CCANParserToken_t));

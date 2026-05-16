@@ -184,7 +184,7 @@ void system_clock_debug(System_t *system) {
                             sprintf(&value_before_str[(system->hook[h].target_bytes - j) * 2], "%.2X", system->memory_intermediate[index + j]);
                             sprintf(&value_after_str[(system->hook[h].target_bytes - j) * 2], "%.2X", *((uint8_t*) system->hook[h].target + j));
                         }
-                        log_msg(LP_NOTICE, "System: Hook %d (HC_CHANGE) triggered. Value changed from %s to %s", h, value_before_str, value_after_str);
+                        log_msg(LP_NOTICE, "System: Hook %d (HC_CHANGE) triggered. Value changed from %s to %s [%s:%d]", h, value_before_str, value_after_str, __FILE__, __LINE__);
                     }
                     if (system->hook[h].action) {
                         system->hook[h].action(system);
@@ -209,7 +209,7 @@ void system_clock_debug(System_t *system) {
                     for (int j = system->hook[h].target_bytes - 1; j >= 0; j--) {
                         sprintf(&value_str[(system->hook[h].target_bytes - j) * 2], "%.2X", ((uint8_t*) system->hook[h].match)[j]);
                     }
-                    log_msg(LP_NOTICE, "System: Hook %d (HC_EQUAL) triggered. Value matching %s", h, value_str);
+                    log_msg(LP_NOTICE, "System: Hook %d (HC_EQUAL) triggered. Value matching %s [%s:%d]", h, value_str, __FILE__, __LINE__);
                     if (system->hook[h].action) {
                         system->hook[h].action(system);
                     }
@@ -222,7 +222,7 @@ void system_clock_debug(System_t *system) {
                     system->cpu->device.device_state == DS_FETCH && 
                     &system->ram->data[system->cpu->device.address] == system->hook->target
                 ) {
-                    log_msg(LP_NOTICE, "System: Hook %d (HC_READ_FROM) triggered. Reading from RAM at address 0x%.4X", h, system->cpu->device.address);
+                    log_msg(LP_NOTICE, "System: Hook %d (HC_READ_FROM) triggered. Reading from RAM at address 0x%.4X [%s:%d]", h, system->cpu->device.address, __FILE__, __LINE__);
                     if (system->hook[h].action) {
                         system->hook[h].action(system);
                     }

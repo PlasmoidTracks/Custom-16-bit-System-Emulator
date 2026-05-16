@@ -245,7 +245,7 @@ extern CCANLexerToken_t* ccan_lexer_parse(char* source, long source_length, long
 
     long index = 0;
     while (index < source_length) {
-        ////log_msg(LP_DEBUG, "%d / %d", index, source_length);
+        //log_msg(LP_DEBUG, "%d / %d", index, source_length);
         int found_token = 0;
 
         // wkip whitespaces

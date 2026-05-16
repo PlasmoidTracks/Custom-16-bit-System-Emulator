@@ -56,7 +56,7 @@ Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address)
                 address <= bus->device[i]->listening_region[l].address_listener_high
             ) {
                 if (device) {
-                    log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d)", device->device_type);
+                    log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d) [%s:%d]", device->device_type, __FILE__, __LINE__);
                 }
                 device = bus->device[i];
             }
@@ -83,7 +83,7 @@ Device_t* bus_find_writable_device_by_mmio_address(BUS_t* bus, uint16_t address)
                 address <= bus->device[i]->listening_region[l].address_listener_high
             ) {
                 if (device) {
-                    log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d)", device->device_type);
+                    log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d) [%s:%d]", device->device_type, __FILE__, __LINE__);
                 }
                 device = bus->device[i];
             }

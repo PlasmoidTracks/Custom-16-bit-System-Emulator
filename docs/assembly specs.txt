@@ -8,6 +8,7 @@ These values can be used as operands anywhere immediates are accepted:
   Modes     Syntax          Example
 - Decimal:  1234            mov r0, 100
   - decimal also includes negative values, like -100
+  - decimal can also be written with an 'i'-prefix: i100, i-100
 - Hex:      $1234, 0x1234   mov r0, $ffff / mov r0, 0xffff
 - Octal:    0o1234          mov r0, 0o741
 - Binary:   0b10101010      mov r0, 0b11100

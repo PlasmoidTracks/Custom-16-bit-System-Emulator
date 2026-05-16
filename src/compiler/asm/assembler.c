@@ -718,7 +718,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             // Allocate or reallocate the segment buffer
                             uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
                             if (!new_segment) {
-                                log_msg(LP_ERROR, "Parsing expressions: Memory allocation for segment failed\n");
+                                log_msg(LP_ERROR, "Parsing expressions: Memory allocation for segment failed [%s:%d]", __FILE__, __LINE__);
                                 exit(1);
                             }
                             *segment = new_segment;
@@ -852,10 +852,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     expression_index ++;
                     continue;
                 } else if (expression[expression_index].type == EXPR_INCBIN) {
-                    log_msg(LP_ERROR, "Parsing expressions: .incbin may only be used within .data segments, not inside .code segments");
+                    log_msg(LP_ERROR, "Parsing expressions: .incbin may only be used within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
                     return NULL;
                 } else if (expression[expression_index].type == EXPR_DEREF_LABEL) {
-                    log_msg(LP_ERROR, "Parsing expressions: label dereferences may only be used within .data segments, not inside .code segments");
+                    log_msg(LP_ERROR, "Parsing expressions: label dereferences may only be used within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
                     return NULL;
                 } else {
                     log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
@@ -1316,7 +1316,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                             //log_msg(LP_DEBUG, "address adjusted by data 1b: %.4x", instruction[i].expression[0].tokens[0].raw, address);
                             address += 1;
                         } else {
-                            log_msg(LP_ERROR, "Unknown data define width");
+                            log_msg(LP_ERROR, "Unknown data define width [%s:%d]", __FILE__, __LINE__);
                         }
                         continue;
                     }
@@ -1823,7 +1823,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     stashed_address = index;
                     stash_calls ++;
                     if (stash_calls > 1) {
-                        log_msg(LP_WARNING, ".store_address was called before the last stored address was restored. Nested stores and restores are not implemented that way");
+                        log_msg(LP_WARNING, ".store_address was called before the last stored address was restored. Nested stores and restores are not implemented that way [%s:%d]", __FILE__, __LINE__);
                         error = 1;
                     }
                     break;
@@ -1832,12 +1832,12 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     index = stashed_address;
                     stash_calls --;
                     if (stash_calls < 0) {
-                        log_msg(LP_WARNING, ".restore_address was called before a new address was stored");
+                        log_msg(LP_WARNING, ".restore_address was called before a new address was stored [%s:%d]", __FILE__, __LINE__);
                     }
                     break;
                 
                 default:
-                    log_msg(LP_ERROR, "Encountered unknown addressing expression \"%s\"", expression_type_string[instruction[instruction_index].expression[0].type]);
+                    log_msg(LP_ERROR, "Encountered unknown addressing expression \"%s\" [%s:%d]", expression_type_string[instruction[instruction_index].expression[0].type], __FILE__, __LINE__);
                     break;
             }
             instruction_index ++;
@@ -1947,7 +1947,7 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 
 
     if (stash_calls != 0) {
-        log_msg(LP_WARNING, "Number of .store_address and .restore_address do not match");
+        log_msg(LP_WARNING, "Number of .store_address and .restore_address do not match [%s:%d]", __FILE__, __LINE__);
     }
     
     if (error && (options & AO_ERROR_ON_OVERLAP)) {

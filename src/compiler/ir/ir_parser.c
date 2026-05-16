@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "compiler/ir/ir_parser_warning_ruleset.h"
 #include "utils/Log.h"
@@ -9,7 +10,7 @@
 #include "compiler/ir/ir_parser_ruleset.h"
 
 #define IR_PARSER_DEBUG
-#undef IR_PARSER_DEBUG
+//#undef IR_PARSER_DEBUG
 
 #ifdef IR_PARSER_DEBUG
     #include "compiler/ir/ir_token_name_table.h"
@@ -18,7 +19,7 @@
         for (int i = 0; i < depth; i++) {
             printf("    ");
         }
-        printf("%s, \"%s\"\n", ir_token_name[parser_token->token.type], parser_token->token.raw);
+        printf("%s, \"%s\" (l:%d, v:%d)\n", ir_token_name[parser_token->token.type], parser_token->token.raw, parser_token->token.line, parser_token->variant);
         for (int i = 0; i < parser_token->child_count; i++) {
             ir_recursion(parser_token->child[i], depth + 1);
         }
@@ -56,7 +57,7 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
         //return NULL;
     }
     
-    IRParserToken_t** parser_token = malloc(sizeof(IRParserToken_t*) * lexer_token_count);
+    IRParserToken_t** parser_token = malloc(sizeof(IRParserToken_t*) * (lexer_token_count + 1));
     for (int i = 0; i < lexer_token_count; i++) {
         parser_token[i] = malloc(sizeof(IRParserToken_t));
         *parser_token[i] = (IRParserToken_t){
@@ -65,6 +66,7 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
             .parent = NULL,
         };
     }
+    parser_token[lexer_token_count] = NULL;
 
 
     // 2) Loop until no rule can be applied
@@ -119,19 +121,21 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
         if (best_rule_index >= 0) {
             something_changed = 1;
             #ifdef IR_PARSER_DEBUG
-            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d)",
+            log_msg(LP_SUCCESS, "Applying highest-priority rule: %s  (priority=%d, start=%d) [%s:%d]",
                 ir_parser_ruleset[best_rule_index].description,
                 best_rule_priority,
-                best_rule_startpos
+                best_rule_startpos, 
+                __FILE__, 
+                __LINE__
             );
             #endif
 
             // Create the new parser token node
             IRParserToken_t* new_token = malloc(sizeof(IRParserToken_t));
-            *new_token = (IRParserToken_t){
+            *new_token = (IRParserToken_t) {
                 .token = {
                     .type      = (IRLexerTokenType_t) ir_parser_ruleset[best_rule_index].output,
-                    .raw       = ir_parser_ruleset[best_rule_index].description,
+                    //.raw       = ir_parser_ruleset[best_rule_index].description,
                     .line      = -1,
                     .column    = -1,
                     .index     = -1,
@@ -139,7 +143,9 @@ IRParserToken_t** ir_parser_parse(char* source, long source_length, long* parser
                 },
                 .parent     = NULL,
                 .child_count = 0,
+                .variant   = ir_parser_ruleset[best_rule_index].variant, 
             };
+            strncpy(new_token->token.raw, ir_parser_ruleset[best_rule_index].description, MAX_RAW_LENGTH - 1);
 
             // Fill the children according to IR_CR_REPLACE / IR_CR_DISCARD / IR_CR_KEEP
             int context_len = ir_parser_ruleset[best_rule_index].context_length;

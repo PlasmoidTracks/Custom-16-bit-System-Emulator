@@ -58,6 +58,66 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .description = "register -> type_definition",
     },
 
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_MMIO, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_TYPE_DEFINITION,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "mmio -> type_definition",
+    },
+
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_TEMP, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_TYPE_DEFINITION,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "temp -> type_definition",
+    },
+
+    // at { number } -> type_definition
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_AT, 
+            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
+            (IRParserTokenType_t) IR_LEX_NUMBER, 
+            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_TYPE_DEFINITION,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 4,
+        .priority = 1000, 
+        .description = "align { number } -> type_definition",
+    },
+
+    // at { number } -> type_definition
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_PADALIGN, 
+            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
+            (IRParserTokenType_t) IR_LEX_NUMBER, 
+            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_TYPE_DEFINITION,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 4,
+        .priority = 1000, 
+        .description = "padalign { number } -> type_definition",
+    },
+
     // TYPE_DEFINITION TYPE_DEFINITION -> TYPE_DEFINITION
 
     {
@@ -251,8 +311,24 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .variant = 8, 
     }, 
 
+    // .label : -> statement
+    {
+        .context = { 
+            (IRParserTokenType_t) IR_LEX_LABEL,  
+            (IRParserTokenType_t) IR_LEX_COLON, 
+            IR_PAR_RULE_END 
+        },
+        .output = IR_PAR_STATEMENT,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 2,
+        .priority = 1,
+        .description = "label : -> statement", 
+        .variant = 9, 
+    }, 
 
-    // L_VALUE operator R_VALUE ; -> STATEMENT
+
+    // expression operator expression -> STATEMENT
     {
         .context = {
             (IRParserTokenType_t) IR_PAR_EXPRESSION, 
@@ -318,6 +394,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
 
     // return ; -> RETURN
+    /*
     {
         .context = {
             (IRParserTokenType_t) IR_LEX_RETURN, 
@@ -331,6 +408,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .priority = 1000, 
         .description = "return ; -> return",
     },
+    */
 
     // variable_declaration -> statement
     {
@@ -370,15 +448,14 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
             (IRParserTokenType_t) IR_PAR_SCOPEBEGIN, 
             (IRParserTokenType_t) IR_PAR_STATEMENT,
             (IRParserTokenType_t) IR_PAR_SCOPEEND, 
-            (IRParserTokenType_t) IR_PAR_RETURN,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_FUNCTION_DEFINITION,
-        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
         .invert_match = {0},
-        .context_length = 5,
+        .context_length = 4,
         .priority = 10, 
-        .description = "label scopebegin statement scopeend return -> function_definition",
+        .description = "label scopebegin statement scopeend -> function_definition",
     },
 
     // label SCOPEBEGIN SCOPEEND return -> FUNCTION_DEFINITION
@@ -387,15 +464,14 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
             (IRParserTokenType_t) IR_LEX_LABEL, 
             (IRParserTokenType_t) IR_PAR_SCOPEBEGIN, 
             (IRParserTokenType_t) IR_PAR_SCOPEEND, 
-            (IRParserTokenType_t) IR_PAR_RETURN,
             IR_PAR_RULE_END
         },
         .output = IR_PAR_FUNCTION_DEFINITION,
-        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD},
         .invert_match = {0},
-        .context_length = 4,
+        .context_length = 3,
         .priority = 10, 
-        .description = "label scopebegin scopeend return -> function_definition",
+        .description = "label scopebegin scopeend -> function_definition",
     },
 
 

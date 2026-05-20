@@ -9,12 +9,15 @@ typedef enum {
     IR_LEX_DEREF,                   // deref
     IR_LEX_IF,                      // if
     IR_LEX_GOTO,                    // goto
-    IR_LEX_RETURN,                  // return
     IR_LEX_PARG,                    // __parg
     IR_LEX_STACK,                   // stack
     IR_LEX_STATIC,                  // static
     IR_LEX_VOLATILE,                // volatile
     IR_LEX_REGISTER,                // register
+    IR_LEX_MMIO,                    // mmio
+    IR_LEX_TEMP,                    // temp
+    IR_LEX_AT,                      // at
+    IR_LEX_PADALIGN,                // padalign
     IR_LEX_PUSHARG,                 // pusharg
     IR_LEX_FREEARG,                 // freearg
     IR_LEX_CALL,                    // call

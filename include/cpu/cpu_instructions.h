@@ -167,8 +167,8 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     EXTNOP = 0x80, 
 
     MOVB,       // movb dest, src           :: (8-bits) src -> (8-bits) dest    [MOV]e [B]yte
-    PUSHB,      // pushb
-    POPB, 
+    PUSHB,      // pushb                    :: (8-bits) push
+    POPB,       // popb                     :: (8-bits) pop
 
     // Cache Operations
     INV,        // [inv]alidate cache :: clears or marks all cache lines as invalid

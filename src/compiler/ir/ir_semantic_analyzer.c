@@ -9,73 +9,11 @@
 #include "compiler/ir/ir_semantic_analyzer.h"
 #include "compiler/ir/ir_parser.h"
 
-
 /*
-static void _show_error_in_syntax_recursion(IRParserToken_t* root, IRParserToken_t* AST, IRParserToken_t* ordered_tokens[16], int *ordered_tokens_index) {
-    if (root->child_count == 0) {
-        ordered_tokens[(*ordered_tokens_index)++] = root;
-        //printf("%s", root->token.raw);
-    }
-    for (int i = 0; i < root->child_count; i++) {
-        _show_error_in_syntax_recursion(root->child[i], AST, ordered_tokens, ordered_tokens_index);
-    }
-}
-
-
-// Maybe instead forward the true root AST and use that to print, just filter to the correct line. 
-static void show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
-    unsigned int min_line = -1, max_line = 0, min_col = -1, max_col = 0;
-
-    IRParserToken_t* ordered_tokens[16];
-    int ordered_tokens_index = 0;
-
-    _show_error_in_syntax_recursion(root, AST, ordered_tokens, &ordered_tokens_index);
-    //printf("ordered tokens index: %d\n", ordered_tokens_index);
-
-    for (int i = 0; i < ordered_tokens_index; i++) {
-        if ((unsigned) ordered_tokens[i]->token.line < min_line) {
-            min_line = (unsigned) ordered_tokens[i]->token.line;
-        }
-        if ((unsigned) ordered_tokens[i]->token.line > max_line) {
-            max_line = (unsigned) ordered_tokens[i]->token.line;
-        }
-        if ((unsigned) ordered_tokens[i]->token.column < min_col) {
-            min_col = (unsigned) ordered_tokens[i]->token.column;
-        }
-        if ((unsigned) ordered_tokens[i]->token.column > max_col) {
-            max_col = (unsigned) ordered_tokens[i]->token.column;
-        }
-    }
-    //printf("l:%d/%d, c:%d/%d\n", min_line, max_line, min_col, max_col);
-
-    int current_line = 0;
-    int current_column = 0;
-    int first = 0; 
-
-    for (int i = 0; i < ordered_tokens_index; i++) {
-        if (current_line != ordered_tokens[i]->token.line) {
-            current_line = ordered_tokens[i]->token.line;
-            current_column = 0;
-            if (!first) {
-                first = 1;
-            } else {
-                putchar('\n');
-            }
-            printf("| %4d| ", current_line);
-            while (++current_column < ordered_tokens[i]->token.column) {
-                putchar('_');
-            }
-        } else {
-            while (++current_column < ordered_tokens[i]->token.column) {
-                putchar('_');
-            }
-        }
-        printf("%s", ordered_tokens[i]->token.raw);
-    }
-    putchar('\n');
-}
+OK, NEW IDEA: 
+Lets not do a full semantic analysis step seperately. 
+So instead, we can refactor this file to contain helper functions that make analysis during compile-time easier!
 */
-
 
 static void _get_lines(IRParserToken_t* root, unsigned int* first_line, unsigned int* last_line) {
     if (root->child_count == 0) {
@@ -103,6 +41,10 @@ static void _get_all_tokens_of_lines(IRParserToken_t* root, IRParserToken_t* lis
 }
 
 void show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
+    show_error_in_syntax_ext(root, AST, NULL, '\n', 1, 0);
+}
+
+void show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, char end, int pad, int newline_on_first_line_change) {
     
     // first, get the line interval of the error
     unsigned int first_line = -1, last_line = 0;
@@ -113,9 +55,13 @@ void show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
     IRParserToken_t* list[16];
     int index = 0;
     _get_all_tokens_of_lines(AST, list, &index, first_line, last_line);
-    //printf("found %d leaf nodes\n", index);
+    if (index == 0) return;
 
-    int current_line = 0, current_column = 0, first = 0;
+    int current_line = 0;
+    if (last_line_shown) {current_line = *last_line_shown;}
+
+    int current_column = 0; 
+    int first = 0;
     char placeholder = ' ';
     for (int i = 0; i < index; i++) {
         if (current_line != list[i]->token.line) {
@@ -123,6 +69,9 @@ void show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
             current_column = 0;
             if (!first) {
                 first = 1;
+                if (newline_on_first_line_change) {
+                    putchar('\n');
+                }
             } else {
                 putchar('\n');
             }
@@ -131,14 +80,17 @@ void show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
                 putchar(placeholder);
             }
         } else {
-            while (++current_column < list[i]->token.column) {
+            while (++current_column < list[i]->token.column && pad) {
                 putchar(placeholder);
             }
         }
         printf("%s", list[i]->token.raw);
         current_column += strlen(list[i]->token.raw)-1;
     }
-    putchar('\n');
+
+    putchar(end);
+
+    if (last_line_shown) {*last_line_shown = current_line;}
 
 }
 
@@ -158,19 +110,19 @@ static void ir_semantic_analysis_check_valid_reference_expression(IRParserToken_
 
     //log_msg(LP_DEBUG, "token->child[1]->variant: %d", token->child[1]->variant);
     
-    if (token->child[1]->token.type == IR_PAR_EXPRESSION && token->child[1]->variant == 6) {
+    if ((IRParserTokenType_t) token->child[1]->token.type == IR_PAR_EXPRESSION && token->child[1]->variant == 6) {
         log_msg(LP_ERROR, "malformed reference: immediate values may not be referenced");
         show_error_in_syntax(token, AST);
         *valid = 0;
     }
     
-    if (token->child[1]->token.type == IR_PAR_EXPRESSION && token->child[1]->variant == 2) {
+    if ((IRParserTokenType_t) token->child[1]->token.type == IR_PAR_EXPRESSION && token->child[1]->variant == 2) {
         log_msg(LP_ERROR, "malformed reference: reference values may not be referenced");
         show_error_in_syntax(token, AST);
         *valid = 0;
     }
     
-    if (token->child[1]->token.type == IR_PAR_EXPRESSION && token->child[1]->variant == 10) {
+    if ((IRParserTokenType_t) token->child[1]->token.type == IR_PAR_EXPRESSION && token->child[1]->variant == 10) {
         log_msg(LP_ERROR, "malformed reference: cannot reference __parg");
         show_error_in_syntax(token, AST);
         *valid = 0;
@@ -218,12 +170,6 @@ static void ir_semantic_analysis_check_valid_lvalue_expression(IRParserToken_t* 
     return;
 }
 
-static void ir_semantic_analysis_check_valid_rvalue_expression(IRParserToken_t* token, IRParserToken_t* AST, int* valid) {
-    // Checks whether the token is a value rvalue. 
-    return;
-}
-
-
 
 // root is the current token, AST is the FULL branch
 static void ir_semantic_analysis_recursion(IRParserToken_t* root, IRParserToken_t* AST, int* valid) {
@@ -233,9 +179,8 @@ static void ir_semantic_analysis_recursion(IRParserToken_t* root, IRParserToken_
             switch (root->variant) {
                 case 1:
                     ir_semantic_analysis_check_valid_lvalue_expression(root->child[0], AST, valid);
-                    ir_semantic_analysis_check_valid_rvalue_expression(root->child[2], AST, valid);
                     break;
-                
+
                 default:
                     break;
             }
@@ -254,6 +199,7 @@ static void ir_semantic_analysis_recursion(IRParserToken_t* root, IRParserToken_
             }
             break;
         }
+
 
         default: {
             break;

@@ -24,7 +24,6 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     [IR_LEX_MMIO] = "mmio",                             // IR_LEX_MMIO
     [IR_LEX_TEMP] = "temp",                             // IR_LEX_TEMP
     [IR_LEX_AT] = "at",                                 // IR_LEX_AT
-    [IR_LEX_PADALIGN] = "padalign",                     // IR_LEX_PADALIGN
     [IR_LEX_PUSHARG] = "pusharg",                       // IR_LEX_CALLPUSHARG
     [IR_LEX_FREEARG] = "freearg",                       // IR_LEX_CALLFREEARG
     [IR_LEX_CALL] = "call",                             // IR_LEX_CALL
@@ -33,7 +32,6 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     [IR_LEX_REENTRANT] = "reentrant",                   // IR_LEX_REENTRANT
     [IR_LEX_INTERRUPT] = "interrupt",                   // IR_LEX_INTERRUPT
     [IR_LEX_LOCAL] = "local",                           // IR_LEX_LOCAL
-    [IR_LEX_ALIGN] = "align",                           // IR_LEX_ALIGN
     [IR_LEX_SCOPEBEGIN] = "scopebegin",                 // IR_LEX_SCOPEBEGIN
     [IR_LEX_SCOPEEND] = "scopeend",                     // IR_LEX_SCOPEEND
     [IR_LEX_CIF] = "cif",                               // IR_LEX_CIF
@@ -119,10 +117,15 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     [IR_LEX_DOUBLE_LESS] = "d<",                         // IR_LEX_DOUBLE_LESS
     [IR_LEX_LONG_LESS] = "l<",                           // IR_LEX_LONG_LESS
 
-    [IR_LEX_SHIFT_LEFT_EQUAL] = "<<=",                   // IR_LEX_SHIFT_LEFT_EQUAL
-    [IR_LEX_SHIFT_RIGHT_EQUAL] = ">>=",                  // IR_LEX_SHIFT_RIGHT_EQUAL
+    [IR_LEX_UNSIGNED_SHIFT_LEFT_EQUAL] = "u<<=",         // IR_LEX_UNSIGNED_SHIFT_LEFT_EQUAL
+    [IR_LEX_UNSIGNED_SHIFT_RIGHT_EQUAL] = "u>>=",        // IR_LEX_UNSIGNED_SHIFT_RIGHT_EQUAL
+    [IR_LEX_SIGNED_SHIFT_LEFT_EQUAL] = "s<<=",           // IR_LEX_SIGNED_SHIFT_LEFT_EQUAL
+    [IR_LEX_SIGNED_SHIFT_RIGHT_EQUAL] = "s>>=",          // IR_LEX_SIGNED_SHIFT_RIGHT_EQUAL
+    
     [IR_LEX_BITWISE_AND_EQUAL] = "&=",                   // IR_LEX_BITWISE_AND_EQUAL
     [IR_LEX_BITWISE_OR_EQUAL] = "|=",                    // IR_LEX_BITWISE_OR_EQUAL
+    [IR_LEX_BITWISE_XOR_EQUAL] = "^=",                   // IR_LEX_BITWISE_XOR_EQUAL
+    [IR_LEX_BITWISE_BITWISE_NOT_EQUAL] = "~=",          // IR_LEX_BITWISE_BITWISE_NOT_EQUAL
     [IR_LEX_ASSIGN_8_BIT] = "8=",                        // IR_LEX_ASSIGN_8_BIT
 
     // Single-character tokens.
@@ -130,8 +133,6 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     [IR_LEX_RIGHT_CURLY_BRACKET] = "}",                  // IR_LEX_RIGHT_CURLY_BRACKET
     [IR_LEX_SEMICOLON] = ";",                            // IR_LEX_SEMICOLON
     [IR_LEX_COLON] = ":",                                // IR_LEX_COLON
-    [IR_LEX_BITWISE_NOT_EQUAL] = "~",                    // IR_LEX_BITWISE_NOT_EQUAL
-    [IR_LEX_BITWISE_XOR_EQUAL] = "^",                    // IR_LEX_BITWISE_XOR_EQUAL
     [IR_LEX_ASSIGN_16_BIT] = "=",                        // IR_LEX_ASSIGN_16_BIT
     [IR_LEX_STAR] = "*",                                 // IR_LEX_STAR
     [IR_LEX_AMPERSAND] = "&",                            // IR_LEX_AMPERSAND

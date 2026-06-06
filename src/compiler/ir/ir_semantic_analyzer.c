@@ -29,33 +29,36 @@ static void _get_lines(IRParserToken_t* root, unsigned int* first_line, unsigned
     }
 }
 
-static void _get_all_tokens_of_lines(IRParserToken_t* root, IRParserToken_t* list[16], int *index, unsigned first_line, unsigned int last_line) {
+static void _get_all_tokens_of_lines(IRParserToken_t* root, IRParserToken_t** list, int capacity, int *index, unsigned first_line, unsigned int last_line) {
+    if ((*index) >= capacity) {
+        return;
+    }
     if (root->child_count == 0) {
         if ((unsigned) root->token.line >= first_line && (unsigned) root->token.line <= last_line) {
             list[(*index)++] = root;
         }
     }
     for (int i = 0; i < root->child_count; i++) {
-        _get_all_tokens_of_lines(root->child[i], list, index, first_line, last_line);
+        _get_all_tokens_of_lines(root->child[i], list, capacity, index, first_line, last_line);
     }
 }
 
-void show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
-    show_error_in_syntax_ext(root, AST, NULL, '\n', 1, 0);
+int show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
+    return show_error_in_syntax_ext(root, AST, NULL, '\n', 1, 0);
 }
 
-void show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, char end, int pad, int newline_on_first_line_change) {
-    
+int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, char end, int pad, int newline_on_first_line_change) {
     // first, get the line interval of the error
     unsigned int first_line = -1, last_line = 0;
     _get_lines(root, &first_line, &last_line);
     //printf("first: %u, last: %u\n", first_line, last_line);
 
     // then get the leaf nodes of all nodes that are at those lines
-    IRParserToken_t* list[16];
+    const int CAPACTIY = 16;
+    IRParserToken_t* list[CAPACTIY];
     int index = 0;
-    _get_all_tokens_of_lines(AST, list, &index, first_line, last_line);
-    if (index == 0) return;
+    _get_all_tokens_of_lines(AST, list, CAPACTIY, &index, first_line, last_line);
+    if (index == 0) return 0;
 
     int current_line = 0;
     if (last_line_shown) {current_line = *last_line_shown;}
@@ -87,11 +90,15 @@ void show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* 
         printf("%s", list[i]->token.raw);
         current_column += strlen(list[i]->token.raw)-1;
     }
+    if (index >= CAPACTIY) {
+        printf(" ...\n| %4d| ...", current_line + 1);
+    }
 
     putchar(end);
 
     if (last_line_shown) {*last_line_shown = current_line;}
 
+    return 1;
 }
 
 

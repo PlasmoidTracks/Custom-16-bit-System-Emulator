@@ -84,40 +84,6 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .description = "temp -> type_definition",
     },
 
-    // at { number } -> type_definition
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_AT, 
-            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
-            (IRParserTokenType_t) IR_LEX_NUMBER, 
-            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_TYPE_DEFINITION,
-        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
-        .invert_match = {0},
-        .context_length = 4,
-        .priority = 1000, 
-        .description = "align { number } -> type_definition",
-    },
-
-    // at { number } -> type_definition
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_PADALIGN, 
-            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
-            (IRParserTokenType_t) IR_LEX_NUMBER, 
-            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_TYPE_DEFINITION,
-        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
-        .invert_match = {0},
-        .context_length = 4,
-        .priority = 1000, 
-        .description = "padalign { number } -> type_definition",
-    },
-
     // TYPE_DEFINITION TYPE_DEFINITION -> TYPE_DEFINITION
 
     {
@@ -135,12 +101,12 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
 
     
-    // TYPE_DEFINITION { EXPRESSION } IDENTIFIER ;  -> VARIABLE_DECLARATION
+    // TYPE_DEFINITION { NUMBER } IDENTIFIER ;  -> VARIABLE_DECLARATION
     {
         .context = {
             (IRParserTokenType_t) IR_PAR_TYPE_DEFINITION, 
             (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
-            (IRParserTokenType_t) IR_PAR_EXPRESSION, 
+            (IRParserTokenType_t) IR_LEX_NUMBER, 
             (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
             (IRParserTokenType_t) IR_LEX_IDENTIFIER, 
             (IRParserTokenType_t) IR_LEX_SEMICOLON, 
@@ -456,6 +422,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 4,
         .priority = 10, 
         .description = "label scopebegin statement scopeend -> function_definition",
+        .variant = 0, 
     },
 
     // label SCOPEBEGIN SCOPEEND return -> FUNCTION_DEFINITION
@@ -472,6 +439,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 3,
         .priority = 10, 
         .description = "label scopebegin scopeend -> function_definition",
+        .variant = 1, 
     },
 
 
@@ -492,6 +460,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "assign -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -504,6 +473,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i+= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -516,6 +486,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "u+= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -528,6 +499,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "si+= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -540,6 +512,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "su+= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -552,6 +525,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f+= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -564,6 +538,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d+= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -576,6 +551,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l+= -> operator",
+        .variant = 0, 
     },
 
     {
@@ -589,6 +565,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -601,6 +578,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "u-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -613,6 +591,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "si-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -625,6 +604,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "su-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -637,6 +617,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -649,6 +630,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -661,6 +643,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l-= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -673,6 +656,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -685,6 +669,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "u*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -697,6 +682,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "si*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -709,6 +695,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "su*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -721,6 +708,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -733,6 +721,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -745,6 +734,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l*= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -757,6 +747,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i/= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -769,6 +760,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "u/= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -781,6 +773,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f/= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -793,6 +786,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d/= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -805,6 +799,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l/= -> operator",
+        .variant = 0, 
     },
 
     {
@@ -818,6 +813,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i== -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -830,6 +826,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f== -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -842,6 +839,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d== -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -854,6 +852,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l== -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -866,6 +865,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i!= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -878,6 +878,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f!= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -890,6 +891,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d!= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -902,6 +904,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l!= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -914,6 +917,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i>= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -926,6 +930,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f>= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -938,6 +943,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d>= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -950,6 +956,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l>= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -962,6 +969,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i<= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -974,6 +982,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f<= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -986,6 +995,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d<= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -998,6 +1008,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l<= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1010,6 +1021,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i> -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1022,6 +1034,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f> -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1034,6 +1047,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d> -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1046,6 +1060,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l> -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1058,6 +1073,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "i< -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1070,6 +1086,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "f< -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1082,6 +1099,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "d< -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1094,10 +1112,11 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "l< -> operator",
+        .variant = 0, 
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_SHIFT_LEFT_EQUAL, 
+            (IRParserTokenType_t) IR_LEX_UNSIGNED_SHIFT_LEFT_EQUAL, 
             IR_PAR_RULE_END
         },
         .output = IR_PAR_OPERATOR,
@@ -1105,11 +1124,12 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 1000, 
-        .description = "<<= -> operator",
+        .description = "u<<= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_SHIFT_RIGHT_EQUAL, 
+            (IRParserTokenType_t) IR_LEX_UNSIGNED_SHIFT_RIGHT_EQUAL, 
             IR_PAR_RULE_END
         },
         .output = IR_PAR_OPERATOR,
@@ -1117,7 +1137,34 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 1000, 
-        .description = ">>= -> operator",
+        .description = "u>>= -> operator",
+        .variant = 0, 
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_SIGNED_SHIFT_LEFT_EQUAL, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "s<<= -> operator",
+        .variant = 0, 
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_SIGNED_SHIFT_RIGHT_EQUAL, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "s>>= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1130,6 +1177,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "&= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1142,6 +1190,20 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "|= -> operator",
+        .variant = 0, 
+    },
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_BITWISE_XOR_EQUAL, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_OPERATOR,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "^= -> operator",
+        .variant = 0, 
     },
     {
         .context = {
@@ -1298,6 +1360,25 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 1000, 
         .description = "cbi -> unary_operator",
+    },
+    
+    // Multi-Byte arithmetic operations: 
+    // {#}i+=, {#}u+=, {#}i-=, {#}i-=, {#}s>>=, {#}u>>=, {#}s<<=, {#}u<<=, {#}&=, {#}|=, {#}^=
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
+            (IRParserTokenType_t) IR_PAR_EXPRESSION, 
+            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
+            (IRParserTokenType_t) IR_PAR_OPERATOR, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_OPERATOR,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 4,
+        .priority = 1000, 
+        .description = "{number} operator -> operator",
+        .variant = 1, 
     },
 
     
@@ -1496,22 +1577,6 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .priority = 1000, 
         .description = "local -> function_modifier",
     },
-    // align { number } -> function_modifier
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_ALIGN, 
-            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
-            (IRParserTokenType_t) IR_LEX_NUMBER, 
-            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_FUNCTION_MODIFIER,
-        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
-        .invert_match = {0},
-        .context_length = 4,
-        .priority = 1000, 
-        .description = "align { number } -> function_modifier",
-    },
 
 
     // function_modifier function_modifier -> function_modifier
@@ -1541,6 +1606,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 2,
         .priority = 10, 
         .description = "function_modifier function_definition -> function_definition",
+        .variant = 2, 
     },
 
     {
@@ -1555,6 +1621,24 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .priority = 1000, 
         .description = "__parg -> expression",
         .variant = 10, 
+    },
+
+    // if expression .label ; -> STATEMENT
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_IF,
+            (IRParserTokenType_t) IR_PAR_EXPRESSION, 
+            (IRParserTokenType_t) IR_LEX_LABEL, 
+            (IRParserTokenType_t) IR_LEX_SEMICOLON, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_STATEMENT,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 4,
+        .priority = 1000, 
+        .description = "if expression .label ; -> statement",
+        .variant = 2, 
     },
 
     // function_definition function_definition -> function_definition

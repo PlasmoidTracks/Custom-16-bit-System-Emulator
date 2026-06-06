@@ -128,6 +128,8 @@ extern Instruction_t* assembler_parse_expression(Expression_t* expression, int e
 
 extern uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction_count, long* binary_size, AssembleOption_t options);
 
+extern Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruction_count);
+
 extern uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options);
 
 extern uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options);

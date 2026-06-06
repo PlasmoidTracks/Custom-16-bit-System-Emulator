@@ -4,6 +4,9 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include "globals/memory_layout.h"
+#include "include/utils/Log.h"
+#include "modules/ram.h"
 #include "utils/IO.h"
 #include "utils/String.h"
 #include "utils/Log.h"
@@ -22,6 +25,11 @@
 
 #include "modules/system.h"
 #include "CLI.h"
+
+#include <stdarg.h>
+
+#include "compiler/linker/linker.h"
+#include "compiler/transpiler/transpiler.h"
 
 
 #define HW_WATCH
@@ -54,6 +62,24 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     //log_msg(LP_DEBUG, "Compiling with option: file:%s, bin:%s, c:%d, cft:%d, run:%d, O1:%d, o:%d, save-temps:%d, d:%d", co.input_filename, co.binary_filename, co.c, co.cft, co.run, co.O, co.o, co.save_temps, co.d);
+
+    /*
+    char** source_files = malloc(sizeof(char*) * 2);
+    source_files[0] = malloc(strlen(co.input_filename) + 1);
+    strcpy(source_files[0], co.input_filename);
+    source_files[1] = NULL;
+    char** dependency_list = linker_build_dependency_set(source_files);
+    if (dependency_list) {
+        int index = 0;
+        while (dependency_list[index]) {
+            printf("index %d: %s\n", index, dependency_list[index]);
+            index++;
+        }
+    }
+
+    return 0;
+    */
+
 
     if (co.cft >= CFT_CCAN)
     {
@@ -164,7 +190,7 @@ int main(int argc, char* argv[]) {
     if (co.cft > CFT_BIN) {
         int success = data_export(co.binary_filename, bin, binary_size);
         if (!success) {
-            log_msg(LP_ERROR, "Main: data_export returned with failure");
+            log_msg(LP_ERROR, "Main: data_export returned with failure [%s:%d]", __FILE__, __LINE__);
             return 0;
         }
     }
@@ -172,6 +198,15 @@ int main(int argc, char* argv[]) {
     if (co.d) {
         disassembler_decompile_to_file(bin, "disassemble.asm", binary_size, segment, segment_count, 
             (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (DO_ADD_RAW_BYTES)));
+    }
+
+    if (co.toc) {
+        char* result = transpile_from_file(co.binary_filename);
+        if (!result) {
+            log_msg(LP_ERROR, "Main: Transpiler returned NULL [%s:%d]", __FILE__, __LINE__);
+            return 0;
+        }
+        printf("%s\n", result);
     }
     
     free(segment);

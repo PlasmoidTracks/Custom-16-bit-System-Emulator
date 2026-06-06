@@ -34,7 +34,7 @@ typedef enum {
     REENTRANT   = 0004, 
     INTERRUPT   = 0010, 
     ADDRESS     = 0020, 
-    PUBLIC      = 0040, 
+    LOCAL       = 0040, 
     ALIGN       = 0100, 
 } FunctionModifier_t;
 
@@ -47,9 +47,6 @@ typedef struct Variable_t {
     char* name;
     int size;
     int scope_index;    // -1 is global
-    int vla;
-    char* vla_variable_name;
-    struct Variable_t* vla_size;
     union {
         int offset;     // for stack variables
         int address;    // for static variables
@@ -59,6 +56,11 @@ typedef struct Variable_t {
 typedef struct Function_t {
     IRParserToken_t* token; // hold what? Parent Statement?
     FunctionModifier_t modifier;
+    int interrupt;
+    int align;
+    char* name;
+    // epilogue size (how many bytes in the epilogue ends and function body starts)
+    // memory layout...?
 } Function_t;
 
 
@@ -104,13 +106,53 @@ static VariableModifier_t ir_prepass_variable_declaration_get_type_definition(IR
                     }
                     *at = parse_immediate(type_definition->child[2]->token.raw);
                     break;
-                
-                case IR_LEX_PADALIGN:
-                    modifier |= PADALIGN;
-                    if (*padalign != -1) {
-                        log_msg(LP_WARNING, "Multiple apprearenced of 'padalign' modifier will use last set value [%s:%d]", __FILE__, __LINE__);
+
+                default:
+                    //log_msg(LP_ERROR, "Unknown variable type modifier \"%s\" [%s:%d]", ir_token_name[type_definition->child[i]->token.type], __FILE__, __LINE__);
+                    break;
+            }
+        }
+    }
+
+    return modifier;
+}
+
+
+
+
+// int* interrupt and int* align MUST to be initialized as -1
+static FunctionModifier_t ir_prepass_function_declaration_get_type_definition(IRParserToken_t* type_definition, int* interrupt, int* align) {
+    if ((IRParserTokenType_t) type_definition->token.type != IR_PAR_FUNCTION_MODIFIER) {
+        return 0;
+    }
+    FunctionModifier_t modifier = 0;
+    for (int i = 0; i < type_definition->child_count; i++) {
+        if ((IRParserTokenType_t) type_definition->child[i]->token.type == IR_PAR_FUNCTION_MODIFIER) {
+            modifier |= ir_prepass_function_declaration_get_type_definition(type_definition->child[i], interrupt, align);
+        } else {
+            switch (type_definition->child[i]->token.type) {
+                case IR_LEX_PERILOGUE:
+                    modifier |= PERILOGUE;
+                    break;
+
+                case IR_LEX_ATOMIC:
+                    modifier |= ATOMIC;
+                    break;
+
+                case IR_LEX_REENTRANT:
+                    modifier |= REENTRANT;
+                    break;
+
+                case IR_LEX_INTERRUPT:
+                    modifier |= INTERRUPT;
+                    if (*interrupt != -1) {
+                        log_msg(LP_WARNING, "Multiple apprearenced of 'interrupt' modifier will use last set value [%s:%d]", __FILE__, __LINE__);
                     }
-                    *padalign = parse_immediate(type_definition->child[2]->token.raw);
+                    *interrupt = parse_immediate(type_definition->child[2]->token.raw);
+                    break;
+
+                case IR_LEX_LOCAL:
+                    modifier |= LOCAL;
                     break;
 
                 default:
@@ -135,7 +177,7 @@ static void list_append(void** list, int* list_length, size_t size, void* data) 
 }
 
 
-static void _ir_prepass(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int inside_function_definition, int* scope_index_ptr) {
+static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int inside_function_definition, int* scope_index_ptr) {
     //log_msg(LP_DEBUG, "%s: %d", ir_token_name[AST->token.type], inside_function_definition);
     if ((IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION) {
         (*scope_index_ptr) ++;
@@ -146,19 +188,10 @@ static void _ir_prepass(IRParserToken_t* AST, Variable_t** variable_list_ptr, in
         int padalign = -1;
         VariableModifier_t modifier = ir_prepass_variable_declaration_get_type_definition(AST->child[0], &at, &padalign);
         char* name = AST->child[4]->token.raw;
-        char* vla_variable_name = NULL;
         int size = 0;
-        int vla = 0;
-        switch (AST->child[2]->child[0]->token.type) {
+        switch (AST->child[2]->token.type) {
             case IR_LEX_NUMBER: {
-                size = parse_immediate(AST->child[2]->child[0]->token.raw);
-                break;
-            }
-
-            case IR_LEX_IDENTIFIER: {
-                size = -1;
-                vla = 1;
-                vla_variable_name = AST->child[2]->child[0]->token.raw;
+                size = parse_immediate(AST->child[2]->token.raw);
                 break;
             }
 
@@ -177,8 +210,6 @@ static void _ir_prepass(IRParserToken_t* AST, Variable_t** variable_list_ptr, in
             .name = name, 
             .size = size, 
             .scope_index = scope_index, 
-            .vla = vla, 
-            .vla_variable_name = vla_variable_name, 
         };
 
         list_append((void*) variable_list_ptr, variable_list_length_ptr, sizeof(Variable_t), &variable);
@@ -187,12 +218,46 @@ static void _ir_prepass(IRParserToken_t* AST, Variable_t** variable_list_ptr, in
     }
 
     for (int i = 0; i < AST->child_count; i++) {
-        _ir_prepass(AST->child[i], variable_list_ptr, variable_list_length_ptr, inside_function_definition || (IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION, scope_index_ptr);
+        _ir_prepass_variable(AST->child[i], variable_list_ptr, variable_list_length_ptr, inside_function_definition || (IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION, scope_index_ptr);
     }
 }
 
-void ir_prepass(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int* scope_index_ptr) {
-    _ir_prepass(AST, variable_list_ptr, variable_list_length_ptr, 0, scope_index_ptr);
+
+static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, FunctionModifier_t modifier, int interrupt, int align) {
+
+    if ((IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION) {
+        if (AST->variant == 2) {
+            FunctionModifier_t fetched_modifier = ir_prepass_function_declaration_get_type_definition(AST->child[0], &interrupt, &align);
+            _ir_prepass_function(AST->child[1], function_list_ptr, function_list_length_ptr, fetched_modifier, interrupt, align);
+        } else {
+            char* name = AST->child[0]->token.raw;
+
+            Function_t function = {
+                .token = AST, 
+                .modifier = modifier, 
+                .name = name, 
+                .interrupt = interrupt, 
+                .align = align, 
+            };
+
+            list_append((void*) function_list_ptr, function_list_length_ptr, sizeof(Function_t), &function);
+        }
+
+        return;
+    }
+
+    for (int i = 0; i < AST->child_count; i++) {
+        _ir_prepass_function(AST->child[i], function_list_ptr, function_list_length_ptr, 0, -1, -1);
+    }
+}
+
+
+void ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int* scope_index_ptr) {
+    _ir_prepass_variable(AST, variable_list_ptr, variable_list_length_ptr, 0, scope_index_ptr);
+}
+
+void ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr) {
+    _ir_prepass_function(AST, function_list_ptr, function_list_length_ptr, 0, -1, -1);
 }
 
 
@@ -220,7 +285,6 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
                 if (!invalid) {
                     log_msg(LP_ERROR, "\"%s\" - Invalid syntax [%s:%d]", 
                         source_identifier, 
-                        ir_token_name[parse[i]->token.type], 
                         __FILE__, 
                         __LINE__
                     );
@@ -245,7 +309,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
     int variable_list_lenght = 0;
     int scope_index = -1;
     for (int i = 0; i < parser_root_count; i++) {
-        ir_prepass(parse[i], &variable_list, &variable_list_lenght, &scope_index);
+        ir_prepass_variable(parse[i], &variable_list, &variable_list_lenght, &scope_index);
     }
     int error = 0;
     for (int i = 0; i < variable_list_lenght; i++) {
@@ -254,10 +318,12 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             if ((variable_list[i].scope_index != variable_list[j].scope_index) && variable_list[i].scope_index != -1 && variable_list[j].scope_index != -1) continue;
             if (strcmp(variable_list[i].name, variable_list[j].name) == 0) {
                 log_msg(LP_ERROR, "\"%s\" - Clashing variable name \"%s\" [%s:%d]", 
-                    source_identifier, variable_list[i].name, __FILE__, __LINE__);
+                    source_identifier, variable_list[i].name, __FILE__, __LINE__
+                );
                 for (int k = 0; k < parser_root_count; k++) {
-                    show_error_in_syntax(variable_list[i].token, parse[k]);
-                    //printf("| ....|\n");  // doesnt even look bad with this line. 
+                    if (show_error_in_syntax(variable_list[i].token, parse[k])) {
+                        printf("| ... |\n");
+                    }
                     show_error_in_syntax(variable_list[j].token, parse[k]);
                 }
                 error = 1;
@@ -265,7 +331,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
         }
 
         // check for valid configuration
-        if (variable_list[i].size <= 0 && !variable_list[i].vla) {
+        if (variable_list[i].size <= 0) {
             log_msg(LP_ERROR, "\"%s\" - Invalid variable size: size may not be zero or negative, got %d [%s:%d]", source_identifier, variable_list[i].size, __FILE__, __LINE__);
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
@@ -322,44 +388,56 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             }
             error = 1;
         }
+    }
 
-        // resolve VLA references
-        if (variable_list[i].vla) {
-            int resolved = 0;
-            for (int j = 0; j < variable_list_lenght; j++) {
-                if (i == j) continue;
-                if (strcmp(variable_list[i].vla_variable_name, variable_list[j].name) == 0) {
-                    if (variable_list[i].scope_index >= variable_list[j].scope_index) {
-                        resolved = 1;
-                        if (!variable_list[j].vla) {
-                            if (variable_list[j].size == 2) {
-                                variable_list[i].vla_size = &variable_list[j];
-                            } else {
-                                log_msg(LP_ERROR, "\"%s\" - VLA may not be set by variable size not equal 2, got \"%s\" with size %d [%s:%d]", source_identifier, variable_list[i].vla_variable_name, variable_list[j].size, __FILE__, __LINE__);
-                                for (int k = 0; k < parser_root_count; k++) {
-                                    show_error_in_syntax(variable_list[i].token, parse[k]);
-                                    show_error_in_syntax(variable_list[j].token, parse[k]);
-                                }
-                            }
-                        } else {
-                            log_msg(LP_ERROR, "\"%s\" - VLA may not be set by another VLA, got VLA \"%s\" [%s:%d]", source_identifier, variable_list[i].vla_variable_name, __FILE__, __LINE__);
-                            for (int k = 0; k < parser_root_count; k++) {
-                                show_error_in_syntax(variable_list[i].token, parse[k]);
-                                show_error_in_syntax(variable_list[j].token, parse[k]);
-                            }
-                        }
-                    }
-                }
-            }
-            if (!resolved) {
-                log_msg(LP_ERROR, "\"%s\" - VLA could not resolve variable name \"%s\" [%s:%d]", source_identifier, variable_list[i].vla_variable_name, __FILE__, __LINE__);
+
+    // Prepass, collecting all functions and their modifiers
+    Function_t* function_list = NULL;
+    int function_list_lenght = 0;
+    for (int i = 0; i < parser_root_count; i++) {
+        ir_prepass_function(parse[i], &function_list, &function_list_lenght);
+    }
+
+    for (int i = 0; i < function_list_lenght; i++) {
+        // Check for name clashing:
+        for (int j = i + 1; j < function_list_lenght; j++) {
+            if (strcmp(function_list[i].name, function_list[j].name) == 0) {
+                log_msg(LP_ERROR, "\"%s\" - Clashing function name \"%s\" [%s:%d]", 
+                    source_identifier, function_list[i].name, __FILE__, __LINE__
+                );
                 for (int k = 0; k < parser_root_count; k++) {
-                    show_error_in_syntax(variable_list[i].token, parse[k]);
+                    if (show_error_in_syntax(function_list[i].token, parse[k])) {
+                        printf("| ... |\n");
+                    }
+                    show_error_in_syntax(function_list[j].token, parse[k]);
+                }
+                error = 1;
+            }
+
+            if (function_list[i].interrupt != -1 && function_list[i].interrupt == function_list[j].interrupt) {
+                log_msg(LP_ERROR, "\"%s\" - Two functions sharing the same interrupt vector table enty at 0x%.4x [%s:%d]", 
+                    source_identifier, function_list[i].interrupt, __FILE__, __LINE__
+                );
+                for (int k = 0; k < parser_root_count; k++) {
+                    if (show_error_in_syntax(function_list[i].token, parse[k])) {
+                        printf("| ... |\n");
+                    }
+                    show_error_in_syntax(function_list[j].token, parse[k]);
                 }
                 error = 1;
             }
         }
+
+        if (function_list[i].modifier & INTERRUPT) {
+            if (!(function_list[i].modifier & ATOMIC)) {
+                log_msg(LP_WARNING, "\"%s\" - Interrupt function should also be atomic [%s:%d]", source_identifier, __FILE__, __LINE__);
+                for (int k = 0; k < parser_root_count; k++) {
+                    show_error_in_syntax(function_list[i].token, parse[k]);
+                }
+            }
+        }
     }
+
 
     if (error) return NULL;
 

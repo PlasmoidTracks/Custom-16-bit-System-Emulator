@@ -857,6 +857,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 } else if (expression[expression_index].type == EXPR_DEREF_LABEL) {
                     log_msg(LP_ERROR, "Parsing expressions: label dereferences may only be used within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
                     return NULL;
+                } else if (expression[expression_index].type == EXPR_DATA) {
+                    log_msg(LP_ERROR, "Parsing expressions: data may only be defined within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
+                    return NULL;
                 } else {
                     log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
                     return NULL;

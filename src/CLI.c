@@ -70,6 +70,8 @@ const CompileOption_t CO_DEFAULT = {
     // IR
     .pic = 0, 
     .no_preamble = 0, 
+    // Transpiler
+    .toc = 0, 
     // Emulator
     .run = 0, 
     // CPU
@@ -155,6 +157,11 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
             arg_index ++;
             continue;
         }
+        if (strcmp(argv[arg_index], "-toc") == 0) {
+            co.toc = 1;
+            arg_index ++;
+            continue;
+        }
         char tmp[32];
         strcpy(tmp, argv[arg_index]);
         tmp[12] = '\0';
@@ -201,6 +208,11 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
             arg_index ++;
             continue;
         }
+        // writing "-" can advance the argument index
+        if (strcmp(argv[arg_index], "-") == 0) {
+            arg_index ++;
+            continue;
+        }
         log_msg(LP_WARNING, "CLI: Unknown argument \"%s\" [%s:%d]", argv[arg_index], __FILE__, __LINE__);
         arg_index ++;
     }
@@ -222,6 +234,8 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
             co.cft = CFT_CCAN;
         } else if (strcmp(extension, "c") == 0) {
             co.cft = CFT_C;
+        } else if (strcmp(extension, "-") == 0) {
+            /**/
         } else {
             log_msg(LP_ERROR, "CLI: Unknown file format \"%s\" [%s:%d]", extension, __FILE__, __LINE__);
             if (error) {*error = 1;}

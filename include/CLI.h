@@ -34,6 +34,8 @@ typedef struct CompileOption_t {
     // IR
     unsigned int pic : 1;           // [p]osition [i]ndependent [c]ode
     unsigned int no_preamble : 1;   // [no preamble]
+    // Transpiler
+    unsigned int toc : 1;           // transpile [to] [C]
     // Emulator
     unsigned int run : 1;           // [run]
     // CPU

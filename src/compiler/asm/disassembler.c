@@ -53,7 +53,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     }
 
     if (instruction >= INSTRUCTION_COUNT) {
-        //log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x] [%s:%d]", instruction, __FILE__, __LINE__);
+        log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x] [%s:%d]", instruction, __FILE__, __LINE__);
         if (valid_instruction) *valid_instruction = 0;
         return strdup("");  // makes it heap allocated
     }
@@ -81,11 +81,11 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     int data_size = 0;
 
     if (argument_count == 2) {
-        //log_msg(LP_INFO, "decompile: instruction \"%s %s, %s\"", cpu_instruction_string[instruction], cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
+        //log_msg(LP_INFO, "decompile: instruction \"%s %s, %s\"", instruction_encoding[instruction].instruction_string, cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
         data_size += cpu_extended_addressing_mode_bytes[admx];
         data_size += cpu_reduced_addressing_mode_bytes[admr];
     } else if (argument_count == 0) {
-        //log_msg(LP_INFO, "decompile: instruction \"%s\"", cpu_instruction_string[instruction]);
+        //log_msg(LP_INFO, "decompile: instruction \"%s\"", instruction_encoding[instruction].instruction_string);
         //log_msg(LP_INFO, "decompile: admr, amdx: \"%s\", \"%s\"", cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
         if (admr != 0 || admx != 0) {
             //log_msg(LP_DEBUG, "Instructions with no argument, but set adm is not realistic. Assuming it is raw data instead");
@@ -99,7 +99,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 if (valid_instruction) *valid_instruction = 0;
                 //return "";
             }
-            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\"", cpu_instruction_string[instruction], cpu_reduced_addressing_mode_string[admr]);
+            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\"", instruction_encoding[instruction].instruction_string, cpu_reduced_addressing_mode_string[admr]);
             data_size += cpu_reduced_addressing_mode_bytes[admr];
         } else {
             if (admr != 0) {
@@ -107,7 +107,7 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 if (valid_instruction) *valid_instruction = 0;
                 //return "";
             }
-            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\"", cpu_instruction_string[instruction], cpu_extended_addressing_mode_string[admx]);
+            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\"", instruction_encoding[instruction].instruction_string, cpu_extended_addressing_mode_string[admx]);
             data_size += cpu_extended_addressing_mode_bytes[admx];
         }
     }
@@ -660,7 +660,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             for (int instruction_index = 0; instruction_index < INSTRUCTION_COUNT; instruction_index++) {
                 if (instruction_encoding[instruction_index].is_jump_instruction && instruction_encoding[instruction_index].argument_count == 1) {
                     if (strcmp(words[0], instruction_encoding[instruction_index].instruction_string) == 0) {
-                        //log_msg(LP_CRITICAL, "jump op: \"%s\"", cpu_instruction_string[instruction_index]);
+                        //log_msg(LP_CRITICAL, "jump op: \"%s\"", instruction_encoding[instruction_index].instruction_string);
                         found_jump_instruction = 1;
                         is_relative_jump = instruction_encoding[instruction_index].is_relative_jump_instruction;
 

@@ -442,7 +442,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 2].type == TT_STAR &&
             tokens[token_index + 3].type == TT_REGISTER &&
             tokens[token_index + 4].type == TT_PLUS &&
-            (tokens[token_index + 5].type == TT_IMMEDIATE || tokens[token_index + 3].type == TT_LABEL) &&
+            (tokens[token_index + 5].type == TT_IMMEDIATE || tokens[token_index + 5].type == TT_LABEL) &&
             tokens[token_index + 6].type == TT_BRACKET_CLOSE) {
 
                 expression[expression_index].type = EXPR_INDIRECT_SCALE_OFFSET;
@@ -465,9 +465,9 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 0].type == TT_BRACKET_OPEN &&
             tokens[token_index + 1].type == TT_REGISTER &&
             tokens[token_index + 2].type == TT_STAR &&
-            (tokens[token_index + 3].type == TT_IMMEDIATE || tokens[token_index + 1].type == TT_LABEL) &&
+            (tokens[token_index + 3].type == TT_IMMEDIATE || tokens[token_index + 3].type == TT_LABEL) &&
             tokens[token_index + 4].type == TT_PLUS &&
-            (tokens[token_index + 5].type == TT_IMMEDIATE || tokens[token_index + 3].type == TT_LABEL) &&
+            (tokens[token_index + 5].type == TT_IMMEDIATE || tokens[token_index + 5].type == TT_LABEL) &&
             tokens[token_index + 6].type == TT_BRACKET_CLOSE) {
 
                 expression[expression_index].type = EXPR_INDIRECT_SCALE_OFFSET;
@@ -513,7 +513,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
         // .address $ffff
         else if (token_index + 1 < token_count &&
             tokens[token_index + 0].type == TT_ADDRESS &&
-            tokens[token_index + 1].type == TT_IMMEDIATE) {
+            (tokens[token_index + 1].type == TT_IMMEDIATE || tokens[token_index + 1].type == TT_LABEL)) {
 
                 expression[expression_index].type = EXPR_ADDRESS;
                 expression[expression_index].tokens[0] = tokens[token_index + 0];

@@ -37,7 +37,7 @@
 
 
 int main(int argc, char* argv[]) {
-
+    
     LOG_LEVEL = LP_MINPRIO;
 
     if (argc < 2) {
@@ -197,16 +197,17 @@ int main(int argc, char* argv[]) {
 
     if (co.d) {
         disassembler_decompile_to_file(bin, "disassemble.asm", binary_size, segment, segment_count, 
-            (DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL | DO_ADD_SOURCE_LABEL | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (DO_ADD_RAW_BYTES)));
+            (DO_ADD_JUMP_LABEL | (0&DO_ADD_DEST_LABEL) | (0&DO_ADD_SOURCE_LABEL) | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (0&DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
     }
 
     if (co.toc) {
-        char* result = transpile_from_file(co.binary_filename);
+        long filesize;
+        char* result = transpile_from_file(co.binary_filename, &filesize);
         if (!result) {
             log_msg(LP_ERROR, "Main: Transpiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 0;
         }
-        printf("%s\n", result);
+        data_export("reconstruct.c", result, filesize);
     }
     
     free(segment);

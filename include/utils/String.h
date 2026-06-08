@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <ExtendedTypes.h>
+#include <utils/ExtendedTypes.h>
 
 extern int contains(const char character, const char* const matches);
 

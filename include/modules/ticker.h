@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "device.h"
+#include "modules/device.h"
 
 /*
 The general idea is that the CPU will get an interrupt every like 10ms. 

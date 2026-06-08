@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "device.h"
+#include "modules/device.h"
 
 #define __RAM_DEBUG
 #undef __RAM_DEBUG

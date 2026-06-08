@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "device.h"
+#include "modules/device.h"
 
 
 typedef struct BUS_t {

@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "globals/memory_layout.h"
+
 #include "utils/ExtendedTypes.h"
 
 #include "modules/cache.h"
 #include "modules/device.h"
-#include "globals/memory_layout.h"
 
 #include "cpu/cpu_instructions.h"
 #include "cpu/cpu_addressing_modes.h"

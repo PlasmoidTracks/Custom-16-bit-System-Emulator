@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "ram.h"
-#include "device.h"
+#include "modules/ram.h"
+#include "modules/device.h"
 
 /*
 The Memory Bank occupies a range of memory, but with swappable address spaces. 

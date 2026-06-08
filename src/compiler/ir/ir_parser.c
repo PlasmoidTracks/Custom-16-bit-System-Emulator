@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "compiler/ir/ir_parser_warning_ruleset.h"
 #include "utils/Log.h"
 
+#include "compiler/ir/ir_parser_warning_ruleset.h"
 #include "compiler/ir/ir_lexer.h"
 #include "compiler/ir/ir_parser.h"
 #include "compiler/ir/ir_parser_ruleset.h"

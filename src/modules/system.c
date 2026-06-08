@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "modules/cache.h"
-#include "modules/memory_bank.h"
 #include "utils/Log.h"
 
-#include "modules/bus.h"
 #include "cpu/cpu.h"
+
+#include "modules/cache.h"
+#include "modules/memory_bank.h"
+#include "modules/bus.h"
 #include "modules/ticker.h"
 #include "modules/system.h"
 #include "modules/terminal.h"

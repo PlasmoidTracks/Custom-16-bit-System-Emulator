@@ -14,6 +14,7 @@
 
 #include "compiler/asm/assembler.h"
 
+
 Label_t jump_label[MAX_LABELS];
 Label_t const_label[MAX_LABELS];
 

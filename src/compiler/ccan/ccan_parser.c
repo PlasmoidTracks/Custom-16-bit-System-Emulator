@@ -6,7 +6,6 @@
 #include "compiler/ccan/ccan_lexer.h"
 #include "compiler/ccan/ccan_parser.h"
 #include "compiler/ccan/ccan_parser_ruleset.h"
-#include "compiler/ccan/ccan_parser_warning_ruleset.h"
 #include "compiler/ccan/ccan_token_name_table.h"
 
 void ccan_recursion(CCANParserToken_t* parser_token, int depth) {

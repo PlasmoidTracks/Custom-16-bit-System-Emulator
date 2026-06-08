@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "globals/interrupt.h"
+
 #include "modules/device.h"
 #include "modules/ticker.h"
 

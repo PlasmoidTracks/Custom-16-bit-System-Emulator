@@ -1,7 +1,7 @@
 #ifndef _CPU_VIRTUAL_INSTRUCTIONS_H_
 #define _CPU_VIRTUAL_INSTRUCTIONS_H_
 
-#include "cpu_instructions.h"
+#include "cpu/cpu_instructions.h"
 
 #include <stdint.h>
 

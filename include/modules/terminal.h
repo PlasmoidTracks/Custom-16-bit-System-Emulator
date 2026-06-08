@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "device.h"
+#include "modules/device.h"
 
 /*
 The terminal will be the intersection between the CPU and the real terminal, for IO interactions

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-char* transpile(uint8_t* bin, long binary_size, long* file_size);
+char* transpile(char* asm, long* filesize);
 
 char* transpile_from_file(const char* const filename, long* filesize);
 

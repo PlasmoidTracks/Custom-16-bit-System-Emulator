@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
 
     if (co.toc) {
         long filesize;
-        char* result = transpile_from_file(co.binary_filename, &filesize);
+        char* result = transpile_from_file(co.input_filename, &filesize);
         if (!result) {
             log_msg(LP_ERROR, "Main: Transpiler returned NULL [%s:%d]", __FILE__, __LINE__);
             return 0;

@@ -1839,6 +1839,10 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     }
                     break;
                 
+                case EXPR_RESERVE:
+                    index += parse_immediate(instruction[instruction_index].expression[0].tokens[1].raw);
+                    break;
+                
                 default:
                     log_msg(LP_ERROR, "Encountered unknown addressing expression \"%s\" [%s:%d]", expression_type_string[instruction[instruction_index].expression[0].type], __FILE__, __LINE__);
                     break;

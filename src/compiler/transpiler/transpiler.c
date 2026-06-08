@@ -43,18 +43,26 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
 
         case PUSH: {
             switch (instruction.admx) {
+                case ADMX_IMM16:
+                    sprintf(output, "%spush16(0x%.4X);", prefix, parse_immediate(instruction.expression[1].tokens[0].raw));
+                    break;
+
                 case ADMX_R0:
                     sprintf(output, "%spush16(r0);", prefix);
                     break;
+
                 case ADMX_R1:
                     sprintf(output, "%spush16(r1);", prefix);
                     break;
+
                 case ADMX_R2:
                     sprintf(output, "%spush16(r2);", prefix);
                     break;
+
                 case ADMX_R3:
                     sprintf(output, "%spush16(r3);", prefix);
                     break;
+
                 case ADMX_SP:
                     sprintf(output, "%spush16(sp);", prefix);
                     break;
@@ -141,20 +149,24 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             }
             if (cpu_reduced_addressing_mode_category[instruction.admr] == ADMC_REG) {
                 switch (instruction.admx) {
+                    case ADMX_IMM16:
+                        sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
+                        break;
+
                     case ADMX_R0:
-                    sprintf(output + strlen(output), "r0;");
+                        sprintf(output + strlen(output), "r0;");
                         break;
     
                     case ADMX_R1:
-                    sprintf(output + strlen(output), "r1;");
+                        sprintf(output + strlen(output), "r1;");
                         break;
     
                     case ADMX_R2:
-                    sprintf(output + strlen(output), "r2;");
+                        sprintf(output + strlen(output), "r2;");
                         break;
     
                     case ADMX_R3:
-                    sprintf(output + strlen(output), "r3;");
+                        sprintf(output + strlen(output), "r3;");
                         break;
 
                     case ADMX_SP:
@@ -222,6 +234,10 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     case ADMX_SP:
                         sprintf(output + strlen(output), "sp);");
                         break;
+
+                    case ADMX_IND16:
+                        sprintf(output + strlen(output), "read16(0x%.4X));", parse_immediate(instruction.expression[2].tokens[1].raw));
+                        break;
                 
                     case ADMX_IND_R0:
                         sprintf(output + strlen(output), "read16(r0));");
@@ -271,18 +287,106 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             break;
         }
     
-        case CMOVNL:
-        case CMOVZ: {
+        case CMOVZ: 
+        case CMOVFZ: 
+        case CMOVL: 
+        case CMOVUL: 
+        case CMOVFL: 
+        case CMOVDL: 
+        case CMOVLL: 
+        case CMOVAO: 
+        case CMOVMI: 
+        case CMOVNZ: 
+        case CMOVNFZ: 
+        case CMOVNL: 
+        case CMOVNUL: 
+        case CMOVNFL: 
+        case CMOVNDL: 
+        case CMOVNLL: 
+        case CMOVNAO: 
+        case CMOVNMI:  {
             char flag[8] = {0};
             char not[8] = {0};
             switch (instruction.instruction) {
-                case CMOVNL:
-                    sprintf(flag, "sr.L");
-                    not[0] = '\0';
+                case CMOVNZ:
+                    sprintf(flag, "sr.Z");
                     break;
                 
+                case CMOVNFZ:
+                    sprintf(flag, "sr.FZ");
+                    break;
+
+                case CMOVNL:
+                    sprintf(flag, "sr.L");
+                    break;
+
+                case CMOVNUL:
+                    sprintf(flag, "sr.UL");
+                    break;
+
+                case CMOVNFL:
+                    sprintf(flag, "sr.FL");
+                    break;
+
+                case CMOVNDL:
+                    sprintf(flag, "sr.DL");
+                    break;
+
+                case CMOVNLL:
+                    sprintf(flag, "sr.LL");
+                    break;
+
+                case CMOVNAO:
+                    sprintf(flag, "sr.AO");
+                    break;
+
+                case CMOVNMI:
+                    sprintf(flag, "sr.MI");
+                    break;
+
+            
                 case CMOVZ:
                     sprintf(flag, "sr.Z");
+                    sprintf(not, "!");
+                    break;
+                
+                case CMOVFZ:
+                    sprintf(flag, "sr.FZ");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVL:
+                    sprintf(flag, "sr.L");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVUL:
+                    sprintf(flag, "sr.UL");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVFL:
+                    sprintf(flag, "sr.FL");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVDL:
+                    sprintf(flag, "sr.DL");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVLL:
+                    sprintf(flag, "sr.LL");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVAO:
+                    sprintf(flag, "sr.AO");
+                    sprintf(not, "!");
+                    break;
+
+                case CMOVMI:
+                    sprintf(flag, "sr.MI");
                     sprintf(not, "!");
                     break;
                 
@@ -511,23 +615,28 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
         case ADD: {
             switch (instruction.admr) {
                 case ADMR_R0:
-                    sprintf(output, "%sr0 += ", prefix);
+                    sprintf(output, "%soverflow_check = r0;\n", prefix);
+                    sprintf(output + strlen(output), "%sr0 += ", prefix);
                     break;
 
                 case ADMR_R1:
-                    sprintf(output, "%sr1 += ", prefix);
+                    sprintf(output, "%soverflow_check = r1;\n", prefix);
+                    sprintf(output + strlen(output), "%sr1 += ", prefix);
                     break;
                     
                 case ADMR_R2:
-                    sprintf(output, "%sr2 += ", prefix);
+                    sprintf(output, "%soverflow_check = r2;\n", prefix);
+                    sprintf(output + strlen(output), "%sr2 += ", prefix);
                     break;
 
                 case ADMR_R3:
-                    sprintf(output, "%sr3 += ", prefix);
+                    sprintf(output, "%soverflow_check = r3;\n", prefix);
+                    sprintf(output + strlen(output), "%sr3 += ", prefix);
                     break;
 
                 case ADMR_SP:
-                    sprintf(output, "%ssp += ", prefix);
+                    sprintf(output, "%soverflow_check = sp;\n", prefix);
+                    sprintf(output + strlen(output), "%ssp += ", prefix);
                     break;
                 
                 default:
@@ -540,31 +649,38 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             }
             switch (instruction.admx) {
                 case ADMX_IMM16:
-                    sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
+                    sprintf(output + strlen(output), "0x%.4X;\n", parse_immediate(instruction.expression[2].tokens[0].raw));
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + 0x%.4X) > 0xFFFF;", prefix, parse_immediate(instruction.expression[2].tokens[0].raw));
                     break;
 
                 case ADMX_R0:
                     sprintf(output + strlen(output), "r0;");
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + r0) > 0xFFFF;", prefix);
                     break;
 
                 case ADMX_R1:
                     sprintf(output + strlen(output), "r1;");
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + r1) > 0xFFFF;", prefix);
                     break;
 
                 case ADMX_R2:
                     sprintf(output + strlen(output), "r2;");
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + r2) > 0xFFFF;", prefix);
                     break;
 
                 case ADMX_R3:
                     sprintf(output + strlen(output), "r3;");
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + r3) > 0xFFFF;", prefix);
                     break;
 
                 case ADMX_SP:
                     sprintf(output + strlen(output), "sp;");
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + sp) > 0xFFFF;", prefix);
                     break;
 
                 case ADMX_IND_R3_OFFSET16:
                     sprintf(output + strlen(output), "read16(0x%.4X + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
+                    sprintf(output + strlen(output), "%ssr.AO = (overflow_check + read16(0x%.4X + r3)) > 0xFFFF;", prefix, parse_immediate(instruction.expression[2].tokens[1].raw));
                     break;
                 
                 default:
@@ -643,6 +759,76 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             }
             break;
         }
+    
+        case MUL: {
+            switch (instruction.admr) {
+                case ADMR_R0:
+                    sprintf(output, "%sr0 *= ", prefix);
+                    break;
+
+                case ADMR_R1:
+                    sprintf(output, "%sr1 *= ", prefix);
+                    break;
+                    
+                case ADMR_R2:
+                    sprintf(output, "%sr2 *= ", prefix);
+                    break;
+
+                case ADMR_R3:
+                    sprintf(output, "%sr3 *= ", prefix);
+                    break;
+
+                case ADMR_SP:
+                    sprintf(output, "%ssp *= ", prefix);
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                        instruction_encoding[instruction.instruction].instruction_string, 
+                        cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                    );
+                    return 1;
+                    break;
+            }
+            switch (instruction.admx) {
+                case ADMX_IMM16:
+                    sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
+                    break;
+
+                case ADMX_R0:
+                    sprintf(output + strlen(output), "r0;");
+                    break;
+
+                case ADMX_R1:
+                    sprintf(output + strlen(output), "r1;");
+                    break;
+
+                case ADMX_R2:
+                    sprintf(output + strlen(output), "r2;");
+                    break;
+
+                case ADMX_R3:
+                    sprintf(output + strlen(output), "r3;");
+                    break;
+
+                case ADMX_SP:
+                    sprintf(output + strlen(output), "sp;");
+                    break;
+
+                case ADMX_IND_R3_OFFSET16:
+                    sprintf(output + strlen(output), "read16(0x%.4X + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                        instruction_encoding[instruction.instruction].instruction_string, 
+                        cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                    );
+                    return 1;
+                    break;
+            }
+            break;
+        }
 
         case CMP: {
             for (int i = 0; i < 9; i++) {
@@ -670,11 +856,19 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                             case ADMX_IMM16:
                                 sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
                                 break;
+
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "r0;");
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "read16(0x%.4x + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
                             
                             default:
-                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
                                     instruction_encoding[instruction.instruction].instruction_string, 
-                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
                                 );
                                 return 1;
                                 break;
@@ -706,11 +900,15 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                             case ADMX_IMM16:
                                 sprintf(output + strlen(output), "(int16_t) 0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
                                 break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "(int16_t) read16(0x%.4x + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
                             
                             default:
-                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
                                     instruction_encoding[instruction.instruction].instruction_string, 
-                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
                                 );
                                 return 1;
                                 break;
@@ -742,11 +940,15 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                             case ADMX_IMM16:
                                 sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
                                 break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "read16(0x%.4x + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
                             
                             default:
-                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
                                     instruction_encoding[instruction.instruction].instruction_string, 
-                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
                                 );
                                 return 1;
                                 break;
@@ -827,6 +1029,23 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             switch (instruction.admx) {
                 case ADMX_IMM16:
                     sprintf(output, "%sif (!sr.Z) goto _%s;", prefix, instruction.expression[1].tokens[0].raw + 1);
+                    break;
+
+                default:
+                    log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                        instruction_encoding[instruction.instruction].instruction_string, 
+                        cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                    );
+                    return 1;
+                    break;
+                }
+            break;
+        }
+
+        case JMP: {
+            switch (instruction.admx) {
+                case ADMX_IMM16:
+                    sprintf(output, "%sgoto _%s;", prefix, instruction.expression[1].tokens[0].raw + 1);
                     break;
 
                 default:
@@ -980,8 +1199,24 @@ char* transpile(uint8_t* bin, long binary_size, long* file_size) {
     c_code = append_to_output(c_code, &c_code_length, 
         "#include <stdint.h>\n"
         "#include <stdio.h>\n\n"
-        "static uint8_t ram[65536] = {0};\n"
+        "static uint8_t ram[65536] = {\n\t"
+    );
+
+    char tmp[128];
+    for (long i = 0; i < binary_size - 1; i++) {
+        sprintf(tmp, "0x%.2x, ", bin[i]);
+        c_code = append_to_output(c_code, &c_code_length, tmp);
+        if (!((i+1) % 0x20)) {
+            sprintf(tmp, "\n\t");
+            c_code = append_to_output(c_code, &c_code_length, tmp);
+        }
+    }
+    sprintf(tmp, "0x%.2x\n};\n", bin[binary_size - 1]);
+    c_code = append_to_output(c_code, &c_code_length, tmp);
+
+    c_code = append_to_output(c_code, &c_code_length, 
         "static uint16_t r0, r1, r2, r3, sp;\n\n"
+        "static uint32_t overflow_check;\n\n"
         "static struct {\n"
         "\tunion {\n"
         "\t\tuint16_t value;\n"
@@ -1035,7 +1270,6 @@ char* transpile(uint8_t* bin, long binary_size, long* file_size) {
             // if not covered yet, add function definition, 
             // but without the '.' prefix and instead a '_' prefix, 
             // just to keep them all unique to already existing functions
-            char tmp[128];
             sprintf(tmp, "void _%s(void);\n", instruction[i].expression[1].tokens[0].raw + 1);
             c_code = append_to_output(c_code, &c_code_length, tmp);
 
@@ -1058,7 +1292,7 @@ char* transpile(uint8_t* bin, long binary_size, long* file_size) {
         }
         // if not a label, generate the code
         log_msg(LP_DEBUG, "%s", instruction_encoding[instruction[index].instruction].instruction_string);
-        char tmp[128] = {0};
+        memset(tmp, 0, sizeof(tmp));
 
         // first display the instruction that is being translated
         generate_asm_reconstruction(instruction[index], tmp);
@@ -1079,6 +1313,7 @@ char* transpile(uint8_t* bin, long binary_size, long* file_size) {
             c_code = append_to_output(c_code, &c_code_length, tmp);
             c_code = append_to_output(c_code, &c_code_length, "\n");
         } else {
+            c_code = append_to_output(c_code, &c_code_length, "// UNKNOWN\n");
             c_code = append_to_output(c_code, &c_code_length, "\n");
         }
 
@@ -1091,7 +1326,7 @@ char* transpile(uint8_t* bin, long binary_size, long* file_size) {
     // And here we loop, generating the bodies of all subsequent functions
     int function_body_started = 0;
     while (index < instruction_count) {
-        char tmp[128] = {0};
+        memset(tmp, 0, sizeof(tmp));
         if (instruction[index].expression[0].type == EXPR_IMMEDIATE) {
             // now be careful, ONLY start a new function, if there was a call to that lable at any point. 
             // Ignore if it's a pure jump label
@@ -1129,6 +1364,7 @@ char* transpile(uint8_t* bin, long binary_size, long* file_size) {
             c_code = append_to_output(c_code, &c_code_length, tmp);
             c_code = append_to_output(c_code, &c_code_length, "\n");
         } else {
+            c_code = append_to_output(c_code, &c_code_length, "\n\t// UNKNOWN");
             c_code = append_to_output(c_code, &c_code_length, "\n");
         }
 

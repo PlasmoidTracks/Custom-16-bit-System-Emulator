@@ -24,7 +24,16 @@ void generate_asm_reconstruction(Instruction_t instruction, char output[128]) {
 int generate_code_for_single_instruction(Instruction_t instruction, char output[128], char* prefix) {
     switch (instruction.instruction) {
         case 0: {
-            if (instruction.expression[0].type == EXPR_ADDRESS) {
+            if (instruction.expression[0].type == EXPR_ADDRESS || 
+                instruction.expression[0].type == EXPR_DATA || 
+                instruction.expression[0].type == EXPR_DEREF_LABEL || 
+                instruction.expression[0].type == EXPR_PAD || 
+                instruction.expression[0].type == EXPR_RESERVE || 
+                instruction.expression[0].type == EXPR_STORE_ADDRESS || 
+                instruction.expression[0].type == EXPR_RESTORE_ADDRESS || 
+                instruction.expression[0].type == EXPR_SEGMENT_CODE || 
+                instruction.expression[0].type == EXPR_SEGMENT_DATA
+            ) {
                 sprintf(output, "%s// No operation", prefix);
                 break;
             }
@@ -990,6 +999,201 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             sprintf(output + strlen(output), "%ssr.AO = (overflow_check - 1) < 0;", prefix);
             break;
         }
+    
+        case ADDF: 
+        case SUBF: 
+        case MULF: 
+        case DIVF: 
+        case ADDD: 
+        case SUBD: 
+        case MULD: 
+        case DIVD: {
+            char operation[32];
+            switch (instruction.instruction) {
+                case ADDF:
+                    sprintf(operation, "f16_add");
+                    break;
+
+                case MULF:
+                    sprintf(operation, "f16_mult");
+                    break;
+
+                case SUBF:
+                    sprintf(operation, "f16_sub");
+                    break;
+
+                case DIVF:
+                    sprintf(operation, "f16_div");
+                    break;
+
+                case ADDD:
+                    sprintf(operation, "bf16_add");
+                    break;
+
+                case MULD:
+                    sprintf(operation, "bf16_mult");
+                    break;
+
+                case SUBD:
+                    sprintf(operation, "bf16_sub");
+                    break;
+
+                case DIVD:
+                    sprintf(operation, "bf16_div");
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: Unknown operation: %s [%s:%d]", instruction_encoding[instruction.instruction].instruction_string, __FILE__, __LINE__);
+                    break;
+            }
+            switch (instruction.admr) {
+                case ADMR_R0:
+                    sprintf(output, "%sr0 = %s(r0, ", prefix, operation);
+                    break;
+
+                case ADMR_R1:
+                    sprintf(output, "%sr1 = %s(r1, ", prefix, operation);
+                    break;
+                    
+                case ADMR_R2:
+                    sprintf(output, "%sr2 = %s(r2, ", prefix, operation);
+                    break;
+
+                case ADMR_R3:
+                    sprintf(output, "%sr3 = %s(r3, ", prefix, operation);
+                    break;
+
+                case ADMR_SP:
+                    sprintf(output, "%ssp = %s(sp, ", prefix, operation);
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                        instruction_encoding[instruction.instruction].instruction_string, 
+                        cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                    );
+                    return 1;
+                    break;
+            }
+            switch (instruction.admx) {
+                case ADMX_IMM16:
+                    sprintf(output + strlen(output), "0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
+                    break;
+
+                case ADMX_R0:
+                    sprintf(output + strlen(output), "r0);");
+                    break;
+
+                case ADMX_R1:
+                    sprintf(output + strlen(output), "r1);");
+                    break;
+
+                case ADMX_R2:
+                    sprintf(output + strlen(output), "r2);");
+                    break;
+
+                case ADMX_R3:
+                    sprintf(output + strlen(output), "r3);");
+                    break;
+
+                case ADMX_SP:
+                    sprintf(output + strlen(output), "sp);");
+                    break;
+
+                case ADMX_IND_R3_OFFSET16:
+                    sprintf(output + strlen(output), "read16(0x%.4X + r3));", parse_immediate(instruction.expression[2].tokens[1].raw));
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                        instruction_encoding[instruction.instruction].instruction_string, 
+                        cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                    );
+                    return 1;
+                    break;
+            }
+            break;
+        }
+    
+        case CIF: 
+        case CID: 
+        case CFI: 
+        case CFD: 
+        case CDI: 
+        case CDF: {
+            char operation[64];
+            switch (instruction.instruction) {
+                case CIF:
+                    sprintf(operation, "f16_from_float((float) ((int16_t) ");
+                    break;
+
+                case CID:
+                    sprintf(operation, "bf16_from_float((float) ((int16_t) ");
+                    break;
+
+                case CFI:
+                    sprintf(operation, "(int16_t) float_from_f16(");
+                    break;
+
+                case CFD:
+                    sprintf(operation, "bf16_from_float(float_from_f16(");
+                    break;
+
+                case CDI:
+                    sprintf(operation, "(int16_t) float_from_bf16(");
+                    break;
+
+                case CDF:
+                    sprintf(operation, "f16_from_float(float_from_bf16(");
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: Unknown operation: %s [%s:%d]", instruction_encoding[instruction.instruction].instruction_string, __FILE__, __LINE__);
+                    break;
+            }
+            switch (instruction.admr) {
+                case ADMR_R0:
+                    sprintf(output, "%sr0 = %sr0", prefix, operation);
+                    break;
+
+                case ADMR_R1:
+                    sprintf(output, "%sr1 = %sr1", prefix, operation);
+                    break;
+                    
+                case ADMR_R2:
+                    sprintf(output, "%sr2 = %sr2", prefix, operation);
+                    break;
+
+                case ADMR_R3:
+                    sprintf(output, "%sr3 = %sr3", prefix, operation);
+                    break;
+
+                case ADMR_SP:
+                    sprintf(output, "%ssp = %ssp", prefix, operation);
+                    break;
+                
+                default:
+                    log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                        instruction_encoding[instruction.instruction].instruction_string, 
+                        cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                    );
+                    return 1;
+                    break;
+            }
+            switch (instruction.instruction) {
+                case CIF:
+                case CID:
+                case CFD:
+                case CDF:
+                    sprintf(output + strlen(output), "));");
+                    break;
+                
+                default:
+                    sprintf(output + strlen(output), ");");
+                    break;
+            }
+            break;
+        }
 
         case CMP: {
             for (int i = 0; i < 9; i++) {
@@ -1118,6 +1322,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     }
 
                     default: 
+                        log_msg(LP_WARNING, "Transpiler: Missing further flags! [%s:%d]", __FILE__, __LINE__);
                         break;
                 }
             }
@@ -1130,6 +1335,12 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     case 0: {
                         // Z
                         switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output, "%ssr.Z = 0x%.4X == 0x0000;", prefix, 
+                                    parse_immediate(instruction.expression[1].tokens[0].raw)
+                                );
+                                break;
+
                             case ADMX_R0:
                                 sprintf(output, "%ssr.Z = r0 == 0x0000;", prefix);
                                 break;
@@ -1159,6 +1370,12 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     case 1: {
                         // L
                         switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output, "%ssr.Z = (int16_t) 0x%.4X < 0x0000;", prefix, 
+                                    parse_immediate(instruction.expression[1].tokens[0].raw)
+                                );
+                                break;
+
                             case ADMX_R0:
                                 sprintf(output + strlen(output), "%ssr.L = (int16_t) r0 < 0x0000;", prefix);
                                 break;
@@ -1176,7 +1393,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                             default:
                                 log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
                                     instruction_encoding[instruction.instruction].instruction_string, 
-                                    cpu_extended_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
                                 );
                                 return 1;
                                 break;
@@ -1192,6 +1409,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     }
 
                     default: 
+                        log_msg(LP_WARNING, "Transpiler: Missing further flags! [%s:%d]", __FILE__, __LINE__);
                         break;
                 }
             }
@@ -1386,19 +1604,36 @@ char* transpile(char* asm, long* file_size) {
     c_code = append_to_output(c_code, &c_code_length, 
         "#include <stdint.h>\n"
         "#include <stdio.h>\n\n"
-        "static uint8_t ram[65536] = {\n\t"
+        "static uint8_t ram[65536] = {"
     );
 
-    char tmp[128];
+    /*char tmp[128];
     for (long i = 0; i < binary_size - 1; i++) {
         sprintf(tmp, "0x%.2x, ", bin[i]);
         c_code = append_to_output(c_code, &c_code_length, tmp);
-        if (!((i+1) % 0x20)) {
-            sprintf(tmp, "\n\t");
-            c_code = append_to_output(c_code, &c_code_length, tmp);
+        if (!((i+1) % 0x40)) {
+            c_code = append_to_output(c_code, &c_code_length, "\n\t");
         }
     }
     sprintf(tmp, "0x%.2x\n};\n", bin[binary_size - 1]);
+    c_code = append_to_output(c_code, &c_code_length, tmp);*/
+
+    char tmp[128];
+    long idx = 0;
+    int latch = 0;
+    for (long i = 0; i < binary_size; i++) {
+        if (!((idx) % 0x10) && latch == 0) {
+            c_code = append_to_output(c_code, &c_code_length, "\n\t");
+            latch = 1;
+        }
+        if (bin[i]) {
+            sprintf(tmp, "[0x%.4lX] = 0x%.2x, ", i, bin[i]);
+            c_code = append_to_output(c_code, &c_code_length, tmp);
+            idx ++;
+            latch = 0;
+        }
+    }
+    sprintf(tmp, "\n};\n\n");
     c_code = append_to_output(c_code, &c_code_length, tmp);
 
     c_code = append_to_output(c_code, &c_code_length, 
@@ -1436,8 +1671,58 @@ char* transpile(char* asm, long* file_size) {
         "\tsp += 0x0002;\n"
         "\treturn data;\n"
         "}\n\n"
-        "// Todo: write the actual binary data into ram for authenticity\n\n"
     );
+
+
+    // TODO: Filter by which function is actually needed by the set of instructions
+    c_code = append_to_output(c_code, &c_code_length, "typedef uint16_t float16_t;\n");
+    c_code = append_to_output(c_code, &c_code_length, "typedef enum {\n\tF16_ZERO,\n\tF16_SUBNORMAL,\n\tF16_NORMAL,\n\tF16_INF,\n\tF16_NAN\n} f16_class;\n\n");
+    char* extended_types = "float16_t f16_from_float(float f32) { \n\tvoid* tmp = &f32;\n\tuint32_t bits = *(uint32_t*)tmp;\n\tuint32_t sign = bits >> 31;\n\tint exp32 = (bits >> 23) & 0xFF;\n\tuint32_t mant32 = bits & 0x7FFFFF;\n\n\tuint16_t exp16, mant16;\n\n\tif (exp32 == 0xFF) {\n\t\texp16 = 0x1F;\n\t\tmant16 = mant32 ? 0x200 : 0;\n\t} else if (exp32 == 0) {\n\t\texp16 = 0;\n\t\tmant16 = 0;\n\t} else {\n\t\tint new_exp = exp32 - 127 + 15;\n\t\tif (new_exp >= 0x1F) {\n\t\t\texp16 = 0x1F;\n\t\t\tmant16 = 0;\n\t\t} else if (new_exp <= 0) {\n\t\t\tuint32_t m = mant32 | 0x800000;\n\t\t\tint shift = 1 - new_exp;\n\t\t\tif (shift > 24) {\n\t\t\t\texp16 = 0;\n\t\t\t\tmant16 = 0;\n\t\t\t} else {\n\t\t\t\tm += 1u << (shift - 1);\n\t\t\t\tmant16 = m >> (shift + 13);\n\t\t\t\texp16 = 0;\n\t\t\t}\n\t\t} else {\n\t\t\tmant32 += 1u << 12;\n\t\t\tmant16 = mant32 >> 13;\n\t\t\texp16 = new_exp;\n\t\t\tif (mant16 == 0x400) {\n\t\t\t\tmant16 = 0;\n\t\t\t\texp16++;\n\t\t\t}\n\t\t}\n\t}\n\n\treturn (sign << 15) | (exp16 << 10) | (mant16 & 0x3FF);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float float_from_f16(float16_t f16) {\n\tuint32_t sign = (f16 >> 15) & 1;\n\tuint32_t exp = (f16 >> 10) & 0x1F;\n\tuint32_t mant = f16 & 0x3FF;\n\n\tuint32_t exp32, mant32;\n\n\tif (exp == 0) {\n\t\tif (mant == 0) {\n\t\t\texp32 = 0;\n\t\t\tmant32 = 0;\n\t\t} else {\n\t\t\tint shift = 0;\n\t\t\twhile ((mant & 0x400) == 0) {\n\t\t\t\tmant <<= 1;\n\t\t\t\tshift++;\n\t\t\t}\n\t\t\tmant &= 0x3FF;\n\t\t\texp32 = 127 - 14 - shift;\n\t\t\tmant32 = mant << 13;\n\t\t}\n\t} else if (exp == 0x1F) {\n\t\texp32 = 0xFF;\n\t\tmant32 = mant << 13;\n\t} else {\n\t\texp32 = exp - 15 + 127;\n\t\tmant32 = mant << 13;\n\t}\n\n\tuint32_t bits = (sign << 31) | (exp32 << 23) | mant32;\n\tvoid* tmp = &bits;\n\treturn *(float*)tmp;\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "static f16_class f16_unpack(float16_t f, int *sign, int *exp, uint32_t *mant) {\n\t*sign = (f >> 15) & 1;\n\tuint16_t e = (f >> 10) & 0x1F;\n\tuint32_t m = f & 0x3FF;\n\n\tif (e == 0) {\n\t\tif (m == 0) {\n\t\t\t*exp = 0;\n\t\t\t*mant = 0;\n\t\t\treturn F16_ZERO;\n\t\t}\n\t\t*exp = -14;\n\t\t*mant = m;\n\t\treturn F16_SUBNORMAL;\n\t}\n\n\tif (e == 0x1F) {\n\t\t*exp = 0;\n\t\t*mant = m;\n\t\treturn m ? F16_NAN : F16_INF;\n\t}\n\n\t*exp = e - 15;\n\t*mant = m | 0x400;\n\treturn F16_NORMAL;\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "static float16_t f16_pack(int sign, int exp, uint32_t mant) {\n\tif (mant == 0)\n\t\treturn sign << 15;\n\n\twhile (mant >= (1u << 11)) {\n\t\tmant >>= 1;\n\t\texp++;\n\t}\n\twhile (mant < (1u << 10)) {\n\t\tmant <<= 1;\n\t\texp--;\n\t}\n\n\tif (exp > 15)\n\t\treturn (sign << 15) | (0x1F << 10);\n\n\tif (exp < -14) {\n\t\tint shift = (-14) - exp;\n\t\tmant = (shift >= 32) ? 0 : (mant + (1u << (shift - 1))) >> shift;\n\t\treturn (sign << 15) | (mant & 0x3FF);\n\t}\n\n\treturn (sign << 15) | ((exp + 15) << 10) | (mant & 0x3FF);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float16_t f16_add(float16_t a, float16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tf16_class ca = f16_unpack(a, &sa, &ea, &ma);\n\tf16_class cb = f16_unpack(b, &sb, &eb, &mb);\n\n\tif (ca == F16_NAN || cb == F16_NAN) return 0x7E00;\n\n\tif (ca == F16_INF || cb == F16_INF) {\n\t\tif (ca == cb && sa != sb) return 0x7E00;\n\t\tint s = (ca == F16_INF) ? sa : sb;\n\t\treturn (s << 15) | (0x1F << 10);\n\t}\n\n\tif (ca == F16_ZERO) return b;\n\tif (cb == F16_ZERO) return a;\n\n\tif (ea > eb) mb >>= (ea - eb);\n\telse if (eb > ea) ma >>= (eb - ea);\n\n\tint exp = ea > eb ? ea : eb;\n\tuint32_t mant;\n\tint sign;\n\n\tif (sa == sb) {\n\t\tmant = ma + mb;\n\t\tsign = sa;\n\t} else {\n\t\tif (ma >= mb) {\n\t\t\tmant = ma - mb;\n\t\t\tsign = sa;\n\t\t} else {\n\t\t\tmant = mb - ma;\n\t\t\tsign = sb;\n\t\t}\n\t}\n\n\treturn f16_pack(sign, exp, mant);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float16_t f16_sub(float16_t a, float16_t b) {\n\treturn f16_add(a, b ^ 0x8000);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float16_t f16_mult(float16_t a, float16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tf16_class ca = f16_unpack(a, &sa, &ea, &ma);\n\tf16_class cb = f16_unpack(b, &sb, &eb, &mb);\n\tint sign = sa ^ sb;\n\n\tif (ca == F16_NAN || cb == F16_NAN) return 0x7E00;\n\tif ((ca == F16_INF && cb == F16_ZERO) ||\n\t\t(cb == F16_INF && ca == F16_ZERO)) return 0x7E00;\n\tif (ca == F16_INF || cb == F16_INF)\n\t\treturn (sign << 15) | (0x1F << 10);\n\tif (ca == F16_ZERO || cb == F16_ZERO)\n\t\treturn sign << 15;\n\n\tuint64_t prod = (uint64_t)ma * mb;\n\tint exp = ea + eb;\n\n\tif (prod & (1ULL << 21)) {\n\t\tprod >>= 11;\n\t\texp++;\n\t} else {\n\t\tprod >>= 10;\n\t}\n\n\treturn f16_pack(sign, exp, (uint32_t)prod);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float16_t f16_div(float16_t a, float16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tf16_class ca = f16_unpack(a, &sa, &ea, &ma);\n\tf16_class cb = f16_unpack(b, &sb, &eb, &mb);\n\tint sign = sa ^ sb;\n\n\tif (ca == F16_NAN || cb == F16_NAN) return 0x7E00;\n\tif (ca == F16_INF && cb == F16_INF) return 0x7E00;\n\tif (cb == F16_INF) return sign << 15;\n\tif (ca == F16_INF) return (sign << 15) | (0x1F << 10);\n\tif (cb == F16_ZERO) return (sign << 15) | (0x1F << 10);\n\tif (ca == F16_ZERO) return sign << 15;\n\n\tint shift = 0;\n\twhile (mb < (1u << 10)) {\n\t\tmb <<= 1;\n\t\tshift++;\n\t}\n\n\tuint64_t dividend = (uint64_t)ma << (10 + shift);\n\tuint32_t mant = dividend / mb;\n\tint exp = ea - eb - shift;\n\n\treturn f16_pack(sign, exp, mant);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float16_t f16_neg(float16_t x) { return x ^ 0x8000; }\nfloat16_t f16_abs(float16_t x) { return x & 0x7FFF; }\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+
+    c_code = append_to_output(c_code, &c_code_length, "typedef uint16_t bfloat16_t;\n");
+    c_code = append_to_output(c_code, &c_code_length, "typedef enum {\n\tBF16_ZERO,\n\tBF16_SUBNORMAL,\n\tBF16_NORMAL,\n\tBF16_INF,\n\tBF16_NAN\n} bf16_class;\n\n");
+    extended_types = "bfloat16_t bf16_from_float(float f32) {\n\tvoid* tmp = &f32;\n\tuint32_t bits = *(uint32_t*)tmp;\n\tuint32_t lsb = (bits >> 16) & 1;\n\tuint32_t rounding_bias = 0x7FFF + lsb;\n\tbits += rounding_bias;\n\treturn (bfloat16_t)(bits >> 16);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "float float_from_bf16(bfloat16_t bf16) {\n\tuint32_t bits = ((uint32_t)bf16) << 16;\n\tvoid* tmp = &bits;\n\treturn *(float*)tmp;\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "static bf16_class bf16_unpack(\n\tbfloat16_t f,\n\tint *sign,\n\tint *exp,\n\tuint32_t *mant\n) {\n\t*sign = (f >> 15) & 1;\n\tuint16_t e = (f >> 7) & 0xFF;\n\tuint32_t m = f & 0x7F;\n\n\tif (e == 0) {\n\t\tif (m == 0) {\n\t\t\t*exp = 0;\n\t\t\t*mant = 0;\n\t\t\treturn BF16_ZERO;\n\t\t}\n\t\t*exp = 1 - 127;\n\t\t*mant = m;\n\t\treturn BF16_SUBNORMAL;\n\t}\n\n\tif (e == 0xFF) {\n\t\t*exp = 0;\n\t\t*mant = m;\n\t\treturn m ? BF16_NAN : BF16_INF;\n\t}\n\n\t*exp = e - 127;\n\t*mant = m | 0x80;\n\treturn BF16_NORMAL;\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "static bfloat16_t bf16_pack(int sign, int exp, uint32_t mant) {\n\tif (mant == 0)\n\t\treturn sign << 15;\n\n\twhile (mant >= (1u << 8)) {\n\t\tmant >>= 1;\n\t\texp++;\n\t}\n\twhile (mant < (1u << 7)) {\n\t\tmant <<= 1;\n\t\texp--;\n\t}\n\n\tif (exp >= 128)\n\t\treturn (sign << 15) | (0xFF << 7);\n\n\tif (exp <= -127) {\n\t\tint shift = (-127) - exp + 1;\n\t\tif (shift >= 32)\n\t\t\tmant = 0;\n\t\telse\n\t\t\tmant >>= shift;\n\t\treturn (sign << 15) | (mant & 0x7F);\n\t}\n\n\treturn (sign << 15) | ((exp + 127) << 7) | (mant & 0x7F);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "bfloat16_t bf16_add(bfloat16_t a, bfloat16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tbf16_class ca = bf16_unpack(a, &sa, &ea, &ma);\n\tbf16_class cb = bf16_unpack(b, &sb, &eb, &mb);\n\n\tif (ca == BF16_NAN || cb == BF16_NAN)\n\t\treturn 0x7FC0;\n\n\tif (ca == BF16_INF || cb == BF16_INF) {\n\t\tif (ca == cb && sa != sb)\n\t\t\treturn 0x7FC0;\n\t\tint s = (ca == BF16_INF) ? sa : sb;\n\t\treturn (s << 15) | (0xFF << 7);\n\t}\n\n\tif (ca == BF16_ZERO) return b;\n\tif (cb == BF16_ZERO) return a;\n\n\tif (ea > eb) mb >>= (ea - eb);\n\telse if (eb > ea) ma >>= (eb - ea);\n\n\tint exp = (ea > eb) ? ea : eb;\n\n\tuint32_t mant;\n\tint sign;\n\n\tif (sa == sb) {\n\t\tmant = ma + mb;\n\t\tsign = sa;\n\t} else {\n\t\tif (ma >= mb) {\n\t\t\tmant = ma - mb;\n\t\t\tsign = sa;\n\t\t} else {\n\t\t\tmant = mb - ma;\n\t\t\tsign = sb;\n\t\t}\n\t}\n\n\treturn bf16_pack(sign, exp, mant);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "bfloat16_t bf16_sub(bfloat16_t a, bfloat16_t b) {\n\treturn bf16_add(a, b ^ 0x8000);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "bfloat16_t bf16_mult(bfloat16_t a, bfloat16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tbf16_class ca = bf16_unpack(a, &sa, &ea, &ma);\n\tbf16_class cb = bf16_unpack(b, &sb, &eb, &mb);\n\n\tint sign = sa ^ sb;\n\n\tif (ca == BF16_NAN || cb == BF16_NAN)\n\t\treturn 0x7FC0;\n\n\tif ((ca == BF16_INF && cb == BF16_ZERO) ||\n\t\t(cb == BF16_INF && ca == BF16_ZERO))\n\t\treturn 0x7FC0;\n\n\tif (ca == BF16_INF || cb == BF16_INF)\n\t\treturn (sign << 15) | (0xFF << 7);\n\n\tif (ca == BF16_ZERO || cb == BF16_ZERO)\n\t\treturn sign << 15;\n\n\tuint64_t prod = (uint64_t)ma * mb;\n\tint exp = ea + eb;\n\n\tif (prod & (1ULL << 15)) {\n\t\tprod >>= 8;\n\t\texp++;\n\t} else {\n\t\tprod >>= 7;\n\t}\n\n\treturn bf16_pack(sign, exp, (uint32_t)prod);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "bfloat16_t bf16_div(bfloat16_t a, bfloat16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tbf16_class ca = bf16_unpack(a, &sa, &ea, &ma);\n\tbf16_class cb = bf16_unpack(b, &sb, &eb, &mb);\n\n\tint sign = sa ^ sb;\n\n\tif (ca == BF16_NAN || cb == BF16_NAN)\n\t\treturn 0x7FC0;\n\n\tif (ca == BF16_INF && cb == BF16_INF)\n\t\treturn 0x7FC0;\n\n\tif (cb == BF16_INF)\n\t\treturn sign << 15;\n\n\tif (ca == BF16_INF)\n\t\treturn (sign << 15) | (0xFF << 7);\n\n\tif (cb == BF16_ZERO)\n\t\treturn (sign << 15) | (0xFF << 7);\n\n\tif (ca == BF16_ZERO)\n\t\treturn sign << 15;\n\n\tint shift = 0;\n\twhile (mb < (1u << 7)) {\n\t\tmb <<= 1;\n\t\tshift++;\n\t}\n\n\tuint64_t dividend = (uint64_t)ma << (7 + shift);\n\tuint32_t mant = dividend / mb;\n\tint exp = ea - eb - shift;\n\n\treturn bf16_pack(sign, exp, mant);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "bfloat16_t bf16_neg(bfloat16_t x) { return x ^ 0x8000; }\nbfloat16_t bf16_abs(bfloat16_t x) { return x & 0x7FFF; }\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+
+    /*
+    extended_types = "";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    */
+
+
 
     // first prepass where we collect all labels that are used to call to, to define them beforehand. 
     int call_label_count = 0;
@@ -1505,7 +1790,11 @@ char* transpile(char* asm, long* file_size) {
 
         index ++;
     }
-    c_code = append_to_output(c_code, &c_code_length, "}\n\n");
+
+    // Exception is where no call is ever executed, then dont prematurely end the function body:
+    if (call_label_count > 0) {
+        c_code = append_to_output(c_code, &c_code_length, "}\n\n");
+    }
 
 
 

@@ -114,6 +114,8 @@ extern const char* expression_type_string[];
 extern int jump_label_index;
 extern int const_label_index;
 
+extern void assembler_reset(void);
+
 extern char** assembler_split_to_separate_lines(const char text[]);
 
 extern void assembler_remove_comments(char **text[]);

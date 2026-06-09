@@ -24,6 +24,10 @@ void generate_asm_reconstruction(Instruction_t instruction, char output[128]) {
 int generate_code_for_single_instruction(Instruction_t instruction, char output[128], char* prefix) {
     switch (instruction.instruction) {
         case 0: {
+            if (instruction.expression[0].type == EXPR_ADDRESS) {
+                sprintf(output, "%s// No operation", prefix);
+                break;
+            }
             if (instruction.expression[0].type == EXPR_IMMEDIATE) {
                 // Here if it was a simple label
                 sprintf(output, "_%s:", instruction.expression[0].tokens[0].raw + 1);
@@ -1330,19 +1334,26 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
 char* transpile(char* asm, long* file_size) {
 
     long binary_size = 0;
-    uint8_t* bin = assembler_compile(asm, &binary_size, NULL, NULL, AO_ERROR_ON_CODE_SEGMENT_BREACH | AO_ERROR_ON_OVERLAP);
+    uint16_t* segment = NULL;
+    int seegment_count = 0;
+    uint8_t* bin = assembler_compile(asm, &binary_size, &segment, &seegment_count, AO_ERROR_ON_CODE_SEGMENT_BREACH | AO_ERROR_ON_OVERLAP);
     if (!bin) {
         log_msg(LP_ERROR, "Transpiler: Assembler returned NULL [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
-    char* content = disassembler_decompile(bin, binary_size, NULL, 0, DO_ADD_JUMP_LABEL);
+    char* content = disassembler_decompile(bin, binary_size, segment, seegment_count, DO_ADD_JUMP_LABEL);
+
+    data_export("temp.dmp", content, strlen(content));
+
+
+    assembler_reset();
 
     // split text into lines
     char** line = assembler_split_to_separate_lines(content);
 
     // remove comments from lines
-    assembler_remove_comments(&line);
+    //assembler_remove_comments(&line);
 
     // split into separate words
     int word_count;
@@ -1358,10 +1369,12 @@ char* transpile(char* asm, long* file_size) {
 
     // build instruction array
     int instruction_count = 0;
-    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, NULL, NULL, AO_ERROR_ON_OVERLAP | AO_ERROR_ON_CODE_SEGMENT_BREACH);
+    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, &segment, &seegment_count, AO_ERROR_ON_OVERLAP | AO_ERROR_ON_CODE_SEGMENT_BREACH);
+
+    free(segment);
 
     for (int i = 0; i < instruction_count; i++) {
-        //log_msg(LP_DEBUG, "%d", instruction[i].is_address);
+        //log_msg(LP_DEBUG, "%d: %d", i, instruction[i].is_address);
     }
 
     // resolve label
@@ -1465,7 +1478,6 @@ char* transpile(char* asm, long* file_size) {
             break;
         }
         // if not a label, generate the code
-        log_msg(LP_DEBUG, "%s", instruction_encoding[instruction[index].instruction].instruction_string);
         memset(tmp, 0, sizeof(tmp));
 
         // first display the instruction that is being translated

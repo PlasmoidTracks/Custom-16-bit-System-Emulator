@@ -77,6 +77,13 @@ const char* expression_type_string[] = {
 };
 
 
+void assembler_reset(void) {
+    jump_label_index = 0;
+    const_label_index = 0;
+
+    stashed_address = 0x0000;
+    stash_calls = 0;
+}
 
 char** assembler_split_to_separate_lines(const char text[]) {
     char** lines = split(text, "\n", "");
@@ -1548,8 +1555,8 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                                     if (corresponding_label_found == -1) {
                                         corresponding_label_found = j;
                                     } else {
-                                        log_msg(LP_ERROR, "Label \"%s\" is not unique [%s:%d]", instruction[i].expression[exp].tokens[0].raw, __FILE__, __LINE__);
-                                        exit(1);
+                                        log_msg(LP_WARNING, "Label \"%s\" is not unique (clashing indices %d vs %d) [%s:%d]", instruction[i].expression[exp].tokens[0].raw, j, corresponding_label_found, __FILE__, __LINE__);
+                                        //exit(1);
                                         break;
                                     }
                                 }
@@ -1977,6 +1984,9 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     // uint16_t** segment - will be allocated to hold the segment offsets
     // int* segment_count - deref will be overwritten with the final segment count
     // usually each variable should be stack allocated and a reference should be passed. 
+
+    assembler_reset();
+
     if (!binary_size) {
         log_msg(LP_ERROR, "binary_size is a required argument for assembler_compile [%s:%d]", __FILE__, __LINE__);
         return NULL;

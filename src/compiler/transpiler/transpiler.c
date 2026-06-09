@@ -12,7 +12,7 @@
 #include "cpu/cpu_addressing_modes.h"
 
 
-void generate_asm_reconstruction(Instruction_t instruction, char output[128]) {
+void generate_asm_reconstruction(Instruction_t instruction, char output[256]) {
     for (int e = 0; e < instruction.expression_count; e++) {
         for (int t = 0; t < instruction.expression[e].token_count; t++) {
             int len = strlen(output);
@@ -21,7 +21,7 @@ void generate_asm_reconstruction(Instruction_t instruction, char output[128]) {
     }
 }
 
-int generate_code_for_single_instruction(Instruction_t instruction, char output[128], char* prefix) {
+int generate_code_for_single_instruction(Instruction_t instruction, char output[512], char* prefix) {
     switch (instruction.instruction) {
         case 0: {
             if (instruction.expression[0].type == EXPR_ADDRESS || 
@@ -1196,7 +1196,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
         }
 
         case CMP: {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < 7; i++) {
                 switch (i) {
                     case 0: {
                         // Z
@@ -1243,6 +1243,88 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     }
 
                     case 1: {
+                        // FZ
+                        switch (instruction.admr) {
+                            case ADMR_R0:
+                                sprintf(output + strlen(output), "%ssr.FZ = (r0 == ", prefix);
+                                break;
+
+                            case ADMR_R1:
+                                sprintf(output + strlen(output), "%ssr.FZ = (r1 == ", prefix);
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output + strlen(output), "0x%.4X)", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "r0)");
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "read16(0x%.4x + r3))", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        switch (instruction.admr) {
+                            case ADMR_R0:
+                                sprintf(output + strlen(output), " || ((r0 & 0x7FFF) == 0 &&");
+                                break;
+
+                            case ADMR_R1:
+                                sprintf(output + strlen(output), " || ((r1 & 0x7FFF) == 0 &&");
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output + strlen(output), " (0x%.4X & 0x7FFF) == 0);", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), " (r0 & 0x7FFF) == 0);");
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), " (read16(0x%.4x + r3) & 0x7FFF) == 0);", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        sprintf(output + strlen(output), "\n");
+                        break;
+                    }
+
+                    case 2: {
                         // L
                         switch (instruction.admr) {
                             case ADMR_R0:
@@ -1250,7 +1332,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 break;
 
                             case ADMR_R1:
-                                sprintf(output, "%ssr.L = (int16_t) r0 < ", prefix);
+                                sprintf(output + strlen(output), "%ssr.L = (int16_t) r0 < ", prefix);
                                 break;
                             
                             default:
@@ -1282,7 +1364,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                         break;
                     }
 
-                    case 2: {
+                    case 3: {
                         // UL
                         switch (instruction.admr) {
                             case ADMR_R0:
@@ -1318,6 +1400,127 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 return 1;
                                 break;
                         }
+                        sprintf(output + strlen(output), "\n");
+                        break;
+                    }
+
+                    case 4: {
+                        // FL
+                        switch (instruction.admr) {
+                            case ADMR_R0:
+                                sprintf(output + strlen(output), "%ssr.FL = float_from_f16(r0) < ", prefix);
+                                break;
+
+                            case ADMR_R1:
+                                sprintf(output + strlen(output), "%ssr.FL = float_from_f16(r1) < ", prefix);
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output + strlen(output), "float_from_f16(0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "float_from_f16(read16(0x%.4x + r3));", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        sprintf(output + strlen(output), "\n");
+                        break;
+                    }
+
+                    case 5: {
+                        // DL
+                        switch (instruction.admr) {
+                            case ADMR_R0:
+                                sprintf(output + strlen(output), "%ssr.FL = float_from_bf16(r0) < ", prefix);
+                                break;
+
+                            case ADMR_R1:
+                                sprintf(output + strlen(output), "%ssr.FL = float_from_bf16(r1) < ", prefix);
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output + strlen(output), "float_from_bf16(0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "float_from_bf16(read16(0x%.4x + r3));", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        sprintf(output + strlen(output), "\n");
+                        break;
+                    }
+
+                    case 6: {
+                        // LL
+                        switch (instruction.admr) {
+                            case ADMR_R0:
+                                sprintf(output + strlen(output), "%ssr.FL = long_long_from_fi16(r0) < ", prefix);
+                                break;
+
+                            case ADMR_R1:
+                                sprintf(output + strlen(output), "%ssr.FL = long_long_from_fi16(r1) < ", prefix);
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admr \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_reduced_addressing_mode_string[instruction.admr], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output + strlen(output), "long_long_from_fi16(0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output + strlen(output), "long_long_from_fi16(read16(0x%.4x + r3));", parse_immediate(instruction.expression[2].tokens[1].raw));
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        sprintf(output + strlen(output), "\n");
                         break;
                     }
 
@@ -1330,7 +1533,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
         }
 
         case TST: {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < 3; i++) {
                 switch (i) {
                     case 0: {
                         // Z
@@ -1368,6 +1571,41 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     }
 
                     case 1: {
+                        // FZ
+                        switch (instruction.admx) {
+                            case ADMX_IMM16:
+                                sprintf(output, "%ssr.Z = (0x%.4X & 0x7FFF) == 0x0000;", prefix, 
+                                    parse_immediate(instruction.expression[1].tokens[0].raw)
+                                );
+                                break;
+
+                            case ADMX_R0:
+                                sprintf(output, "%ssr.Z = (r0 & 0x7FFF) == 0x0000;", prefix);
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output, "%ssr.Z = (r1 & 0x7FFF) == 0x0000;", prefix);
+                                break;
+
+                            case ADMX_IND_R3_OFFSET16:
+                                sprintf(output, "%ssr.Z = (read16(0x%.4X + r3) & 0x7FFF) == 0x0000;", prefix, 
+                                    parse_immediate(instruction.expression[1].tokens[1].raw)
+                                );
+                                break;
+                            
+                            default:
+                                log_msg(LP_ERROR, "Transpiler: \"%s\" with admx \"%s\" not handled [%s:%d]", 
+                                    instruction_encoding[instruction.instruction].instruction_string, 
+                                    cpu_extended_addressing_mode_string[instruction.admx], __FILE__, __LINE__
+                                );
+                                return 1;
+                                break;
+                        }
+                        sprintf(output + strlen(output), "\n");
+                        break;
+                    }
+
+                    case 2: {
                         // L
                         switch (instruction.admx) {
                             case ADMX_IMM16:
@@ -1399,12 +1637,6 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 break;
                         }
                         sprintf(output + strlen(output), "\n");
-                        break;
-                    }
-
-                    case 2: {
-                        // UL
-                        sprintf(output + strlen(output), "%ssr.UL = 0;", prefix);
                         break;
                     }
 
@@ -1618,7 +1850,7 @@ char* transpile(char* asm, long* file_size) {
     sprintf(tmp, "0x%.2x\n};\n", bin[binary_size - 1]);
     c_code = append_to_output(c_code, &c_code_length, tmp);*/
 
-    char tmp[128];
+    char tmp[512];
     long idx = 0;
     int latch = 0;
     for (long i = 0; i < binary_size; i++) {
@@ -1715,6 +1947,26 @@ char* transpile(char* asm, long* file_size) {
     extended_types = "bfloat16_t bf16_div(bfloat16_t a, bfloat16_t b) {\n\tint sa, sb, ea, eb;\n\tuint32_t ma, mb;\n\tbf16_class ca = bf16_unpack(a, &sa, &ea, &ma);\n\tbf16_class cb = bf16_unpack(b, &sb, &eb, &mb);\n\n\tint sign = sa ^ sb;\n\n\tif (ca == BF16_NAN || cb == BF16_NAN)\n\t\treturn 0x7FC0;\n\n\tif (ca == BF16_INF && cb == BF16_INF)\n\t\treturn 0x7FC0;\n\n\tif (cb == BF16_INF)\n\t\treturn sign << 15;\n\n\tif (ca == BF16_INF)\n\t\treturn (sign << 15) | (0xFF << 7);\n\n\tif (cb == BF16_ZERO)\n\t\treturn (sign << 15) | (0xFF << 7);\n\n\tif (ca == BF16_ZERO)\n\t\treturn sign << 15;\n\n\tint shift = 0;\n\twhile (mb < (1u << 7)) {\n\t\tmb <<= 1;\n\t\tshift++;\n\t}\n\n\tuint64_t dividend = (uint64_t)ma << (7 + shift);\n\tuint32_t mant = dividend / mb;\n\tint exp = ea - eb - shift;\n\n\treturn bf16_pack(sign, exp, mant);\n}\n\n";
     c_code = append_to_output(c_code, &c_code_length, extended_types);
     extended_types = "bfloat16_t bf16_neg(bfloat16_t x) { return x ^ 0x8000; }\nbfloat16_t bf16_abs(bfloat16_t x) { return x & 0x7FFF; }\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+
+    c_code = append_to_output(c_code, &c_code_length, "typedef uint16_t fint16_t;\n");
+    extended_types = "long long int long_long_from_fi16(fint16_t fi16) {\n\tconst long long int mbits = 10;\n\tlong long int sign = fi16 & 0x8000;\n\tlong long int exponent = (fi16 & 0x7fff) >> mbits;\n\tlong long int mantissa = fi16 & ((1 << mbits) - 1);\n\tif (exponent == 0) {\n\t\treturn sign ? -mantissa : mantissa;\n\t}\n\treturn ((mantissa + (1 << mbits)) << (exponent - 1)) * (sign ? -1 : 1);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "int int_from_fi16(fint16_t fi16) {\n\tconst int mbits = 10;\n\tint sign = fi16 & 0x8000;\n\tint exponent = (fi16 & 0x7fff) >> mbits;\n\tint mantissa = fi16 & ((1 << mbits) - 1);\n\tif (exponent == 0) {\n\t\treturn sign ? -mantissa : mantissa;\n\t}\n\treturn ((mantissa + (1 << mbits)) << (exponent - 1)) * (sign ? -1 : 1);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_from_int(int i32) {\n\tconst int mbits = 10;\n\tfint16_t fi16;\n\t\n\tint sign = (i32 < 0) ? 1 : 0;\n\tint abs_i32 = (i32 < 0) ? -i32 : i32;\n\t\n\tif (abs_i32 == 0) {\n\t\treturn 0x0000;\n\t}\n\t\n\tint msb_pos = 0;\n\tunsigned int temp = abs_i32;\n\twhile (temp >>= 1) {\n\t\tmsb_pos++;\n\t}\n\t\n\tint exponent, mantissa;\n\t\n\tif (msb_pos < mbits) {\n\t\texponent = 0;\n\t\tmantissa = abs_i32;\n\t} else {\n\t\texponent = msb_pos - 9;\n\t\tint shift = exponent - 1;\n\t\tmantissa = (abs_i32 >> shift) - (1 << mbits);\n\t}\n\t\n\tfi16 = (sign << 15) | (exponent << mbits) | mantissa;\n\t\n\tif (mantissa < ((1 << mbits) - 1) || exponent < 31) {\n\t\tfint16_t fi16_plus_1 = fi16 + 1;\n\t\t\n\t\tint reconstructed = int_from_fi16(fi16);\n\t\tint reconstructed_plus_1 = int_from_fi16(fi16_plus_1);\n\t\t\n\t\tint dist_current = abs_i32 - reconstructed;\n\t\tif (dist_current < 0) dist_current = -dist_current;\n\t\t\n\t\tint dist_next = abs_i32 - reconstructed_plus_1;\n\t\tif (dist_next < 0) dist_next = -dist_next;\n\t\t\n\t\tif (dist_next < dist_current) {\n\t\t\tfi16 = fi16_plus_1;\n\t\t}\n\t}\n\t\n\treturn fi16;\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_from_long_long(long long int i64) {\n\tconst int mbits = 10;\n\tfint16_t fi16;\n\t\n\tint sign = (i64 < 0) ? 1 : 0;\n\tlong long int abs_i64 = (i64 < 0) ? -i64 : i64;\n\t\n\tif (abs_i64 == 0) {\n\t\treturn 0x0000;\n\t}\n\t\n\tint msb_pos = 0;\n\tlong long int temp = abs_i64;\n\twhile (temp >>= 1) {\n\t\tmsb_pos++;\n\t}\n\t\n\tint exponent, mantissa;\n\t\n\tif (msb_pos < mbits) {\n\t\texponent = 0;\n\t\tmantissa = abs_i64;\n\t} else {\n\t\texponent = msb_pos - 9;\n\t\tint shift = exponent - 1;\n\t\tmantissa = (abs_i64 >> shift) - (1 << mbits);\n\t}\n\t\n\tfi16 = (sign << 15) | (exponent << mbits) | mantissa;\n\t\n\tif (mantissa < ((1 << mbits) - 1) || exponent < 31) {\n\t\tfint16_t fi16_plus_1 = fi16 + 1;\n\t\t\n\t\tlong long int reconstructed = long_long_from_fi16(fi16);\n\t\tlong long int reconstructed_plus_1 = long_long_from_fi16(fi16_plus_1);\n\t\t\n\t\tlong long int dist_current = abs_i64 - reconstructed;\n\t\tif (dist_current < 0) dist_current = -dist_current;\n\t\t\n\t\tlong long int dist_next = abs_i64 - reconstructed_plus_1;\n\t\tif (dist_next < 0) dist_next = -dist_next;\n\t\t\n\t\tif (dist_next < dist_current) {\n\t\t\tfi16 = fi16_plus_1;\n\t\t}\n\t}\n\t\n\treturn fi16;\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_add(fint16_t fi16_a, fint16_t fi16_b) {\n\tconst int mbits = 10;\n\t\n\t// Extract fields from both operands\n\tuint16_t sign_a = (fi16_a >> 15) & 1;\n\tuint16_t exp_a = (fi16_a >> mbits) & 0x1F;\n\tuint16_t mant_a = fi16_a & 0x3FF;\n\t\n\tuint16_t sign_b = (fi16_b >> 15) & 1;\n\tuint16_t exp_b = (fi16_b >> mbits) & 0x1F;\n\tuint16_t mant_b = fi16_b & 0x3FF;\n\t\n\t// Convert to actual mantissa values (add implicit 1 for normalized)\n\tuint32_t actual_mant_a = (exp_a == 0) ? mant_a : (mant_a + (1 << mbits));\n\tuint32_t actual_mant_b = (exp_b == 0) ? mant_b : (mant_b + (1 << mbits));\n\t\n\t// Handle special case: both are subnormal\n\tif (exp_a == 0 && exp_b == 0) {\n\t\tif (sign_a == sign_b) {\n\t\t\tint result_val = actual_mant_a + actual_mant_b;\n\t\t\treturn fi16_from_int(sign_a ? -result_val : result_val);\n\t\t} else {\n\t\t\tint result_val, result_sign;\n\t\t\tif (actual_mant_a >= actual_mant_b) {\n\t\t\t\tresult_val = actual_mant_a - actual_mant_b;\n\t\t\t\tresult_sign = sign_a;\n\t\t\t} else {\n\t\t\t\tresult_val = actual_mant_b - actual_mant_a;\n\t\t\t\tresult_sign = sign_b;\n\t\t\t}\n\t\t\treturn fi16_from_int(result_sign ? -result_val : result_val);\n\t\t}\n\t}\n\t\n\t// Align exponents\n\tuint16_t exp_result;\n\tif (exp_a > exp_b) {\n\t\tuint16_t shift = (exp_a > 0 ? exp_a - 1 : 0) - (exp_b > 0 ? exp_b - 1 : 0);\n\t\tactual_mant_b >>= shift;\n\t\texp_result = exp_a;\n\t} else if (exp_b > exp_a) {\n\t\tuint16_t shift = (exp_b > 0 ? exp_b - 1 : 0) - (exp_a > 0 ? exp_a - 1 : 0);\n\t\tactual_mant_a >>= shift;\n\t\texp_result = exp_b;\n\t} else {\n\t\texp_result = exp_a;\n\t}\n\t\n\t// Perform addition/subtraction based on signs\n\tuint32_t result_mant;\n\tuint16_t result_sign;\n\t\n\tif (sign_a == sign_b) {\n\t\tresult_mant = actual_mant_a + actual_mant_b;\n\t\tresult_sign = sign_a;\n\t} else {\n\t\tif (actual_mant_a >= actual_mant_b) {\n\t\t\tresult_mant = actual_mant_a - actual_mant_b;\n\t\t\tresult_sign = sign_a;\n\t\t} else {\n\t\t\tresult_mant = actual_mant_b - actual_mant_a;\n\t\t\tresult_sign = sign_b;\n\t\t}\n\t}\n\t\n\t// Convert back to actual value\n\tint result_val;\n\tif (exp_result == 0) {\n\t\tresult_val = result_mant;\n\t} else {\n\t\tresult_val = result_mant << (exp_result - 1);\n\t}\n\t\n\treturn fi16_from_int(result_sign ? -result_val : result_val);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_sub(fint16_t fi16_a, fint16_t fi16_b) {\n\t// Negate fi16_b by flipping its sign bit\n\tfint16_t fi16_b_negated = fi16_b ^ 0x8000;\n\treturn fi16_add(fi16_a, fi16_b_negated);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_mult(fint16_t fi16_a, fint16_t fi16_b) {\n\tconst int mbits = 10;\n\t\n\t// Handle zero\n\tif (fi16_a == 0 || fi16_b == 0) {\n\t\treturn 0;\n\t}\n\t\n\t// Extract fields\n\tuint16_t sign_a = (fi16_a >> 15) & 1;\n\tuint16_t exp_a = (fi16_a >> mbits) & 0x1F;\n\tuint16_t mant_a = fi16_a & 0x3FF;\n\t\n\tuint16_t sign_b = (fi16_b >> 15) & 1;\n\tuint16_t exp_b = (fi16_b >> mbits) & 0x1F;\n\tuint16_t mant_b = fi16_b & 0x3FF;\n\t\n\t// Result sign (XOR of input signs)\n\tuint16_t result_sign = sign_a ^ sign_b;\n\t\n\t// Get actual mantissa values and shifts\n\tuint32_t actual_mant_a, shift_a;\n\tif (exp_a == 0) {\n\t\tactual_mant_a = mant_a;\n\t\tshift_a = 0;\n\t} else {\n\t\tactual_mant_a = mant_a + (1 << mbits);\n\t\tshift_a = exp_a - 1;\n\t}\n\t\n\tuint32_t actual_mant_b, shift_b;\n\tif (exp_b == 0) {\n\t\tactual_mant_b = mant_b;\n\t\tshift_b = 0;\n\t} else {\n\t\tactual_mant_b = mant_b + (1 << mbits);\n\t\tshift_b = exp_b - 1;\n\t}\n\t\n\t// Multiply mantissas (32-bit intermediate to avoid overflow)\n\tuint32_t result_mant = actual_mant_a * actual_mant_b;\n\t\n\t// Combine shifts\n\tuint32_t total_shift = shift_a + shift_b;\n\t\n\t// Compute result value (may need long long for large shifts)\n\tlong long int result_val = ((long long int) result_mant) << total_shift;\n\t\n\treturn fi16_from_long_long(result_sign ? -result_val : result_val);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_div(fint16_t fi16_a, fint16_t fi16_b) {\n\tconst int mbits = 10;\n\t\n\t// Handle division by zero - return max value with appropriate sign\n\tif (fi16_b == 0) {\n\t\treturn (fi16_a & 0x8000) ? 0xFFFF : 0x7FFF;\n\t}\n\t\n\t// Handle zero dividend\n\tif (fi16_a == 0) {\n\t\treturn 0;\n\t}\n\t\n\t// Extract fields\n\tuint16_t sign_a = (fi16_a >> 15) & 1;\n\tuint16_t exp_a = (fi16_a >> mbits) & 0x1F;\n\tuint16_t mant_a = fi16_a & 0x3FF;\n\t\n\tuint16_t sign_b = (fi16_b >> 15) & 1;\n\tuint16_t exp_b = (fi16_b >> mbits) & 0x1F;\n\tuint16_t mant_b = fi16_b & 0x3FF;\n\t\n\t// Result sign (XOR of input signs)\n\tuint16_t result_sign = sign_a ^ sign_b;\n\t\n\t// Get actual values\n\tint val_a, val_b;\n\tif (exp_a == 0) {\n\t\tval_a = mant_a;\n\t} else {\n\t\tval_a = (mant_a + (1 << mbits)) << (exp_a - 1);\n\t}\n\t\n\tif (exp_b == 0) {\n\t\tval_b = mant_b;\n\t} else {\n\t\tval_b = (mant_b + (1 << mbits)) << (exp_b - 1);\n\t}\n\t\n\t// Perform division\n\tif (val_b == 0) {\n\t\treturn result_sign ? 0xFFFF : 0x7FFF;\n\t}\n\t\n\tint result_val = val_a / val_b;\n\t\n\treturn fi16_from_int(result_sign ? -result_val : result_val);\n}\n\n";
+    c_code = append_to_output(c_code, &c_code_length, extended_types);
+    extended_types = "fint16_t fi16_neg(fint16_t x) { return x ^ 0x8000; }\nfint16_t fi16_abs(fint16_t x) { return x & 0x7FFF; }\n\n";
     c_code = append_to_output(c_code, &c_code_length, extended_types);
 
     /*
@@ -1857,10 +2109,11 @@ char* transpile(char* asm, long* file_size) {
         "\tr3 = 0x0000;\n"
         "\tsp = 0x7F00;\n\n"
         "\tpreamble();\n\n"
-        "\tprintf(\"r0: %.4x\\n\", r0);\n"
-        "\tprintf(\"r1: %.4x\\n\", r1);\n"
-        "\tprintf(\"r2: %.4x\\n\", r2);\n"
-        "\tprintf(\"r3: %.4x\\n\", r3);\n"
+        "\tprintf(\"    HEX      FLOAT     DOUBLE     LONG\\n\");"
+        "\tprintf(\"r0: %.4x   %f    %f    %lld\\n\", r0, float_from_f16(r0), float_from_bf16(r0), long_long_from_fi16(r0));\n"
+        "\tprintf(\"r1: %.4x   %f    %f    %lld\\n\", r1, float_from_f16(r1), float_from_bf16(r1), long_long_from_fi16(r1));\n"
+        "\tprintf(\"r2: %.4x   %f    %f    %lld\\n\", r2, float_from_f16(r2), float_from_bf16(r2), long_long_from_fi16(r2));\n"
+        "\tprintf(\"r3: %.4x   %f    %f    %lld\\n\", r3, float_from_f16(r3), float_from_bf16(r3), long_long_from_fi16(r3));\n"
         "\tprintf(\"sp: %.4x\\n\", sp);\n\n"
         "\treturn 0;\n"
         "}\n"

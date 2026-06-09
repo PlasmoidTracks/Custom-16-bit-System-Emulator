@@ -13,4 +13,4 @@ mov r0, [$CDEF]
 hlt
 
 
-
+; to execute: ./main example_scripts/asm/open_bus.asm -run -noerr-csb -noerr-overlap -cache-size=0

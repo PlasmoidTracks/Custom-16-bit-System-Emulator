@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
 
     if (co.d) {
         disassembler_decompile_to_file(bin, "disassemble.asm", binary_size, segment, segment_count, 
-            (DO_ADD_JUMP_LABEL | (0&DO_ADD_DEST_LABEL) | (0&DO_ADD_SOURCE_LABEL) | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (0&DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (0&DO_ADD_RAW_BYTES)));
+            (DO_ADD_JUMP_LABEL | (0&DO_ADD_DEST_LABEL) | (0&DO_ADD_SOURCE_LABEL) | (0&DO_ADD_LABEL_TO_CODE_SEGMENT) | (0&DO_ADD_SPECULATIVE_CODE) | (0&DO_USE_FLOAT_LITERALS) | (0&DO_ALIGN_ADDRESS_JUMP) | (DO_ADD_RAW_BYTES)));
     }
 
     if (co.toc) {

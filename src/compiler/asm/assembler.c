@@ -425,7 +425,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
             tokens[token_index + 2].type == TT_PLUS &&
             tokens[token_index + 3].type == TT_REGISTER &&
             tokens[token_index + 4].type == TT_STAR &&
-            (tokens[token_index + 5].type == TT_IMMEDIATE || tokens[token_index + 3].type == TT_LABEL) &&
+            (tokens[token_index + 5].type == TT_IMMEDIATE || tokens[token_index + 5].type == TT_LABEL) &&
             tokens[token_index + 6].type == TT_BRACKET_CLOSE) {
 
                 expression[expression_index].type = EXPR_INDIRECT_SCALE_OFFSET;
@@ -522,7 +522,6 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
         else if (token_index + 1 < token_count &&
             tokens[token_index + 0].type == TT_ADDRESS &&
             (tokens[token_index + 1].type == TT_IMMEDIATE || tokens[token_index + 1].type == TT_LABEL)) {
-
                 expression[expression_index].type = EXPR_ADDRESS;
                 expression[expression_index].tokens[0] = tokens[token_index + 0];
                 expression[expression_index].tokens[1] = tokens[token_index + 1];
@@ -670,6 +669,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
     while (expression_index < expression_count) {
 
+        //log_msg(LP_DEBUG, "byte_index: $%.4x", byte_index);
+
         if (byte_index > SEGMENT_CODE_END) {
             if (!exceeding_boundary_error) {
                 LOG_PRIORITY lp = (options & AO_ERROR_ON_CODE_SEGMENT_BREACH) ? LP_ERROR : LP_WARNING;
@@ -687,7 +688,8 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
             exceeding_boundary_error = 1;
             if (options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) {
                 // simply stop, the rest will be zeros instead
-                break;
+                // BUT WAIT: What if we do an address jump later to a legal region?? We cant just break!
+                //break;
             }
             // else, do nothing. 
         }
@@ -767,10 +769,9 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     //printf("EXPR_ADDRESS: %s\n", string_value);
                     int value = parse_immediate(string_value); //(int) strtol(&string_value[1], NULL, 16);
                     instruction[instruction_index].address = value;
-
                     byte_index = value;
 
-                    //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                    //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x in code segment", value);
                     
                     instruction_index ++;
 
@@ -1381,7 +1382,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 instruction[instruction_index].address = value;
                 byte_index = value;
 
-                //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x", value);
+                //log_msg(LP_INFO, "Parsing expressions: Added address jump to %.4x in data segment", value);
                 
                 instruction_index ++;
 
@@ -1877,81 +1878,83 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             //log_msg(LP_DEBUG, "label");
             continue;
         }
-        if (instruction[instruction_index].expression[0].type == EXPR_DEREF_LABEL) {
-            error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
-            error |= safe_write(bin, index++, instruction[instruction_index].raw_data >> 8, written, options);
-            if (index > *binary_size) {
-                *binary_size = index;
-            }
-            instruction_index ++;
-            //log_msg(LP_DEBUG, "seg code");
-            continue;
-        } 
-        if (instruction[instruction_index].expression[0].type == EXPR_INCBIN) {
-            char* filename = calloc(strlen(instruction[instruction_index].expression[0].tokens[1].raw) - 1, 1);
-            memcpy(filename, instruction[instruction_index].expression[0].tokens[1].raw + 1, strlen(instruction[instruction_index].expression[0].tokens[1].raw + 1));
-            filename[strlen(filename) - 1] = '\0';
-            //log_msg(LP_INFO, "filename: %s", filename);
-            long filesize;
-            uint8_t* content = (uint8_t*) read_file(filename, &filesize);
-            for (long i = 0; i < filesize; i++) {
-                error |= safe_write(bin, index++, content[i], written, options);
-                //bin[index++] = content[i];
+        if (index <= SEGMENT_CODE_END || (index > SEGMENT_CODE_END && (options & AO_PAD_SEGMENT_BREACH_WITH_ZERO))) {
+            if (instruction[instruction_index].expression[0].type == EXPR_DEREF_LABEL) {
+                error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+                error |= safe_write(bin, index++, instruction[instruction_index].raw_data >> 8, written, options);
                 if (index > *binary_size) {
                     *binary_size = index;
                 }
+                instruction_index ++;
+                //log_msg(LP_DEBUG, "seg code");
+                continue;
+            } 
+            if (instruction[instruction_index].expression[0].type == EXPR_INCBIN) {
+                char* filename = calloc(strlen(instruction[instruction_index].expression[0].tokens[1].raw) - 1, 1);
+                memcpy(filename, instruction[instruction_index].expression[0].tokens[1].raw + 1, strlen(instruction[instruction_index].expression[0].tokens[1].raw + 1));
+                filename[strlen(filename) - 1] = '\0';
+                //log_msg(LP_INFO, "filename: %s", filename);
+                long filesize;
+                uint8_t* content = (uint8_t*) read_file(filename, &filesize);
+                for (long i = 0; i < filesize; i++) {
+                    error |= safe_write(bin, index++, content[i], written, options);
+                    //bin[index++] = content[i];
+                    if (index > *binary_size) {
+                        *binary_size = index;
+                    }
+                }
+                instruction_index ++;
+                //log_msg(LP_DEBUG, "incbin");
+                continue;
             }
-            instruction_index ++;
-            //log_msg(LP_DEBUG, "incbin");
-            continue;
-        }
-        // this here has to be checked last, else weird offsets occure
-        if (instruction[instruction_index].is_raw_data) {
-            //printf("is raw data! %d\n", instruction_index);
-            if (instruction[instruction_index].data_size_in_bytes == 2) {
-                if (instruction[instruction_index].byte_aligned) {
-                    //printf("aligned!\n");
+            // this here has to be checked last, else weird offsets occure
+            if (instruction[instruction_index].is_raw_data) {
+                //printf("is raw data! %d\n", instruction_index);
+                if (instruction[instruction_index].data_size_in_bytes == 2) {
+                    if (instruction[instruction_index].byte_aligned) {
+                        //printf("aligned!\n");
+                        error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+                        error |= safe_write(bin, index++, (instruction[instruction_index].raw_data & 0xff00) >> 8, written, options);
+                        instruction_index ++;
+                        if (index > *binary_size) {
+                            *binary_size = index;
+                        }
+                    } else {
+                        //printf("unaligned!\n");
+                        error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
+                        instruction_index ++;
+                        if (index > *binary_size) {
+                            *binary_size = index;
+                        }
+                    }
+                } else if (instruction[instruction_index].data_size_in_bytes == 1) {
                     error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
-                    error |= safe_write(bin, index++, (instruction[instruction_index].raw_data & 0xff00) >> 8, written, options);
                     instruction_index ++;
                     if (index > *binary_size) {
                         *binary_size = index;
                     }
                 } else {
-                    //printf("unaligned!\n");
-                    error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
-                    instruction_index ++;
-                    if (index > *binary_size) {
-                        *binary_size = index;
-                    }
+                    log_msg(LP_ERROR, "Parsing instruction: data size does not match word or byte size (%d) [%s:%d]", instruction[instruction_index].data_size_in_bytes, __FILE__, __LINE__);
+                    return NULL;
                 }
-            } else if (instruction[instruction_index].data_size_in_bytes == 1) {
-                error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);
-                instruction_index ++;
-                if (index > *binary_size) {
-                    *binary_size = index;
-                }
-            } else {
-                log_msg(LP_ERROR, "Parsing instruction: data size does not match word or byte size (%d) [%s:%d]", instruction[instruction_index].data_size_in_bytes, __FILE__, __LINE__);
-                return NULL;
+                //log_msg(LP_DEBUG, "raw data");
+                continue;
             }
-            //log_msg(LP_DEBUG, "raw data");
-            continue;
-        }
 
-        // writing the instruction
-        int tmp = instruction[instruction_index].instruction;
-        while (tmp > 0x7f) {
-            error |= safe_write(bin, index++, EXT | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
-            tmp -= 0x80;
-        }
-        error |= safe_write(bin, index++, tmp | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
-        
-        // writing the instruction arguments
-        if (instruction_encoding[instruction[instruction_index].instruction].argument_count > 0) {
-            error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
-            for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
-                error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);
+            // writing the instruction
+            int tmp = instruction[instruction_index].instruction;
+            while (tmp > 0x7f) {
+                error |= safe_write(bin, index++, EXT | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
+                tmp -= 0x80;
+            }
+            error |= safe_write(bin, index++, tmp | ((instruction[instruction_index].no_cache != 0) << 7), written, options);
+            
+            // writing the instruction arguments
+            if (instruction_encoding[instruction[instruction_index].instruction].argument_count > 0) {
+                error |= safe_write(bin, index++, instruction[instruction_index].admr | (instruction[instruction_index].admx << 3), written, options);
+                for (int i = 0; i < instruction[instruction_index].argument_bytes; i++) {
+                    error |= safe_write(bin, index++, (uint8_t) instruction[instruction_index].arguments[i], written, options);
+                }
             }
         }
         instruction_index ++;

@@ -24,3 +24,6 @@ mov r2, $FFFF
 hlt
 
 
+; run with ./main example_scripts/asm/open_bus2.asm -run -noerr-csb -O0 -d -cache-size=0
+; This only works when the memory bank is not set at 0x8000 - 0xA000, which it is by default!
+

@@ -1537,7 +1537,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 }
 
 Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruction_count) {
-    if (! instruction) {
+    if (!instruction) {
         return NULL;
     }
     for (int i = 0; i < instruction_count; i++) {

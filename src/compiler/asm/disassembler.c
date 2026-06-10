@@ -36,6 +36,12 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
         if (instruction_bytes) *instruction_bytes += 1; // given that EXT is a one-byte-instruction
     }
 
+    // check if the instruction is even properly encoded
+    if (instruction != 0x00 && instruction_encoding[instruction].mnemonic == 0) {
+        if (valid_instruction) *valid_instruction = 0;
+        return strdup("");
+    }
+
     uint8_t addressing_mode = 0;
     int one_byte_instruction = 1;
     if (valid_instruction) *valid_instruction = 1;
@@ -81,33 +87,33 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     int data_size = 0;
 
     if (argument_count == 2) {
-        //log_msg(LP_INFO, "decompile: instruction \"%s %s, %s\"", instruction_encoding[instruction].instruction_string, cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
+        //log_msg(LP_INFO, "decompile: instruction \"%s %s, %s\" [%s:%d]", instruction_encoding[instruction].instruction_string, cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx], __FILE__, __LINE__);
         data_size += cpu_extended_addressing_mode_bytes[admx];
         data_size += cpu_reduced_addressing_mode_bytes[admr];
     } else if (argument_count == 0) {
-        //log_msg(LP_INFO, "decompile: instruction \"%s\"", instruction_encoding[instruction].instruction_string);
-        //log_msg(LP_INFO, "decompile: admr, amdx: \"%s\", \"%s\"", cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx]);
+        //log_msg(LP_INFO, "decompile: instruction \"%s\" [%s:%d]", instruction_encoding[instruction].instruction_string, __FILE__, __LINE__);
+        //log_msg(LP_INFO, "decompile: admr, amdx: \"%s\", \"%s\" [%s:%d]", cpu_reduced_addressing_mode_string[admr], cpu_extended_addressing_mode_string[admx], __FILE__, __LINE__);
         if (admr != 0 || admx != 0) {
-            //log_msg(LP_DEBUG, "Instructions with no argument, but set adm is not realistic. Assuming it is raw data instead");
+            //log_msg(LP_DEBUG, "Instructions with no argument, but set adm is not realistic. Assuming it is raw data instead [%s:%d]", __FILE__, __LINE__);
             if (valid_instruction) *valid_instruction = 0;
             return "";
         }
     } else if (argument_count == 1) {
         if (instruction_encoding[instruction].single_operant_writeback) {
             if (admx != 0) {
-                //log_msg(LP_DEBUG, "Instructions with one writeback argument (admr), but set admx is not realistic. Assuming it is raw data instead");
+                //log_msg(LP_DEBUG, "Instructions with one writeback argument (admr), but set admx is not realistic. Assuming it is raw data instead [%s:%d]", __FILE__, __LINE__);
                 if (valid_instruction) *valid_instruction = 0;
                 //return "";
             }
-            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\"", instruction_encoding[instruction].instruction_string, cpu_reduced_addressing_mode_string[admr]);
+            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\" [%s:%d]", instruction_encoding[instruction].instruction_string, cpu_reduced_addressing_mode_string[admr], __FILE__, __LINE__);
             data_size += cpu_reduced_addressing_mode_bytes[admr];
         } else {
             if (admr != 0) {
-                //log_msg(LP_DEBUG, "Instructions with one argument (admx), but set admr is not realistic. Assuming it is raw data instead");
+                //log_msg(LP_DEBUG, "Instructions with one argument (admx), but set admr is not realistic. Assuming it is raw data instead [%s:%d]", __FILE__, __LINE__);
                 if (valid_instruction) *valid_instruction = 0;
                 //return "";
             }
-            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\"", instruction_encoding[instruction].instruction_string, cpu_extended_addressing_mode_string[admx]);
+            //log_msg(LP_INFO, "decompile: instruction \"%s, %s\" [%s:%d]", instruction_encoding[instruction].instruction_string, cpu_extended_addressing_mode_string[admx], __FILE__, __LINE__);
             data_size += cpu_extended_addressing_mode_bytes[admx];
         }
     }
@@ -327,8 +333,8 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
                 break;
             
             default:
-            //log_msg(LP_ERROR, "Unsupported admx \"%s\" [%s:%d]", cpu_extended_addressing_mode_string[admx], __FILE__, __LINE__);
-            if (valid_instruction) *valid_instruction = 0;
+                //log_msg(LP_ERROR, "Unsupported admx \"%s\" [%s:%d]", cpu_extended_addressing_mode_string[admx], __FILE__, __LINE__);
+                if (valid_instruction) *valid_instruction = 0;
                 break;
         }
     }
@@ -380,7 +386,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
             while (assembly_index + 3 >= allocated_space) {
                 allocated_space *= 2;
-                //log_msg(LP_DEBUG, "Disassembler: Increased allocated space");
+                //log_msg(LP_DEBUG, "Disassembler: Increased allocated space [%s:%d]", __FILE__, __LINE__);
                 disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));
                 disassembly.binary_index = realloc(disassembly.binary_index, allocated_space * sizeof(int));
                 disassembly.lines = allocated_space;
@@ -578,13 +584,13 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
 
         if (instruction == NULL) {
-            //log_msg(LP_ERROR, "Disassembler: Decompilation failed [%s:%d]", __FILE__, __LINE__);
+            log_msg(LP_ERROR, "Disassembler: Decompilation failed [%s:%d]", __FILE__, __LINE__);
             return (Disassembly_t) {0};
         }
 
         while (assembly_index >= allocated_space) {
             allocated_space *= 2;
-            //log_msg(LP_DEBUG, "Disassembler: Increased allocated space");
+            //log_msg(LP_DEBUG, "Disassembler: Increased allocated space [%s:%d]", __FILE__, __LINE__);
             disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));
             disassembly.binary_index = realloc(disassembly.binary_index, allocated_space * sizeof(int));
             disassembly.lines = allocated_space;
@@ -611,7 +617,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
             while (assembly_index >= allocated_space) {
                 allocated_space *= 2;
-                //log_msg(LP_DEBUG, "Disassembler: Increased allocated space");
+                //log_msg(LP_DEBUG, "Disassembler: Increased allocated space [%s:%d]", __FILE__, __LINE__);
                 disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));
                 disassembly.binary_index = realloc(disassembly.binary_index, allocated_space * sizeof(int));
                 disassembly.lines = allocated_space;
@@ -660,7 +666,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             for (int instruction_index = 0; instruction_index < INSTRUCTION_COUNT; instruction_index++) {
                 if (instruction_encoding[instruction_index].is_jump_instruction && instruction_encoding[instruction_index].argument_count == 1) {
                     if (strcmp(words[0], instruction_encoding[instruction_index].instruction_string) == 0) {
-                        //log_msg(LP_CRITICAL, "jump op: \"%s\"", instruction_encoding[instruction_index].instruction_string);
+                        //log_msg(LP_CRITICAL, "jump op: \"%s\" [%s:%d]", instruction_encoding[instruction_index].instruction_string, __FILE__, __LINE__);
                         found_jump_instruction = 1;
                         is_relative_jump = instruction_encoding[instruction_index].is_relative_jump_instruction;
 
@@ -672,7 +678,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                 }
             }
             if (!found_jump_instruction) {
-                //log_msg(LP_INFO, "was not a jump instruction: %s", words[0]);
+                //log_msg(LP_INFO, "was not a jump instruction: %s [%s:%d]", words[0], __FILE__, __LINE__);
                 int windex = 0;
                 while (words[windex]) {
                     free(words[windex++]);
@@ -681,7 +687,11 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                 continue;
             }
             // Here when jump instruction was found
-
+            
+            if (*assembly_code.admx != ADMX_IMM16 && *assembly_code.admx != ADMX_IND16) {
+                continue;
+            }
+            /*
             if (words[1][0] == 'r') {
                 if (words[1][1] == '0') {
                     continue;
@@ -694,24 +704,27 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                 }
             } else if (words[1][0] == 's' && words[1][1] == 'p') {
                 continue;
+            } else if (words[1][0] == 'p' && words[1][1] == 'c') {
+                continue;
             }
+            */
 
             int destination = parse_immediate(words[1]);
-            //log_msg(LP_CRITICAL, "jump dest: %.4x", destination);
+            //log_msg(LP_CRITICAL, "jump dest: %.4x [%s:%d]", destination, __FILE__, __LINE__);
 
             // check if a preexisting label exists that points to the destination
             int found_match = 0;
             for (int j = assembly_lines - 1; j >= 0; j--) {
                 if (!is_relative_jump) {
                     if (assembly_code.is_label[j] && assembly_code.binary_index[j] == destination) {
-                        //log_msg(LP_INFO, "Found a matching label for jump to \"%s\"", assembly_code.code[j]);
+                        //log_msg(LP_INFO, "Found a matching label for jump to \"%s\" [%s:%d]", assembly_code.code[j], __FILE__, __LINE__);
                         sprintf(assembly_code.code[i], "%s %s", words[0], assembly_code.code[j]);
                         found_match = 1;
                         break;
                     }
                 } else {
                     if (assembly_code.is_label[j] && assembly_code.binary_index[i] + (int16_t) destination == assembly_code.binary_index[j]) {
-                        //log_msg(LP_INFO, "Found a matching label for relative jump to \"%s\"", assembly_code.code[j]);
+                        //log_msg(LP_INFO, "Found a matching label for relative jump to \"%s\" [%s:%d]", assembly_code.code[j], __FILE__, __LINE__);
                         sprintf(assembly_code.code[i], "%s %s", words[0], assembly_code.code[j]);
                         found_match = 1;
                         break;
@@ -736,7 +749,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
                     condition = assembly_code.binary_index[j] == destination;
                 }
                 if (condition) {
-                    //log_msg(LP_CRITICAL, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
+                    //log_msg(LP_CRITICAL, "Found target: [%.4x - %s] [%s:%d]", assembly_code.binary_index[j], assembly_code.code[j], __FILE__, __LINE__);
                     // first, increase capacity
                     for (long x = assembly_lines * 2 ; x < assembly_code.lines; x++) {
                         //free(assembly_code.code[x]);
@@ -804,7 +817,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
         }
         // Now for every instruction, check if its a jump through a dedicated table plus has an argument. Then compare strings
         if (strcmp(words[0], instruction_encoding[MOV].instruction_string) != 0) {
-            //log_msg(LP_INFO, "was not mov instruction: %s", words[0]);
+            //log_msg(LP_INFO, "was not mov instruction: %s [%s:%d]", words[0], __FILE__, __LINE__);
             int windex = 0;
             while (words[windex]) {
                 free(words[windex++]);
@@ -869,7 +882,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             default:
                 skip_admx = 1;
                 sprintf(postfix_admx, "%s", words[2]);
-                //log_msg(LP_INFO, "Disassembler: Skipping admx");
+                //log_msg(LP_INFO, "Disassembler: Skipping admx [%s:%d]", __FILE__, __LINE__);
                 break;
         }
         if (!skip_admx && (options & DO_ADD_SOURCE_LABEL)) {
@@ -881,7 +894,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             for (int j = assembly_lines - 1; j >= 0; j--) {
                 //printf("CHECKING OUT: %.4x %d %s", assembly_code.binary_index[j], assembly_code.is_label[j], assembly_code.code[j]);
                 if (assembly_code.is_label[j] && assembly_code.binary_index[j] == source) {
-                    //log_msg(LP_EMERGENCY, "Found a matching label \"%s\" sitting at %.4x", assembly_code.code[j], assembly_code.binary_index[j]);
+                    //log_msg(LP_EMERGENCY, "Found a matching label \"%s\" sitting at %.4x [%s:%d]", assembly_code.code[j], assembly_code.binary_index[j], __FILE__, __LINE__);
                     char code[256];
                     strcpy(code, assembly_code.code[j]);
                     code[strlen(code) - 1] = '\0'; // turn \n into \0
@@ -902,7 +915,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             // look for instruction or data that starts at that destination. Choose last byte, so its after all control instrucitons like .code etc.
             for (int j = assembly_lines - 1; j >= 0; j--) {
                 if (assembly_code.binary_index[j] == source) {
-                    //log_msg(LP_INFO, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
+                    //log_msg(LP_INFO, "Found target: [%.4x - %s] [%s:%d]", assembly_code.binary_index[j], assembly_code.code[j], __FILE__, __LINE__);
                     // Check if its within a data segment
                     if (!assembly_code.is_data[j] && !(options & DO_ADD_LABEL_TO_CODE_SEGMENT)) {
                         break;
@@ -939,10 +952,10 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
 
                     assembly_lines ++;
                     if (j <= i) {
-                        //log_msg(LP_INFO, "Label was added to PRIOR code, thus moving ahead by one");
+                        //log_msg(LP_INFO, "Label was added to PRIOR code, thus moving ahead by one [%s:%d]", __FILE__, __LINE__);
                         i += 1;
                     } else {
-                        //log_msg(LP_INFO, "Label was added to code AHEAD");
+                        //log_msg(LP_INFO, "Label was added to code AHEAD [%s:%d]", __FILE__, __LINE__);
                     }
 
                     // Then inser the label
@@ -980,7 +993,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             if (!skip_admx) {
                 //i += 2;
             }
-            //log_msg(LP_INFO, "Skipping admr");
+            //log_msg(LP_INFO, "Skipping admr [%s:%d]", __FILE__, __LINE__);
             continue;
         }
 
@@ -1065,7 +1078,7 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
             // look for instruction or data that starts at that destination. Choose last byte, so its after all control instrucitons like .code etc.
             for (int j = assembly_lines - 1; j >= 0; j--) {
                 if (assembly_code.binary_index[j] == source) {
-                    //log_msg(LP_INFO, "Found target: [%.4x - %s]", assembly_code.binary_index[j], assembly_code.code[j]);
+                    //log_msg(LP_INFO, "Found target: [%.4x - %s] [%s:%d]", assembly_code.binary_index[j], assembly_code.code[j], __FILE__, __LINE__);
                     // Check if its within a data segment
                     if (!assembly_code.is_data[j] && !(options & DO_ADD_LABEL_TO_CODE_SEGMENT)) {
                         break;
@@ -1102,10 +1115,10 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
 
                     assembly_lines ++;
                     if (j <= i) {
-                        //log_msg(LP_INFO, "Label was added to PRIOR code, thus moving ahead by one");
+                        //log_msg(LP_INFO, "Label was added to PRIOR code, thus moving ahead by one [%s:%d]", __FILE__, __LINE__);
                         i += 1;
                     } else {
-                        //log_msg(LP_INFO, "Label was added to code AHEAD");
+                        //log_msg(LP_INFO, "Label was added to code AHEAD [%s:%d]", __FILE__, __LINE__);
                     }
 
                     // Then inser the label

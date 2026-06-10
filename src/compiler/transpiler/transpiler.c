@@ -428,7 +428,7 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     break;
 
                 case ADMR_SP:
-                    sprintf(output, "%ssp = %s%s ? rsp : ", prefix, not, flag);
+                    sprintf(output, "%ssp = %s%s ? sp : ", prefix, not, flag);
                     break;
 
                 case ADMR_IND_R0:
@@ -1520,7 +1520,6 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 return 1;
                                 break;
                         }
-                        sprintf(output + strlen(output), "\n");
                         break;
                     }
 
@@ -1636,7 +1635,6 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 return 1;
                                 break;
                         }
-                        sprintf(output + strlen(output), "\n");
                         break;
                     }
 
@@ -1648,10 +1646,10 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             break;
         }
 
-        case JNZ: {
+        case JMP: {
             switch (instruction.admx) {
                 case ADMX_IMM16:
-                    sprintf(output, "%sif (!sr.Z) goto _%s;", prefix, instruction.expression[1].tokens[0].raw + 1);
+                    sprintf(output, "%sgoto _%s;", prefix, instruction.expression[1].tokens[0].raw + 1);
                     break;
 
                 default:
@@ -1665,10 +1663,79 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             break;
         }
 
-        case JMP: {
+        case JZ: 
+        case JNZ: 
+        case JFZ: 
+        case JNFZ: 
+        case JL: 
+        case JNL: 
+        case JUL: 
+        case JNUL: 
+        case JFL: 
+        case JNFL: 
+        case JDL: 
+        case JNDL: 
+        case JLL: 
+        case JNLL: 
+        case JAO: 
+        case JNAO: {
+            char flag[8];
+            switch(instruction.instruction) {
+                case JZ: 
+                    sprintf(flag, "sr.Z");
+                    break;
+                case JNZ: 
+                    sprintf(flag, "!sr.Z");
+                    break;
+                case JFZ: 
+                    sprintf(flag, "sr.FZ");
+                    break;
+                case JNFZ: 
+                    sprintf(flag, "!sr.FZ");
+                    break;
+                case JL: 
+                    sprintf(flag, "sr.L");
+                    break;
+                case JNL: 
+                    sprintf(flag, "!sr.L");
+                    break;
+                case JUL: 
+                    sprintf(flag, "sr.UL");
+                    break;
+                case JNUL: 
+                    sprintf(flag, "!sr.UL");
+                    break;
+                case JFL: 
+                    sprintf(flag, "sr.FL");
+                    break;
+                case JNFL: 
+                    sprintf(flag, "!sr.FL");
+                    break;
+                case JDL: 
+                    sprintf(flag, "sr.DL");
+                    break;
+                case JNDL: 
+                    sprintf(flag, "!sr.DL");
+                    break;
+                case JLL: 
+                    sprintf(flag, "sr.LL");
+                    break;
+                case JNLL: 
+                    sprintf(flag, "!sr.LL");
+                    break;
+                case JAO: 
+                    sprintf(flag, "sr.AO");
+                    break;
+                case JNAO:
+                    sprintf(flag, "!sr.AO");
+                    break;
+                default:
+                    log_msg(LP_ERROR, "Transpiler: Unknown flag [%s:%d]", __FILE__, __LINE__);
+                    break;
+            }
             switch (instruction.admx) {
                 case ADMX_IMM16:
-                    sprintf(output, "%sgoto _%s;", prefix, instruction.expression[1].tokens[0].raw + 1);
+                    sprintf(output, "%sif (%s) goto _%s;", prefix, flag, instruction.expression[1].tokens[0].raw + 1);
                     break;
 
                 default:
@@ -1786,13 +1853,13 @@ char* transpile(char* asm, long* file_size) {
     long binary_size = 0;
     uint16_t* segment = NULL;
     int seegment_count = 0;
-    uint8_t* bin = assembler_compile(asm, &binary_size, &segment, &seegment_count, AO_ERROR_ON_CODE_SEGMENT_BREACH | AO_ERROR_ON_OVERLAP);
+    uint8_t* bin = assembler_compile(asm, &binary_size, &segment, &seegment_count, 0);
     if (!bin) {
         log_msg(LP_ERROR, "Transpiler: Assembler returned NULL [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
 
-    char* content = disassembler_decompile(bin, binary_size, segment, seegment_count, DO_ADD_JUMP_LABEL);
+    char* content = disassembler_decompile(bin, binary_size, segment, seegment_count, DO_ADD_JUMP_LABEL | DO_ADD_DEST_LABEL);
 
     data_export("temp.dmp", content, strlen(content));
 
@@ -1819,7 +1886,7 @@ char* transpile(char* asm, long* file_size) {
 
     // build instruction array
     int instruction_count = 0;
-    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, &segment, &seegment_count, AO_ERROR_ON_OVERLAP | AO_ERROR_ON_CODE_SEGMENT_BREACH);
+    Instruction_t* instruction = assembler_parse_expression(expression, expression_count, &instruction_count, &segment, &seegment_count, 0);
 
     free(segment);
 
@@ -1829,6 +1896,10 @@ char* transpile(char* asm, long* file_size) {
 
     // resolve label
     instruction = assembler_resolve_labels(instruction, instruction_count);
+
+    if (!instruction) {
+        log_msg(LP_ERROR, "Transpiler: Assembler returned NULL [%s:%d]", __FILE__, __LINE__);
+    }
 
     char* c_code = NULL;
     long c_code_length = 0;

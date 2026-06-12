@@ -28,7 +28,6 @@
 
 #include <stdarg.h>
 
-#include "compiler/linker/linker.h"
 #include "compiler/transpiler/transpiler.h"
 
 

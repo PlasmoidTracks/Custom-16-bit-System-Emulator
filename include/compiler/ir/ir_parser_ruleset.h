@@ -1,7 +1,6 @@
 #ifndef _IR_PARSER_RULESET_H_
 #define _IR_PARSER_RULESET_H_
 
-#include "compiler/ir/ir_lexer.h"
 #include "compiler/ir/ir_parser.h"
 
 #define IR_PAR_RULE_END ((IRParserTokenType_t)(-1))
@@ -21,8 +20,7 @@ typedef struct IRGrammarRule_t {
     int invert_match[8];
     IRRulePriority_t priority;                   // for precedence
     int context_length;
-    const char description[MAX_RAW_LENGTH];
-    int variant;
+    const char* description;
 } IRGrammarRule_t;
 
 extern IRGrammarRule_t ir_parser_ruleset[256];

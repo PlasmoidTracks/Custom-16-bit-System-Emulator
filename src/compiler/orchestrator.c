@@ -1,4 +1,8 @@
+#include "compiler/orchestrator.h"
 
+void foo(void) {
+    return;
+}
 
 /*
 Orchestrates the compilation

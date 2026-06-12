@@ -622,6 +622,10 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                     case ADMX_IND16:
                         sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[1].raw));
                         break;
+
+                    case ADMX_IND_SP:
+                        sprintf(output + strlen(output), "read16(sp);");
+                        break;
                     
                     case ADMX_IND_R3_OFFSET16:
                         sprintf(output + strlen(output), "0x%.4X + r3;", parse_immediate(instruction.expression[2].tokens[1].raw));
@@ -1226,6 +1230,10 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 sprintf(output + strlen(output), "r0;");
                                 break;
 
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "r1;");
+                                break;
+
                             case ADMX_IND_R3_OFFSET16:
                                 sprintf(output + strlen(output), "read16(0x%.4x + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
                                 break;
@@ -1270,6 +1278,10 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 sprintf(output + strlen(output), "r0)");
                                 break;
 
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "r1)");
+                                break;
+
                             case ADMX_IND_R3_OFFSET16:
                                 sprintf(output + strlen(output), "read16(0x%.4x + r3))", parse_immediate(instruction.expression[2].tokens[1].raw));
                                 break;
@@ -1306,6 +1318,10 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
 
                             case ADMX_R0:
                                 sprintf(output + strlen(output), " (r0 & 0x7FFF) == 0);");
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), " (r1 & 0x7FFF) == 0);");
                                 break;
 
                             case ADMX_IND_R3_OFFSET16:
@@ -1348,6 +1364,14 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 sprintf(output + strlen(output), "(int16_t) 0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
                                 break;
 
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "(int16_t) r0;");
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "(int16_t) r1;");
+                                break;
+
                             case ADMX_IND_R3_OFFSET16:
                                 sprintf(output + strlen(output), "(int16_t) read16(0x%.4x + r3);", parse_immediate(instruction.expression[2].tokens[1].raw));
                                 break;
@@ -1386,6 +1410,14 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                         switch (instruction.admx) {
                             case ADMX_IMM16:
                                 sprintf(output + strlen(output), "0x%.4X;", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "r0;");
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "r1;");
                                 break;
 
                             case ADMX_IND_R3_OFFSET16:
@@ -1428,6 +1460,14 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 sprintf(output + strlen(output), "float_from_f16(0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
                                 break;
 
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "r0;");
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "r1;");
+                                break;
+
                             case ADMX_IND_R3_OFFSET16:
                                 sprintf(output + strlen(output), "float_from_f16(read16(0x%.4x + r3));", parse_immediate(instruction.expression[2].tokens[1].raw));
                                 break;
@@ -1468,6 +1508,14 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                                 sprintf(output + strlen(output), "float_from_bf16(0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
                                 break;
 
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "r0;");
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "r1;");
+                                break;
+
                             case ADMX_IND_R3_OFFSET16:
                                 sprintf(output + strlen(output), "float_from_bf16(read16(0x%.4x + r3));", parse_immediate(instruction.expression[2].tokens[1].raw));
                                 break;
@@ -1506,6 +1554,14 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
                         switch (instruction.admx) {
                             case ADMX_IMM16:
                                 sprintf(output + strlen(output), "long_long_from_fi16(0x%.4X);", parse_immediate(instruction.expression[2].tokens[0].raw));
+                                break;
+
+                            case ADMX_R0:
+                                sprintf(output + strlen(output), "r0;");
+                                break;
+
+                            case ADMX_R1:
+                                sprintf(output + strlen(output), "r1;");
                                 break;
 
                             case ADMX_IND_R3_OFFSET16:
@@ -1850,6 +1906,13 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
 
 char* transpile(char* asm, long* file_size) {
 
+    /*
+    Transpile options: 
+
+    no_helper -> removes read16 and write16 (THIS IS A NIGHTMARE IF WE ADD MMAPs ETC.!)
+    
+    */
+
     long binary_size = 0;
     uint16_t* segment = NULL;
     int seegment_count = 0;
@@ -2076,7 +2139,7 @@ char* transpile(char* asm, long* file_size) {
     c_code = append_to_output(c_code, &c_code_length, "\n");
 
     c_code = append_to_output(c_code, &c_code_length, "// This function contains the code that is run at the beginning of the execution\n");
-    c_code = append_to_output(c_code, &c_code_length, "void preamble(void) {\n");
+    c_code = append_to_output(c_code, &c_code_length, "void preamble(void) {");
 
 
     // Now, generate the code until we stumble upon the first standalone label, which will mark a new function section
@@ -2108,7 +2171,6 @@ char* transpile(char* asm, long* file_size) {
             c_code = append_to_output(c_code, &c_code_length, "\n");
         } else {
             c_code = append_to_output(c_code, &c_code_length, "// UNKNOWN\n");
-            c_code = append_to_output(c_code, &c_code_length, "\n");
         }
 
         index ++;
@@ -2136,6 +2198,14 @@ char* transpile(char* asm, long* file_size) {
                 }
             }
             if (!unique) {
+                // OK, here is the exception: If a label was followed by another label, they should point to the same function. 
+                // But in code the label is just left empty: 
+                if (function_body_started == 1) {
+                    // meaning a label was followed by a label again. Then call the other label in this function as a workaround. 
+                    sprintf(tmp, "\t_%s();\n", instruction[index].expression[0].tokens[0].raw + 1);
+                    c_code = append_to_output(c_code, &c_code_length, tmp);
+                }
+
                 // ending old function body if a body was started before
                 if (function_body_started) {
                     c_code = append_to_output(c_code, &c_code_length, "}\n\n");
@@ -2149,6 +2219,8 @@ char* transpile(char* asm, long* file_size) {
                 continue;
             }
         }
+        // setting it to something else to denote that the body actually has content. 
+        function_body_started = 2;
 
         // first display the instruction that is being translated
         generate_asm_reconstruction(instruction[index], tmp);
@@ -2157,12 +2229,12 @@ char* transpile(char* asm, long* file_size) {
 
         // then generate the actual C code
         int err = generate_code_for_single_instruction(instruction[index], tmp, "\t");
+        c_code = append_to_output(c_code, &c_code_length, "\n");
         if (!err) {
-            c_code = append_to_output(c_code, &c_code_length, "\n");
             c_code = append_to_output(c_code, &c_code_length, tmp);
             c_code = append_to_output(c_code, &c_code_length, "\n");
         } else {
-            c_code = append_to_output(c_code, &c_code_length, "\n\t// UNKNOWN");
+            c_code = append_to_output(c_code, &c_code_length, "\t// UNKNOWN");
             c_code = append_to_output(c_code, &c_code_length, "\n");
         }
 

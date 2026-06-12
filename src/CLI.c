@@ -237,7 +237,7 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         } else if (strcmp(extension, "-") == 0) {
             /**/
         } else {
-            log_msg(LP_ERROR, "CLI: Unknown file format \"%s\" [%s:%d]", extension, __FILE__, __LINE__);
+            log_msg(LP_ERROR, "CLI: Unknown file format \"%s\". Use \"-c=[bin|asm|ir|ccan|c]\" to specify instead [%s:%d]", extension, __FILE__, __LINE__);
             if (error) {*error = 1;}
         }
     }

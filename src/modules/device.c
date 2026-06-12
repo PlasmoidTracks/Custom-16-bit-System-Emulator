@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "utils/Random.h"
 
 #include "modules/device.h"

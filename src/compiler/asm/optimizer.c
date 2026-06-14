@@ -881,7 +881,7 @@ char* optimizer_compile(char* content) {
                                     // now need to validate that rN is unused until reset
                                     int k = j + 1;
                                     int valid = 1;
-                                    while (k < instruction_count - i) {
+                                    while (k < instruction_count) {
                                         if (
                                             is_same_adm(admr, instruction[k].admx) ||
                                             is_same_indirect_adm(admr, instruction[k].admx) ||

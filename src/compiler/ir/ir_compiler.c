@@ -281,6 +281,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
     // Check whether the AST roots consists of only Statements and Function definitions
     int invalid = 0;
     int last_line_shown = -1;
+    int last_column_shown = -1;
     for (long i = 0; i < parser_root_count; i++) {
         if ((IRParserTokenType_t) parse[i]->token.type != IR_PAR_STATEMENT && 
             (IRParserTokenType_t) parse[i]->token.type != IR_PAR_FUNCTION_DEFINITION) {
@@ -291,7 +292,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
                         __LINE__
                     );
                 }
-                show_error_in_syntax_ext(parse[i], parse[i], &last_line_shown, 1, i > 0);
+                show_error_in_syntax_ext(parse[i], parse[i], &last_line_shown, &last_column_shown, 1, i > 0);
                 invalid = 1;
         }
     }

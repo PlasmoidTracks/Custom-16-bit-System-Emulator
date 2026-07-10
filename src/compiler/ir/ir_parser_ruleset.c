@@ -6,6 +6,20 @@
 
 IRGrammarRule_t ir_parser_ruleset[256] = {
 
+    // remove comments
+    {
+        .context = { 
+            (IRParserTokenType_t) IR_LEX_COMMENT,  
+            IR_PAR_RULE_END 
+        },
+        .output = IR_PAR_UNUSED,
+        .context_rule = {IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 5,
+        .description = "comment -> DEL", 
+    }, 
+
     {
         .context = {
             (IRParserTokenType_t) IR_LEX_STACK, 
@@ -123,7 +137,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     // = -> assign
     {
         .context = {
-            (IRParserTokenType_t) IR_LEX_ASSIGN_16_BIT, 
+            (IRParserTokenType_t) IR_LEX_ASSIGN, 
             IR_PAR_RULE_END
         },
         .output = IR_PAR_ASSIGN,
@@ -132,20 +146,6 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 1,
         .priority = 10000, 
         .description = "= -> assign",
-    },
-
-    // 8= -> assign
-    {
-        .context = {
-            (IRParserTokenType_t) IR_LEX_ASSIGN_8_BIT, 
-            IR_PAR_RULE_END
-        },
-        .output = IR_PAR_ASSIGN,
-        .context_rule = {IR_CR_REPLACE},
-        .invert_match = {0},
-        .context_length = 1,
-        .priority = 10000, 
-        .description = "8= -> assign",
     },
 
     // * EXPRESSION -> DEREF_EXPRESSION
@@ -240,7 +240,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_rule = {IR_CR_REPLACE},
         .invert_match = {0},
         .context_length = 1,
-        .priority = 1,
+        .priority = 5,
         .description = "number -> expression",
         .variant = 6, 
     }, 
@@ -256,7 +256,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_rule = {IR_CR_KEEP, IR_CR_REPLACE},
         .invert_match = {0},
         .context_length = 2,
-        .priority = 1,
+        .priority = 5,
         .description = "operator label -> operator expression",
         .variant = 7,  
     }, 
@@ -272,7 +272,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_rule = {IR_CR_KEEP, IR_CR_REPLACE},
         .invert_match = {0},
         .context_length = 2,
-        .priority = 1,
+        .priority = 5,
         .description = "* label -> * expression",
         .variant = 8, 
     }, 
@@ -288,9 +288,9 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD},
         .invert_match = {0},
         .context_length = 2,
-        .priority = 1,
+        .priority = 5,
         .description = "label : -> statement", 
-        .variant = 9, 
+        .variant = 0, 
     }, 
 
 
@@ -1363,7 +1363,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
     
     // Multi-Byte arithmetic operations: 
-    // {#}i+=, {#}u+=, {#}i-=, {#}i-=, {#}s>>=, {#}u>>=, {#}s<<=, {#}u<<=, {#}&=, {#}|=, {#}^=
+    // {#}=, {#}i+=, {#}u+=, {#}i-=, {#}i-=, {#}s>>=, {#}u>>=, {#}s<<=, {#}u<<=, {#}&=, {#}|=, {#}^=
     {
         .context = {
             (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
@@ -1377,8 +1377,24 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 4,
         .priority = 1000, 
-        .description = "{number} operator -> operator",
+        .description = "{expr} operator -> operator",
         .variant = 1, 
+    },
+
+    // Stack allocation
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_LEFT_CURLY_BRACKET, 
+            (IRParserTokenType_t) IR_PAR_EXPRESSION, 
+            (IRParserTokenType_t) IR_LEX_RIGHT_CURLY_BRACKET, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_EXPRESSION,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 3,
+        .priority = 2, 
+        .description = "{expr} -> operator expr",
     },
 
     
@@ -1427,7 +1443,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 6,
         .priority = 1000, 
-        .description = "callpusharg { expr } expr ; -> callpusharg",
+        .description = "pusharg { expr } expr ; -> pusharg",
     },
     
     {
@@ -1440,7 +1456,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 1000, 
-        .description = "callpusharg -> statement",
+        .description = "pusharg -> statement",
         .variant = 6, 
     },
     
@@ -1458,7 +1474,7 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 5,
         .priority = 1000, 
-        .description = "callfreearg { expr } ; -> callfreearg",
+        .description = "freearg { expr } ; -> freearg",
     },
     
     {
@@ -1471,37 +1487,116 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .invert_match = {0},
         .context_length = 1,
         .priority = 1000, 
-        .description = "callfreearg -> statement",
+        .description = "freearg -> statement",
         .variant = 7, 
     },
     
     {
         .context = {
+            (IRParserTokenType_t) IR_LEX_SAFE, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_CALL_MODIFIER,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "safe -> call_modifier",
+    },
+    
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_FAST, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_CALL_MODIFIER,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "fast -> call_modifier",
+    },
+    
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_UNSAFE, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_CALL_MODIFIER,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "unsafe -> call_modifier",
+    },
+    
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_MASKED, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_CALL_MODIFIER,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "masked -> call_modifier",
+    },
+    
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_INLINE, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_CALL_MODIFIER,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "inline -> call_modifier",
+    },
+    
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_RELATIVE, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_CALL_MODIFIER,
+        .context_rule = {IR_CR_REPLACE},
+        .invert_match = {0},
+        .context_length = 1,
+        .priority = 1000, 
+        .description = "relative -> call_modifier",
+    },
+    
+    {
+        .context = {
+            (IRParserTokenType_t) IR_PAR_CALL_MODIFIER, 
             (IRParserTokenType_t) IR_LEX_CALL, 
             (IRParserTokenType_t) IR_LEX_LABEL, 
             (IRParserTokenType_t) IR_LEX_SEMICOLON, 
             IR_PAR_RULE_END
         },
         .output = IR_PAR_EXPRESSION,
-        .context_rule = {IR_CR_KEEP, IR_CR_REPLACE, IR_CR_KEEP},
+        .context_rule = {IR_CR_KEEP, IR_CR_KEEP, IR_CR_REPLACE, IR_CR_KEEP},
         .invert_match = {0},
-        .context_length = 3,
+        .context_length = 4,
         .priority = 1000, 
-        .description = "call label ; -> call expression ;",
-        .variant = 9, 
+        .description = "call_modifier call label ; -> call_modifier call expression ;",
     },
     
     {
         .context = {
+            (IRParserTokenType_t) IR_PAR_CALL_MODIFIER, 
             (IRParserTokenType_t) IR_LEX_CALL, 
             (IRParserTokenType_t) IR_PAR_EXPRESSION, 
             (IRParserTokenType_t) IR_LEX_SEMICOLON, 
             IR_PAR_RULE_END
         },
         .output = IR_PAR_STATEMENT,
-        .context_rule = {IR_CR_REPLACE},
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD, IR_CR_DISCARD},
         .invert_match = {0},
-        .context_length = 3,
+        .context_length = 4,
         .priority = 1000, 
         .description = "call expression ; -> call",
         .variant = 8, 
@@ -1638,7 +1733,41 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
         .context_length = 4,
         .priority = 1000, 
         .description = "if expression .label ; -> statement",
-        .variant = 2, 
+        .variant = 9, 
+    },
+
+    // goto .label ; -> STATEMENT
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_GOTO,
+            (IRParserTokenType_t) IR_LEX_LABEL, 
+            (IRParserTokenType_t) IR_LEX_SEMICOLON, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_STATEMENT,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 3,
+        .priority = 1000, 
+        .description = "goto .label ; -> statement",
+        .variant = 10, 
+    },
+
+    // asm string ; -> STATEMENT
+    {
+        .context = {
+            (IRParserTokenType_t) IR_LEX_ASM,
+            (IRParserTokenType_t) IR_LEX_STRING, 
+            (IRParserTokenType_t) IR_LEX_SEMICOLON, 
+            IR_PAR_RULE_END
+        },
+        .output = IR_PAR_STATEMENT,
+        .context_rule = {IR_CR_REPLACE, IR_CR_DISCARD, IR_CR_DISCARD},
+        .invert_match = {0},
+        .context_length = 3,
+        .priority = 1000, 
+        .description = "asm string ; -> statement",
+        .variant = 11, 
     },
 
     // function_definition function_definition -> function_definition

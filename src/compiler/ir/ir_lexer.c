@@ -34,6 +34,12 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     [IR_LEX_LOCAL] = "local",                           // IR_LEX_LOCAL
     [IR_LEX_SCOPEBEGIN] = "scopebegin",                 // IR_LEX_SCOPEBEGIN
     [IR_LEX_SCOPEEND] = "scopeend",                     // IR_LEX_SCOPEEND
+    [IR_LEX_SAFE] = "safe",                             // IR_LEX_SAFE
+    [IR_LEX_FAST] = "fast",                             // IR_LEX_FAST
+    [IR_LEX_UNSAFE] = "unsafe",                         // IR_LEX_UNSAFE
+    [IR_LEX_MASKED] = "masked",                         // IR_LEX_MASKED
+    [IR_LEX_INLINE] = "inline",                         // IR_LEX_INLINE
+    [IR_LEX_RELATIVE] = "relative",                     // IR_LEX_RELATIVE
     [IR_LEX_CIF] = "cif",                               // IR_LEX_CIF
     [IR_LEX_CID] = "cid",                               // IR_LEX_CID
     [IR_LEX_CIL] = "cil",                               // IR_LEX_CIL
@@ -126,14 +132,13 @@ const char* ir_lexer_token_literal[IR_LEX_TOKEN_COUNT] = {
     [IR_LEX_BITWISE_OR_EQUAL] = "|=",                    // IR_LEX_BITWISE_OR_EQUAL
     [IR_LEX_BITWISE_XOR_EQUAL] = "^=",                   // IR_LEX_BITWISE_XOR_EQUAL
     [IR_LEX_BITWISE_BITWISE_NOT_EQUAL] = "~=",          // IR_LEX_BITWISE_BITWISE_NOT_EQUAL
-    [IR_LEX_ASSIGN_8_BIT] = "8=",                        // IR_LEX_ASSIGN_8_BIT
 
     // Single-character tokens.
     [IR_LEX_LEFT_CURLY_BRACKET] = "{",                   // IR_LEX_LEFT_CURLY_BRACKET
     [IR_LEX_RIGHT_CURLY_BRACKET] = "}",                  // IR_LEX_RIGHT_CURLY_BRACKET
     [IR_LEX_SEMICOLON] = ";",                            // IR_LEX_SEMICOLON
     [IR_LEX_COLON] = ":",                                // IR_LEX_COLON
-    [IR_LEX_ASSIGN_16_BIT] = "=",                        // IR_LEX_ASSIGN_16_BIT
+    [IR_LEX_ASSIGN] = "=",                              // IR_LEX_ASSIGN
     [IR_LEX_STAR] = "*",                                 // IR_LEX_STAR
     [IR_LEX_AMPERSAND] = "&",                            // IR_LEX_AMPERSAND
 

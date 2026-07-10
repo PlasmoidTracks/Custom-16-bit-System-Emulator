@@ -277,19 +277,21 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
         log_msg(LP_ERROR, "parser returned NULL [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
+
+    // Check whether the AST roots consists of only Statements and Function definitions
     int invalid = 0;
     int last_line_shown = -1;
     for (long i = 0; i < parser_root_count; i++) {
         if ((IRParserTokenType_t) parse[i]->token.type != IR_PAR_STATEMENT && 
             (IRParserTokenType_t) parse[i]->token.type != IR_PAR_FUNCTION_DEFINITION) {
                 if (!invalid) {
-                    log_msg(LP_ERROR, "\"%s\" - Invalid syntax [%s:%d]", 
+                    log_msg_inline(LP_ERROR, "\"%s\" - Invalid syntax [%s:%d]", 
                         source_identifier, 
                         __FILE__, 
                         __LINE__
                     );
                 }
-                show_error_in_syntax_ext(parse[i], parse[i], &last_line_shown, ' ', 0, i > 0);
+                show_error_in_syntax_ext(parse[i], parse[i], &last_line_shown, 1, i > 0);
                 invalid = 1;
         }
     }
@@ -299,6 +301,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
     }
 
     // First comes semantic analysis, operations beyond functions is not allowed for instance. 
+    // TODO - delete, honestly, just do it while codegen for the untracked cases
     if (!ir_semantic_analysis(parse, parser_root_count)) {
         log_msg(LP_ERROR, "\"%s\" - Semantic analysis returned invalid semantics [%s:%d]", source_identifier, __FILE__, __LINE__);
         return NULL;

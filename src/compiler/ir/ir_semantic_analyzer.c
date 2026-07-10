@@ -44,10 +44,10 @@ static void _get_all_tokens_of_lines(IRParserToken_t* root, IRParserToken_t** li
 }
 
 int show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
-    return show_error_in_syntax_ext(root, AST, NULL, '\n', 1, 0);
+    return show_error_in_syntax_ext(root, AST, NULL, 1, 0);
 }
 
-int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, char end, int pad, int newline_on_first_line_change) {
+int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, int pad, int newline_on_first_line_change) {
     // first, get the line interval of the error
     unsigned int first_line = -1, last_line = 0;
     _get_lines(root, &first_line, &last_line);
@@ -83,8 +83,9 @@ int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* l
                 putchar(placeholder);
             }
         } else {
-            while (++current_column < list[i]->token.column && pad) {
-                putchar(placeholder);
+            if (pad) {
+                putchar(' ');
+                if (current_column < list[i]->token.column) current_column++;
             }
         }
         printf("%s", list[i]->token.raw);
@@ -93,8 +94,6 @@ int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* l
     if (index >= CAPACTIY) {
         printf(" ...\n| %4d| ...", current_line + 1);
     }
-
-    putchar(end);
 
     if (last_line_shown) {*last_line_shown = current_line;}
 

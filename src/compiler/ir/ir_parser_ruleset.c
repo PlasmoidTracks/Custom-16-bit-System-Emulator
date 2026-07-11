@@ -99,7 +99,6 @@ IRGrammarRule_t ir_parser_ruleset[256] = {
     },
 
     // TYPE_DEFINITION TYPE_DEFINITION -> TYPE_DEFINITION
-
     {
         .context = {
             (IRParserTokenType_t) IR_PAR_TYPE_DEFINITION, 

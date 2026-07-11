@@ -14,7 +14,6 @@
 #include "compiler/ir/ir_token_name_table.h"
 #include "compiler/ir/ir_lexer.h"
 #include "compiler/ir/ir_compiler.h"
-#include "compiler/ir/ir_semantic_analyzer.h"
 
 
 typedef enum {
@@ -53,7 +52,7 @@ typedef struct Variable_t {
     };
 } Variable_t;
 
-typedef struct Function_t {
+typedef struct {
     IRParserToken_t* token; // hold what? Parent Statement?
     FunctionModifier_t modifier;
     int interrupt;
@@ -62,6 +61,108 @@ typedef struct Function_t {
     // epilogue size (how many bytes in the epilogue ends and function body starts)
     // memory layout...?
 } Function_t;
+
+
+typedef struct {
+    IRParserToken_t* parent;        // temporary, will change
+} CodeGenContext_t;
+
+typedef struct {
+    char* assembly;             // the whole assembly script
+    long allocated;             // the amount of allocated memory for 'char* assembly'
+    long index;                 // the current "cursor" position
+    CodeGenContext_t context;   // preserved context between codegen sections
+} CodeGen_t;
+
+
+static void _get_lines(IRParserToken_t* root, unsigned int* first_line, unsigned int* last_line) {
+    if (root->child_count == 0) {
+        if ((unsigned) root->token.line < *first_line) {
+            (*first_line) = root->token.line;
+        }
+        if ((unsigned) root->token.line > *last_line) {
+            (*last_line) = root->token.line;
+        }
+    }
+    for (int i = 0; i < root->child_count; i++) {
+        _get_lines(root->child[i], first_line, last_line);
+    }
+}
+
+static void _get_all_tokens_of_lines(IRParserToken_t* root, IRParserToken_t** list, int capacity, int *index, unsigned first_line, unsigned int last_line) {
+    if ((*index) >= capacity) {
+        return;
+    }
+    if (root->child_count == 0) {
+        if ((unsigned) root->token.line >= first_line && (unsigned) root->token.line <= last_line) {
+            list[(*index)++] = root;
+        }
+    }
+    for (int i = 0; i < root->child_count; i++) {
+        _get_all_tokens_of_lines(root->child[i], list, capacity, index, first_line, last_line);
+    }
+}
+
+int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, int* last_column, int pad, int newline_on_first_line_change) {
+    // first, get the line interval of the error
+    unsigned int first_line = -1, last_line = 0;
+    _get_lines(root, &first_line, &last_line);
+    //printf("first: %u, last: %u\n", first_line, last_line);
+
+    // then get the leaf nodes of all nodes that are at those lines
+    const int CAPACTIY = 16;
+    IRParserToken_t* list[CAPACTIY];
+    int index = 0;
+    _get_all_tokens_of_lines(AST, list, CAPACTIY, &index, first_line, last_line);
+    if (index == 0) return 0;
+
+    int current_line = 0;
+    if (last_line_shown) {current_line = *last_line_shown;}
+
+    int current_column = 0; 
+    if (last_column && *last_column > 0) {current_column = *last_column;}
+
+    int first = 0;
+    char placeholder = ' ';
+    for (int i = 0; i < index; i++) {
+        if (current_line != list[i]->token.line) {
+            current_line = list[i]->token.line;
+            current_column = 0;
+            if (!first) {
+                first = 1;
+                if (newline_on_first_line_change) {
+                    putchar('\n');
+                }
+            } else {
+                putchar('\n');
+            }
+            printf("| %4d| ", current_line);
+            while (++current_column < list[i]->token.column) {
+                putchar(placeholder);
+            }
+        } else {
+            while (++current_column < list[i]->token.column && pad) {
+                putchar(placeholder);
+            }
+        }
+        printf("%s", list[i]->token.raw);
+        current_column += strlen(list[i]->token.raw)-1;
+    }
+    if (index >= CAPACTIY) {
+        printf(" ...\n| %4d| ...", current_line + 1);
+    }
+
+    if (last_line_shown) {*last_line_shown = current_line;}
+    if (last_column) {*last_column = current_column;}
+
+    return 1;
+}
+
+int show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
+    int err = show_error_in_syntax_ext(root, AST, NULL, NULL, 1, 0);
+    //putchar('\n');
+    return err;
+}
 
 
 // int* at and int* padalign MUST to be initialized as -1
@@ -116,8 +217,6 @@ static VariableModifier_t ir_prepass_variable_declaration_get_type_definition(IR
 
     return modifier;
 }
-
-
 
 
 // int* interrupt and int* align MUST to be initialized as -1
@@ -263,10 +362,30 @@ void ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, i
 
 
 char* ir_codegen(IRParserToken_t** roots, int parser_root_count) {
+
+    // Context object, to keep track of stuff like, are we in a function, or outside, function modifiers, and whatnot
+    // TODO
+    
+    char* assembly = malloc(128);
+    long assembly_size = 128;
+    sprintf(assembly, "hlt\n");
+
+    CodeGen_t codegen = {
+        assembly = NULL, 
+        .allocated = 0, 
+        .index = 0, 
+        .context = (CodeGenContext_t) {0}
+    };
+
+    for (int i = 0; i < parser_root_count; i++) {
+        
+    }
+
     (void) roots;
     (void) parser_root_count;
-    return NULL;
+    return assembly;
 }
+
 
 char* ir_compile(char* source, long source_length, const char* const source_identifier, IRCompileOption_t options) {
     (void) options;
@@ -277,6 +396,9 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
         log_msg(LP_ERROR, "parser returned NULL [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
+
+    // SECOND PARSING PASS that finalizes and returns a single root, should have custom ruselet again
+    
 
     // Check whether the AST roots consists of only Statements and Function definitions
     int invalid = 0;
@@ -298,13 +420,6 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
     }
     if (invalid) {
         putchar('\n');
-        return NULL;
-    }
-
-    // First comes semantic analysis, operations beyond functions is not allowed for instance. 
-    // TODO - delete, honestly, just do it while codegen for the untracked cases
-    if (!ir_semantic_analysis(parse, parser_root_count)) {
-        log_msg(LP_ERROR, "\"%s\" - Semantic analysis returned invalid semantics [%s:%d]", source_identifier, __FILE__, __LINE__);
         return NULL;
     }
     
@@ -340,6 +455,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         if (variable_list[i].size > 0x0400) {
@@ -347,6 +463,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         int modifier_value = (variable_list[i].modifier & (STACK | STATIC | REGISTER | TEMP));
@@ -355,6 +472,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         if (!modifier_value) {
@@ -362,6 +480,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         if ((variable_list[i].modifier & (REGISTER | TEMP)) && variable_list[i].size != 2) {
@@ -369,6 +488,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         if ((variable_list[i].modifier & AT) && !(variable_list[i].modifier & STATIC)) {
@@ -376,6 +496,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         if ((variable_list[i].modifier & AT) && (variable_list[i].modifier & PADALIGN)) {
@@ -383,6 +504,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
         if ((variable_list[i].modifier & STACK) && variable_list[i].scope_index == -1) {
@@ -390,6 +512,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
             for (int k = 0; k < parser_root_count; k++) {
                 show_error_in_syntax(variable_list[i].token, parse[k]);
             }
+            putchar('\n');
             error = 1;
         }
     }
@@ -442,15 +565,9 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
         }
     }
 
-
     if (error) return NULL;
 
-
     // So all offsets are stored, VLAs are tracked, type modifiers set, statics delegated and indexed, etc. required files, 
-    
-    char* assembly = malloc(128);
-    strcpy(assembly, "\nhlt\n");
-    return assembly;
     
     // codegen
     char* binary = ir_codegen(parse, parser_root_count);
@@ -459,7 +576,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
         return NULL;
     }
     
-    return NULL;
+    return binary;
 }
 
 char* ir_compile_from_filename(const char* const filename, IRCompileOption_t options) {

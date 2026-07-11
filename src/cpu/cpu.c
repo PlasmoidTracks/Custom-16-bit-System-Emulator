@@ -221,7 +221,7 @@ void cpu_clock(CPU_t* cpu) {
     #endif
     if (cpu->device.device_state == DS_INTERRUPT) {
         #ifdef _CPU_DEBUG_
-        log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): PC %.4x - interrupt on CS %d", cpu->clock, cpu->state, cpu->device.device_state, cpu->regs.pc, cpu->state);
+        log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): PC %.4x - interrupt on CS %d, irqid %d", cpu->clock, cpu->state, cpu->device.device_state, cpu->regs.pc, cpu->state, cpu->device.address);
         #endif
         
         if (!cpu->regs.sr.MI && !cpu->regs.sr.MNI) {
@@ -2566,7 +2566,7 @@ void cpu_clock(CPU_t* cpu) {
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW:
                 #ifdef _CPU_DEEP_DEBUG_
-                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low", cpu->clock, cpu->state, cpu->device.device_state);
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2);
                 #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
@@ -2583,7 +2583,7 @@ void cpu_clock(CPU_t* cpu) {
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH:
                 #ifdef _CPU_DEEP_DEBUG_
-                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high", cpu->clock, cpu->state, cpu->device.device_state);
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2);
                 #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;

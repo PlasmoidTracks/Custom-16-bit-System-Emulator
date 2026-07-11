@@ -7,12 +7,14 @@
 #include "modules/device.h"
 #include "modules/terminal.h"
 
+const uint16_t MMIO_INPUT_REGISTER = SEGMENT_MMIO + 2;
+
 Terminal_t* terminal_create(void) {
     Terminal_t* terminal = malloc(sizeof(Terminal_t));
     terminal->device = device_create(DT_TERMINAL);
     device_add_listening_region(
         &terminal->device, 
-        listening_region_create(SEGMENT_MMIO + 2, SEGMENT_MMIO + 2, 0, 1)
+        listening_region_create(MMIO_INPUT_REGISTER, MMIO_INPUT_REGISTER, LR_WRITE)
     );
     terminal->device.device_state = DS_IDLE;
 

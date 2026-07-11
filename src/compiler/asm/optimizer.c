@@ -662,26 +662,6 @@ char* optimizer_compile(char* content) {
             if (changes_applied) break;
 
 
-            // mov rN, ?
-            // call ?
-            // ->
-            // (remove)
-            // call/ret ?
-            if (i < instruction_count - 2) {
-                if (instruction[i].instruction == MOV && is_register_admr(instruction[i].admr) && instruction[i].admr != ADMR_SP) {
-                    if (instruction[i + 1].instruction == CALL || instruction[i + 1].instruction == RET) {
-                        if (!(is_same_adm(instruction[i].admr, instruction[i + 1].admx) || is_same_indirect_adm(instruction[i].admr, instruction[i + 1].admx))) {
-                            remove_instruction(instruction, &instruction_count, i);
-                            changes_applied = 1;
-                            #ifdef OPT_DEBUG
-                                log_msg(LP_DEBUG, "Optimizer: applied {mov rN, ?; call/ret} => {-; call/ret} [%s:%d]", __FILE__, __LINE__);
-                            #endif // OPT_DEBUG
-                        }
-                    }
-                }
-            }
-
-
             // mov rN, $xyz
             // push [rN]
             // ->

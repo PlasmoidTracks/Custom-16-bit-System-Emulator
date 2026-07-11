@@ -751,6 +751,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         if (instruction_encoding[instruction[i].instruction].argument_count == 0) {
                             address -= 1;
                         }
+                        address += instruction[i].instruction / 0x80;   // account for instruction extension
                     }
                     jump_label[jump_label_index].value = address;
                     //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
@@ -1333,6 +1334,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         continue;
                     }
                     address += instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0);
+                    address += instruction[i].instruction / 0x80;   // account for instruction extension
                     // above was adjusted for the case of 1-byte encoded instructions
                     //log_msg(LP_DEBUG, "address adjusted by instruction (%s) increase of (%d) width: %.4x", instruction[i].expression[0].tokens[0].raw, instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0), address);
                     byte_index = address;

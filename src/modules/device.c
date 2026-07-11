@@ -18,12 +18,11 @@ Device_t device_create(DEVICE_TYPE_t type) {
     };
 }
 
-ListeningRegion_t listening_region_create(uint16_t address_listener_low, uint16_t address_listener_high, int readable, int writable) {
+ListeningRegion_t listening_region_create(uint16_t address_listener_low, uint16_t address_listener_high, ListeningRegionAccess_t access_type) {
     return (ListeningRegion_t) {
         .address_listener_high = address_listener_high, 
         .address_listener_low = address_listener_low, 
-        .readable = readable, 
-        .writable = writable, 
+        .access_type = access_type, 
     };
 }
 

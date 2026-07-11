@@ -46,24 +46,24 @@ Device_t* bus_find_readable_device_by_mmio_address(BUS_t* bus, uint16_t address)
     //log_msg(LP_DEBUG, "read, address %.4x", address);
     for (int i = 0; i < bus->device_count; i++) {
         for (int l = 0; l < bus->device[i]->listening_region_count; l++) {
-            if (!bus->device[i]->listening_region[l].readable) {
-                //log_msg(LP_DEBUG, "read, device %d was not readable", bus->device[i]->device_type);
+            if (!(bus->device[i]->listening_region[l].access_type & LR_READ)) {
+                //log_msg(LP_DEBUG, "read, device %d (type %d, listening region %d) was not readable", i, bus->device[i]->device_type, l);
                 continue;
             }
-            //log_msg(LP_DEBUG, "read, device %d check region %.4x - %.4x", bus->device[i]->device_type, bus->device[i]->listening_region[l].address_listener_low, bus->device[i]->listening_region[l].address_listener_high);
+            //log_msg(LP_DEBUG, "read, device %d (type %d, listening region %d) check region %.4x - %.4x", i, bus->device[i]->device_type, l, bus->device[i]->listening_region[l].address_listener_low, bus->device[i]->listening_region[l].address_listener_high);
             if (
                 address >= bus->device[i]->listening_region[l].address_listener_low && 
                 address <= bus->device[i]->listening_region[l].address_listener_high
             ) {
                 if (device) {
-                    log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d) [%s:%d]", device->device_type, __FILE__, __LINE__);
+                    //log_msg(LP_ERROR, "BUS: Device memory read listeners are not unique (%d) [%s:%d]", device->device_type, __FILE__, __LINE__);
                 }
                 device = bus->device[i];
             }
         }
     }
     if (device) {
-        //log_msg(LP_DEBUG, "BUS: Found readable mmio device %d", device->device_type);
+        //log_msg(LP_DEBUG, "BUS: Found readable mmio device (type %d)", device->device_type);
     }
     return device;
 }
@@ -73,7 +73,7 @@ Device_t* bus_find_writable_device_by_mmio_address(BUS_t* bus, uint16_t address)
     //log_msg(LP_DEBUG, "write, address %.4x", address);
     for (int i = 0; i < bus->device_count; i++) {
         for (int l = 0; l < bus->device[i]->listening_region_count; l++) {
-            if (!bus->device[i]->listening_region[l].writable) {
+            if (!(bus->device[i]->listening_region[l].access_type & LR_WRITE)) {
                 //log_msg(LP_DEBUG, "write, device %d was not readable", bus->device[i]->device_type);
                 continue;
             }
@@ -83,7 +83,7 @@ Device_t* bus_find_writable_device_by_mmio_address(BUS_t* bus, uint16_t address)
                 address <= bus->device[i]->listening_region[l].address_listener_high
             ) {
                 if (device) {
-                    log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d) [%s:%d]", device->device_type, __FILE__, __LINE__);
+                    //log_msg(LP_ERROR, "BUS: Device memory write listeners are not unique (%d) [%s:%d]", device->device_type, __FILE__, __LINE__);
                 }
                 device = bus->device[i];
             }
@@ -133,7 +133,7 @@ void bus_clock(BUS_t* bus) {
                         // what do now?
                         break;
                     }
-                    //log_msg(LP_DEBUG, "BUS %d: Found RAM device to fetch data from. Making request", bus->clock);
+                    //log_msg(LP_DEBUG, "BUS %d: Found MMIO device to fetch data from. Making request", bus->clock);
                     // lets just straight up overwrite it and see what happens
                     if (device_mmio->device_state == DS_IDLE) {
                         device_mmio->address = device->address;
@@ -141,7 +141,7 @@ void bus_clock(BUS_t* bus) {
                         device_mmio->device_state = DS_FETCH;
                         device_mmio->processed = 0;
                     } else {
-                        //log_msg(LP_DEBUG, "BUS %d: RAM device is Idle, need to wait", bus->clock);
+                        //log_msg(LP_DEBUG, "BUS %d: MMIO device is Idle, need to wait", bus->clock);
                     }
                     break;
                 }
@@ -205,7 +205,7 @@ void bus_clock(BUS_t* bus) {
                     }
                     Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
                     if (!device_target) {
-                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
                         break;
                     }
                     //log_msg(LP_DEBUG, "BUS %d: Found Target device to send data to", bus->clock);
@@ -223,7 +223,7 @@ void bus_clock(BUS_t* bus) {
                     }
                     Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
                     if (!device_target) {
-                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
                         break;
                     }
                     //log_msg(LP_DEBUG, "BUS %d: Found Target device to validate", bus->clock);
@@ -296,7 +296,7 @@ void bus_clock(BUS_t* bus) {
                     }
                     Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
                     if (!device_target) {
-                        //log_msg(LP_ERROR, "BUS %d: Terminal target device is not attached to the BUS", bus->clock [%s:%d]", __FILE__, __LINE__);
+                        //log_msg(LP_ERROR, "BUS %d: Terminal target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
                         break;
                     }
                     //log_msg(LP_DEBUG, "BUS %d: Found Terminal target device to validate", bus->clock);
@@ -360,6 +360,59 @@ void bus_clock(BUS_t* bus) {
                 
                 default:
                     //log_msg(LP_DEBUG, "BUS %d: The MEMORY_BANK is in an unknown state %d", bus->clock, device_state);
+                    break;
+            }
+            break;
+        
+
+
+
+        case DT_FILESYSTEM:
+            //log_msg(LP_DEBUG, "BUS %d: Attending to a FILESYSTEM", bus->clock);
+            
+            // figure out what the CPU wants
+            switch (device_state) {
+                case DS_IDLE:
+                    //log_msg(LP_DEBUG, "BUS %d: The FILESYSTEM is idle", bus->clock);
+                    break;
+                
+                case DS_FETCH: {
+                    //log_msg(LP_DEBUG, "BUS %d: The FILESYSTEM is retrieving data", bus->clock);
+                    if (device->processed == 0) {
+                        //log_msg(LP_DEBUG, "BUS %d: The FILESYSTEM is not done with the request yet", bus->clock);
+                        break;
+                    }
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
+                        break;
+                    }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Target device to send data to", bus->clock);
+                    device_target->data = device->data;
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
+                    break;
+                }
+                
+                case DS_STORE: {
+                    //log_msg(LP_DEBUG, "BUS %d: The FILESYSTEM is storing data", bus->clock);
+                    if (device->processed == 0) {
+                        //log_msg(LP_DEBUG, "BUS %d: The FILESYSTEM is not done with the request yet", bus->clock);
+                        break;
+                    }
+                    Device_t* device_target = bus_find_device_by_id(bus, device->device_target_id);
+                    if (!device_target) {
+                        //log_msg(LP_ERROR, "BUS %d: Target device is not attached to the BUS [%s:%d]", bus->clock, __FILE__, __LINE__);
+                        break;
+                    }
+                    //log_msg(LP_DEBUG, "BUS %d: Found Target device to validate", bus->clock);
+                    device_target->processed = 1;
+                    device->device_state = DS_IDLE;
+                    break;
+                }
+                
+                default:
+                    //log_msg(LP_DEBUG, "BUS %d: The FILESYSTEM is in an unknown state %d", bus->clock, device_state);
                     break;
             }
             break;

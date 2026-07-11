@@ -1,0 +1,116 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+
+#include "Log.h"
+#include "compiler/asm/assembler.h"
+#include "globals/memory_layout.h"
+
+#include "modules/device.h"
+#include "modules/filesystem.h"
+
+const uint16_t MMIO_MODE_REGISTER_ADDRESS = SEGMENT_MMIO + 6;
+const uint16_t MMIO_INPUT_REGISTER_ADDRESS = SEGMENT_MMIO + 8;
+
+FileSystem_t* filesystem_create(void) {
+    FileSystem_t* filesystem = malloc(sizeof(FileSystem_t));
+    filesystem->device = device_create(DT_FILESYSTEM);
+    device_add_listening_region(
+        &filesystem->device, 
+        listening_region_create(MMIO_MODE_REGISTER_ADDRESS, MMIO_MODE_REGISTER_ADDRESS, LR_READ | LR_WRITE)
+    );
+    device_add_listening_region(
+        &filesystem->device, 
+        listening_region_create(MMIO_INPUT_REGISTER_ADDRESS, MMIO_INPUT_REGISTER_ADDRESS, LR_WRITE)
+    );
+
+    for (int i = 0; i < 64; i++) {
+        filesystem->path[i] = '\0';
+    }
+    filesystem->path_cursor_index = 0;
+    filesystem->file_stream = NULL;
+    filesystem->mode = 0;
+
+    filesystem->device.device_state = DS_IDLE;
+    filesystem->clock = 0ULL;
+
+    return filesystem;
+}
+
+void filesystem_delete(FileSystem_t** filesystem) {
+    if (!filesystem) {return;}
+    free(*filesystem);
+    *filesystem = NULL;
+}
+
+void filesystem_clock(FileSystem_t* filesystem) {
+    //log_msg(LP_DEBUG, "%lld, address: %.4x, state: %d, processed: %d", filesystem->clock, filesystem->device.address, filesystem->device.device_state, filesystem->device.processed);
+    if (filesystem->device.processed == 1) {
+        //log_msg(LP_INFO, "Filesystem %d: Waiting for confirmation, nothing to do", filesystem->clock);
+        filesystem->clock ++;
+        return;
+    }
+
+    // Only allow a change in mode, when the mode has been reset?
+    if (filesystem->device.address == MMIO_MODE_REGISTER_ADDRESS) {
+        if (filesystem->device.device_state == DS_STORE) {
+            if (filesystem->mode != 0) {
+                //log_msg(LP_DEBUG, "Filesystem %lld: Couldnt update mode, as mode is not 0 (%d)", filesystem->clock, filesystem->mode);
+            } else {
+                filesystem->mode = filesystem->device.data;
+                //log_msg(LP_DEBUG, "Filesystem %lld: Update mode to %d", filesystem->clock, filesystem->mode);
+            }
+        } else if (filesystem->device.device_state == DS_FETCH) {
+            //log_msg(LP_DEBUG, "Filesystem %lld: fetched mode %d", filesystem->clock, filesystem->mode);
+            filesystem->device.data = filesystem->mode;
+        } else {
+            //log_msg(LP_DEBUG, "Filesystem %lld: unknown device state %d", filesystem->clock, filesystem->device.device_state);
+        }
+
+        switch (filesystem->mode) {
+            case M_PATH_RESET:
+                //log_msg(LP_DEBUG, "Filesystem %lld: Reset path", filesystem->clock);
+                for (int i = 0; i < 64; i++) {
+                    filesystem->path[i] = '\0';
+                }
+                filesystem->path_cursor_index = 0;
+                filesystem->mode = 0;
+                break;
+            
+            default:
+                break;
+        }
+
+        filesystem->device.processed = 1;
+    } else if (filesystem->device.address == MMIO_INPUT_REGISTER_ADDRESS) {
+        switch (filesystem->mode) {
+            case M_BASE:
+                //log_msg(LP_DEBUG, "Filesystem %lld: Written to input without a mode set!", filesystem->clock);
+                break;
+
+            case M_SET_PATH:
+                if (filesystem->path_cursor_index < 64) {
+                    filesystem->path[filesystem->path_cursor_index++] = filesystem->device.data;
+                }
+                //log_msg(LP_DEBUG, "Filesystem %lld: Set path - \"%s\"", filesystem->clock, filesystem->path);
+                break;
+            
+            case M_PATH_RESET:
+                //log_msg(LP_DEBUG, "Filesystem %lld: Reset path", filesystem->clock);
+                for (int i = 0; i < 64; i++) {
+                    filesystem->path[i] = '\0';
+                }
+                filesystem->path_cursor_index = 0;
+                break;
+            
+            default:
+                //log_msg(LP_DEBUG, "Filesystem %lld: Unknown mode (%d)", filesystem->clock, filesystem->mode);
+                break;
+        }
+        filesystem->mode = 0;
+        filesystem->device.processed = 1;
+        //log_msg(LP_DEBUG, "Filesystem %lld: Update mode after successful operation to %d", filesystem->clock, filesystem->mode);
+    }
+
+    filesystem->clock ++;
+}

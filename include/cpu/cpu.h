@@ -68,6 +68,7 @@ typedef enum CpuState_t {
     CS_INTERRUPT_JUMP, 
 
     CS_HALT,                    // halts all execution indefinitely
+    CS_SLEEP, 
 
     CS_EXCEPTION, 
     CS_COUNT, 

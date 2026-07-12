@@ -20,7 +20,7 @@
 
 #define _CPU_DEEP_DEBUG_
 #undef _CPU_DEEP_DEBUG_
-
+                
 
 
 #ifdef _CPU_DEBUG_
@@ -61,6 +61,7 @@ const char* cpu_state_name[CS_COUNT] = {
     "CS_INTERRUPT_JUMP", 
 
     "CS_HALT",                    // halts all execution indefinitely
+    "CS_SLEEP", 
 
     "CS_EXCEPTION", 
 };
@@ -2257,6 +2258,11 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
+                    case HWSLEEP:
+                        cpu->state = CS_SLEEP;
+                        goto CS_SLEEP;
+                        break;
+                    
                     // Extended instructions
 
                     case EXTNOP:
@@ -2604,6 +2610,15 @@ void cpu_clock(CPU_t* cpu) {
                     halted = 1;
                 }
                 //exit(1);
+                break;
+            }
+
+        case CS_SLEEP: 
+            {
+                CS_SLEEP:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_DEBUG, "CPU (C:%d, I:%d CS:%d DS:%d): SLEEP [%s:%d]", cpu->clock, cpu->instruction, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
+                #endif
                 break;
             }
 

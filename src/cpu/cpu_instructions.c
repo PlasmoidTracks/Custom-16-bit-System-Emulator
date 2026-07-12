@@ -171,6 +171,7 @@ const CPU_INSTRUCTION_ENCODING_t instruction_encoding[INSTRUCTION_COUNT] = {
     // Self Identification and HW-Info Operations
     [HWCLOCK] = {HWCLOCK, "hwclock", 0, 0, 0, 0},
     [HWINSTR] = {HWINSTR, "hwinstr", 0, 0, 0, 0},
+    [HWSLEEP] = {HWSLEEP, "hwsleep", 0, 0, 0, 0},
 
     // Other
     [INT] = {INT, "int", 1, 0, 0, 0},

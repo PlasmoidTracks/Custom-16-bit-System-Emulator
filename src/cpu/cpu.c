@@ -244,8 +244,10 @@ void cpu_clock(CPU_t* cpu) {
                 #endif
                 cpu->regs.sr.MNI = 0;
                 uint16_t address = cpu->regs.pc;
-                cpu->intermediate.previous_pc = cpu->regs.pc;
-                cpu->intermediate.previous_sp = cpu->regs.sp;
+                if (cpu->intermediate.extension_index == 0) { // This check prevents prev values from updating when iterating over extension prefixes, keeping the prev at the base of the instruction. 
+                    cpu->intermediate.previous_pc = cpu->regs.pc;
+                    cpu->intermediate.previous_sp = cpu->regs.sp;
+                }
                 uint8_t data;
                 int success = cpu_read_memory(cpu, address, &data);
                 if (success) {

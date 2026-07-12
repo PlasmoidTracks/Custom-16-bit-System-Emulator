@@ -65,29 +65,62 @@ void filesystem_clock(FileSystem_t* filesystem) {
     if (filesystem->device.address == MMIO_MODE_REGISTER_ADDRESS) {
         if (filesystem->device.device_state == DS_STORE) {
             if (filesystem->mode != 0) {
-                //log_msg(LP_DEBUG, "Filesystem %lld: Couldnt update mode, as mode is not 0 (%d)", filesystem->clock, filesystem->mode);
+                log_msg(LP_DEBUG, "Filesystem %lld: Couldnt update mode, as mode is not 0 (%d)", filesystem->clock, filesystem->mode);
             } else {
                 filesystem->mode = filesystem->device.data;
-                //log_msg(LP_DEBUG, "Filesystem %lld: Update mode to %d", filesystem->clock, filesystem->mode);
+                log_msg(LP_DEBUG, "Filesystem %lld: Update mode to %d", filesystem->clock, filesystem->mode);
             }
         } else if (filesystem->device.device_state == DS_FETCH) {
-            //log_msg(LP_DEBUG, "Filesystem %lld: fetched mode %d", filesystem->clock, filesystem->mode);
+            log_msg(LP_DEBUG, "Filesystem %lld: fetched mode %d", filesystem->clock, filesystem->mode);
             filesystem->device.data = filesystem->mode;
         } else {
-            //log_msg(LP_DEBUG, "Filesystem %lld: unknown device state %d", filesystem->clock, filesystem->device.device_state);
+            log_msg(LP_DEBUG, "Filesystem %lld: unknown device state %d", filesystem->clock, filesystem->device.device_state);
         }
 
         switch (filesystem->mode) {
             case M_PATH_RESET:
-                //log_msg(LP_DEBUG, "Filesystem %lld: Reset path", filesystem->clock);
+                log_msg(LP_DEBUG, "Filesystem %lld: Reset path", filesystem->clock);
                 for (int i = 0; i < 64; i++) {
                     filesystem->path[i] = '\0';
                 }
                 filesystem->path_cursor_index = 0;
                 filesystem->mode = 0;
                 break;
+
+            case M_PROBE_FILE: {
+                // TODO, probe file and set output value accordingly
+                FILE* temp = fopen(filesystem->path, "r");
+                filesystem->output = temp != NULL;
+                if (temp) {
+                    int err = fclose(temp);
+                    if (err) {
+                        log_msg(LP_ERROR, "Filesystem: file \"%s\" could not be closed [%s:%d]", filesystem->path, __FILE__, __LINE__);
+                        exit(1);
+                    }
+                }
+                filesystem->mode = 0;
+                log_msg(LP_DEBUG, "Filesystem %lld: probe path: %d", filesystem->clock, filesystem->output);
+                break;
+            }
+
+            case M_CREATE_FILE: {
+                // TODO, probe file and set output value accordingly
+                FILE* temp = fopen(filesystem->path, "w");
+                if (temp) {
+                    int err = fclose(temp);
+                    if (err) {
+                        log_msg(LP_ERROR, "Filesystem: file \"%s\" could not be closed [%s:%d]", filesystem->path, __FILE__, __LINE__);
+                        exit(1);
+                    }
+                }
+                filesystem->output = 1;
+                filesystem->mode = 0;
+                log_msg(LP_DEBUG, "Filesystem %lld: create file: %d", filesystem->clock, filesystem->output);
+                break;
+            }
             
             default:
+                log_msg(LP_DEBUG, "Filesystem %lld: unknown mode (%d)", filesystem->clock, filesystem->mode);
                 break;
         }
 
@@ -97,18 +130,18 @@ void filesystem_clock(FileSystem_t* filesystem) {
     } else if (filesystem->device.address == MMIO_INPUT_REGISTER_ADDRESS) {
         switch (filesystem->mode) {
             case M_BASE:
-                //log_msg(LP_DEBUG, "Filesystem %lld: Written to input without a mode set!", filesystem->clock);
+                log_msg(LP_DEBUG, "Filesystem %lld: Written to input without a mode set!", filesystem->clock);
                 break;
 
             case M_SET_PATH:
                 if (filesystem->path_cursor_index < 64) {
                     filesystem->path[filesystem->path_cursor_index++] = filesystem->device.data;
                 }
-                //log_msg(LP_DEBUG, "Filesystem %lld: Set path - \"%s\"", filesystem->clock, filesystem->path);
+                log_msg(LP_DEBUG, "Filesystem %lld: Set path - \"%s\"", filesystem->clock, filesystem->path);
                 break;
             
             case M_PATH_RESET:
-                //log_msg(LP_DEBUG, "Filesystem %lld: Reset path", filesystem->clock);
+                log_msg(LP_DEBUG, "Filesystem %lld: Reset path", filesystem->clock);
                 for (int i = 0; i < 64; i++) {
                     filesystem->path[i] = '\0';
                 }
@@ -116,16 +149,16 @@ void filesystem_clock(FileSystem_t* filesystem) {
                 break;
             
             default:
-                //log_msg(LP_DEBUG, "Filesystem %lld: Unknown mode (%d)", filesystem->clock, filesystem->mode);
+                log_msg(LP_DEBUG, "Filesystem %lld: Unknown mode (%d)", filesystem->clock, filesystem->mode);
                 break;
         }
         filesystem->mode = 0;
         filesystem->device.processed = 1;
-        //log_msg(LP_DEBUG, "Filesystem %lld: Update mode after successful operation to %d", filesystem->clock, filesystem->mode);
+        log_msg(LP_DEBUG, "Filesystem %lld: Update mode after successful operation to %d", filesystem->clock, filesystem->mode);
     } else if (filesystem->device.address == MMIO_OUTPUT_REGISTER_ADDRESS) {
+        filesystem->device.data = filesystem->output;
         filesystem->device.processed = 1;
-    } else {
-        //log_msg(LP_DEBUG, "Filesystem %lld: ??? %.4x", filesystem->clock, filesystem->device.address);
+        log_msg(LP_DEBUG, "Filesystem %lld: fetched output register %d", filesystem->clock, filesystem->mode);
     }
 
     filesystem->clock ++;

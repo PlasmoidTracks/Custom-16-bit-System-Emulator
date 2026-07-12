@@ -11,11 +11,13 @@ The Filesystem is an abstract module, that uses a state machine to make file acc
 */
 
 typedef enum {
-    M_BASE = 0, 
-    M_SET_PATH = 1,     // in this mode, any input is treated as an append to the destination path
-    M_PATH_RESET = 2,   // this triggers a full reset of the path
-    M_PROBE_FILE = 3,   // Checks whether the file already exists (return 0) or not (return 1) [YES, IT'S INVERTED! THIS IS BECAUSE IT'S BETTER TO WAIT FOR A CHANGE IN VALUE THAN TO EXPECT NO CHANGE, AS THE OUTPUT IS 0 BY DEFAULT, Y'KNOW?]
-    M_MOUNT_FILE = 4,   // take the current set path and 
+    M_BASE, 
+    M_SET_PATH,     // in this mode, any input is treated as an append to the destination path
+    M_PATH_RESET,   // this triggers a full reset of the path
+    M_PROBE_FILE,   // Checks whether the file already exists (return 0) or not (return 1) [YES, IT'S INVERTED! THIS IS BECAUSE IT'S BETTER TO WAIT FOR A CHANGE IN VALUE THAN TO EXPECT NO CHANGE, AS THE OUTPUT IS 0 BY DEFAULT, Y'KNOW?]
+    M_CREATE_FILE,  // if the path doesnt exist, create a file with the path name, otherwise leave file alone
+    M_MOUNT_FILE,   // take the current set path and (return 1 on success, else 0)
+    M_CLOSE_FILE,   
 } Mode_t;
 
 typedef enum {
@@ -31,6 +33,8 @@ typedef struct FileSystem_t {
     uint8_t mode;               // mode of operation, changes behavior on read and write
     uint8_t mode_modifier;      // modifier for the mode of operation
     FILE* file_stream;
+
+    uint8_t output;
 
     uint64_t clock;
     Device_t device;

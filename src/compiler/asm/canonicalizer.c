@@ -73,27 +73,28 @@ char* canonicalizer_compile(char* content) {
             } else if (instr.expression[0].type == EXPR_INCBIN) {
                 output = append_to_output(output, &output_len, ".incbin ");
                 output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
+            } else if (instr.expression[0].type == EXPR_TEXT_DEFINITION) {
+                output = append_to_output(output, &output_len, ".text ");
+                output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
             } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
                 //log_msg(LP_INFO, "Label found");
                 output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
                 output = append_to_output(output, &output_len, " ");
             } else if (instr.expression[0].tokens[0].type == TT_DW) {
                 //log_msg(LP_INFO, "Label found");
-                output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-                output = append_to_output(output, &output_len, " ");
+                output = append_to_output(output, &output_len, ".dw ");
                 uint16_t imm = parse_immediate(instr.expression[0].tokens[1].raw);
                 char tmp[16];
                 sprintf(tmp, "$%.4X", imm);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].tokens[0].type == TT_DB) {
                 //log_msg(LP_INFO, "Label found");
-                output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-                output = append_to_output(output, &output_len, " ");
+                output = append_to_output(output, &output_len, ".db ");
                 uint16_t imm = parse_immediate(instr.expression[0].tokens[1].raw);
                 char tmp[16];
                 sprintf(tmp, "$%.2X", imm);
                 output = append_to_output(output, &output_len, tmp);
-            } else {
+            } else if (instr.expression[0].type == EXPR_INSTRUCTION) {
                 // here if instruction
                 if (  (instr.admx == ADMX_IND_R0_OFFSET16 
                     || instr.admx == ADMX_IND_R1_OFFSET16 
@@ -328,6 +329,8 @@ char* canonicalizer_compile(char* content) {
                         }
                     }
                 }
+            } else {
+                log_msg(LP_ERROR, "Canonicalizer: Unknown expression \"%s\" [%s:%d]", expression_type_string[instr.expression[0].type], __FILE__, __LINE__);
             }
         }
         output = append_to_output(output, &output_len, "\n");

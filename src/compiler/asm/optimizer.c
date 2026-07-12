@@ -1248,19 +1248,20 @@ char* optimizer_compile(char* content) {
         } else if (instr.expression[0].type == EXPR_INCBIN) {
             output = append_to_output(output, &output_len, ".incbin ");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
+        } else if (instr.expression[0].type == EXPR_TEXT_DEFINITION) {
+            output = append_to_output(output, &output_len, ".text ");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
             //log_msg(LP_INFO, "Label found");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
             output = append_to_output(output, &output_len, " ");
         } else if (instr.expression[0].tokens[0].type == TT_DW) {
             //log_msg(LP_INFO, "Label found");
-            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-            output = append_to_output(output, &output_len, " ");
+            output = append_to_output(output, &output_len, ".dw ");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else if (instr.expression[0].tokens[0].type == TT_DB) {
             //log_msg(LP_INFO, "Label found");
-            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-            output = append_to_output(output, &output_len, " ");
+            output = append_to_output(output, &output_len, ".db ");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else {
             for (int j = 0; j < ec; j++) {

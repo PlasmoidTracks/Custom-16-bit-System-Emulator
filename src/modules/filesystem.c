@@ -3,14 +3,16 @@
 #include <stdint.h>
 
 #include "Log.h"
-#include "compiler/asm/assembler.h"
+
 #include "globals/memory_layout.h"
 
 #include "modules/device.h"
 #include "modules/filesystem.h"
 
-const uint16_t MMIO_MODE_REGISTER_ADDRESS = SEGMENT_MMIO + 6;
-const uint16_t MMIO_INPUT_REGISTER_ADDRESS = SEGMENT_MMIO + 8;
+const uint16_t MMIO_MODE_REGISTER_ADDRESS = SEGMENT_MMIO + 6;       // sets the general operation mode (r/w)
+const uint16_t MMIO_MODIFIER_REGISTER_ADDRESS = SEGMENT_MMIO + 7;   // sets modifiers for the operation mode (r/w)
+const uint16_t MMIO_INPUT_REGISTER_ADDRESS = SEGMENT_MMIO + 8;      // accepts user input, use depends on operation mode (w)
+const uint16_t MMIO_OUTPUT_REGISTER_ADDRESS = SEGMENT_MMIO + 9;     // returns misc. information, depends on operaion mode (r)
 
 FileSystem_t* filesystem_create(void) {
     FileSystem_t* filesystem = malloc(sizeof(FileSystem_t));
@@ -21,7 +23,15 @@ FileSystem_t* filesystem_create(void) {
     );
     device_add_listening_region(
         &filesystem->device, 
+        listening_region_create(MMIO_MODIFIER_REGISTER_ADDRESS, MMIO_MODIFIER_REGISTER_ADDRESS, LR_READ | LR_WRITE)
+    );
+    device_add_listening_region(
+        &filesystem->device, 
         listening_region_create(MMIO_INPUT_REGISTER_ADDRESS, MMIO_INPUT_REGISTER_ADDRESS, LR_WRITE)
+    );
+    device_add_listening_region(
+        &filesystem->device, 
+        listening_region_create(MMIO_OUTPUT_REGISTER_ADDRESS, MMIO_OUTPUT_REGISTER_ADDRESS, LR_READ)
     );
 
     for (int i = 0; i < 64; i++) {
@@ -82,6 +92,8 @@ void filesystem_clock(FileSystem_t* filesystem) {
         }
 
         filesystem->device.processed = 1;
+    } else if (filesystem->device.address == MMIO_MODIFIER_REGISTER_ADDRESS) {
+        filesystem->device.processed = 1;
     } else if (filesystem->device.address == MMIO_INPUT_REGISTER_ADDRESS) {
         switch (filesystem->mode) {
             case M_BASE:
@@ -110,6 +122,10 @@ void filesystem_clock(FileSystem_t* filesystem) {
         filesystem->mode = 0;
         filesystem->device.processed = 1;
         //log_msg(LP_DEBUG, "Filesystem %lld: Update mode after successful operation to %d", filesystem->clock, filesystem->mode);
+    } else if (filesystem->device.address == MMIO_OUTPUT_REGISTER_ADDRESS) {
+        filesystem->device.processed = 1;
+    } else {
+        //log_msg(LP_DEBUG, "Filesystem %lld: ??? %.4x", filesystem->clock, filesystem->device.address);
     }
 
     filesystem->clock ++;

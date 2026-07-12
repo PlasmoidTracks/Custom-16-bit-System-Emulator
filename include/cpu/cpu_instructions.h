@@ -177,6 +177,7 @@ typedef enum CPU_INSTRUCTION_MNEMONIC {
     // Self Identification and HW-Info Operations
     HWCLOCK,    // returns the currrent [h]ard[w]are [clock] count in registers r0-r4 in little endian
     HWINSTR,    // returns the currrent [h]ard[w]are [instr]uction count in registers r0-r4 in little endian
+    HWSLEEP,    // puts the CPU into [h]ard[w]are [sleep], where CPU does nothing to "save energy" (reacts to interrupts)
 
     // Saturated Arithmetic Signed Integer Operations
     SSA,        // ssa dest, src    :: dest = clamp((dest + src), 0x8000, 0x7fff)

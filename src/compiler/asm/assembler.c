@@ -1467,7 +1467,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 char* string_value = expression[expression_index].tokens[1].raw;
                 // TODO: free the expression raw?
                 string_value[strlen(string_value) - 1] = '\0';  // this makes the output implicitly null terminated
-                for (size_t i = 0; i < strlen(string_value); i++) {
+                for (size_t i = 1; i < strlen(string_value); i++) {
                     instruction[instruction_index].expression_count = 1;
                     instruction[instruction_index].is_address = 0;
                     instruction[instruction_index].is_raw_data = 1;

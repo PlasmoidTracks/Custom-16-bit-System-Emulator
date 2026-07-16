@@ -4,7 +4,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "globals/memory_layout.h"
 #include "include/utils/Log.h"
 #include "modules/ram.h"
 #include "utils/IO.h"
@@ -12,9 +11,6 @@
 #include "utils/Log.h"
 
 #include "cpu/cpu_utils.h"
-
-#include "compiler/ccan/ccan_lexer.h"
-#include "compiler/ccan/ccan_parser.h"
 
 #include "compiler/ir/ir_compiler.h"
 
@@ -78,28 +74,6 @@ int main(int argc, char* argv[]) {
 
     return 0;
     */
-
-
-    if (co.cft >= CFT_CCAN)
-    {
-        long filesize;
-        long lexer_token_count;
-        long parser_root_count;
-        char* content = read_file(argv[1], &filesize);
-        CCANLexerToken_t* lexer = ccan_lexer_parse(content, filesize, &lexer_token_count);
-
-        log_msg(LP_INFO, "token count: %d", lexer_token_count);
-        for (int i = 0; i < lexer_token_count; i++) {
-            log_msg(LP_INFO, "%d :: %s", i, lexer[i].raw);
-        }
-        
-        CCANParserToken_t** parser = ccan_parser_parse(lexer, lexer_token_count, &parser_root_count);
-        (void) parser;
-
-        log_msg(LP_ERROR, "Main: CCAN compilation is not implemented [%s:%d]", __FILE__, __LINE__);
-
-        return 0;
-    }
 
 
     char* filename = malloc(128);

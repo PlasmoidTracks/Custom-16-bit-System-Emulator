@@ -94,6 +94,10 @@ char* canonicalizer_compile(char* content) {
                 char tmp[16];
                 sprintf(tmp, "$%.2X", imm);
                 output = append_to_output(output, &output_len, tmp);
+            } else if (instr.expression[0].type == EXPR_DEREF_LABEL) {
+                char tmp[32];
+                sprintf(tmp, "*%s", instr.expression[0].tokens[1].raw);
+                output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_INSTRUCTION) {
                 // here if instruction
                 if (  (instr.admx == ADMX_IND_R0_OFFSET16 

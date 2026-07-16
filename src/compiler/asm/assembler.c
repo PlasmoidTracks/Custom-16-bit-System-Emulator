@@ -1316,6 +1316,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 }
 
                 for (int i = instruction_index_since_last_address_change; i < instruction_index; i++) {
+                    if (instruction[i].expression[0].type == EXPR_ADDRESS) {
+                        address = parse_immediate(instruction[i].expression[0].tokens[1].raw);
+                        continue;
+                    }
                     if (instruction[i].expression[0].type == EXPR_SEGMENT_CODE || 
                         instruction[i].expression[0].type == EXPR_SEGMENT_DATA ||
                         instruction[i].expression[0].tokens[0].type == TT_LABEL) {
@@ -1331,6 +1335,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         } else {
                             log_msg(LP_ERROR, "Unknown data define width [%s:%d]", __FILE__, __LINE__);
                         }
+                        continue;
+                    }
+                    if (instruction[i].expression[0].type == EXPR_DEREF_LABEL) {
+                        address += 2;
                         continue;
                     }
                     address += instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0);

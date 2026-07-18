@@ -14,7 +14,7 @@ int map_capacity = 0;
 int map_length = 0;
 
 char** assembly_preprocessor_split_to_tokens(const char text[]) {
-    char** lines = split(text, " \n,", "\n");
+    char** lines = split(text, " \n,[]+", "\n[]+");
     free((void*) text);
     return lines;
 }

@@ -20,6 +20,25 @@ typedef enum {
     M_CLOSE_FILE,   
 } Mode_t;
 
+// set cursor position as value (where negative is like pythons [-1])
+    // is -1 the very end, or one before the very end?
+// set cursor to beginning (same as set 0)
+// set cursor to end (same as set -1?)
+// insert
+// overwrite
+// delete
+// read (+increment pointer)
+
+/*
+// maybe split into more basic and more specific: 
+PATH (reset, set)
+FILE (probe, create, mount, close)
+
+why? Because a single write to two 8-bit registers can set the modes directly!
+
+Maybe we should have a status register
+*/
+
 typedef enum {
     MM_EXPECT_EXISTING = 1 << 0, 
     MM_CREATE_ON_MISSING = 1 << 1, 

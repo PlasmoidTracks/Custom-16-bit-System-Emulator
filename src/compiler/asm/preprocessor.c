@@ -1,11 +1,10 @@
 
 
+#include <string.h>
+
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"
-#include <stdlib.h>
-#include <string.h>
-#include <utils/String.h>
 
 #include "compiler/asm/preprocessor.h"
 

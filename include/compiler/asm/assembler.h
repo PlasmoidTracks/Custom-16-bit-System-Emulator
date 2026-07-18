@@ -14,6 +14,7 @@ typedef enum {
 } AssembleOption_t;
 
 #define MAX_LABELS 256
+#define MAX_TOKEN_LENGTH 64
 
 typedef enum TokenType_t {
     TT_INSTRUCTION, 
@@ -70,7 +71,7 @@ typedef enum {
 
 typedef struct Token_t {
     TokenType_t type;
-    char* raw;
+    char raw[MAX_TOKEN_LENGTH];
 } Token_t;
 
 typedef struct Expression_t {

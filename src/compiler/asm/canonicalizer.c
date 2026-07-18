@@ -46,24 +46,24 @@ char* canonicalizer_compile(char* content) {
         for (int j = 0; j < ec; j++) {
             if (instr.is_address) {
                 if (instr.expression[0].type == EXPR_ADDRESS) {
-                    char tmp[32];
-                    sprintf(tmp, ".address $%.4X", instr.address);
+                    char tmp[MAX_TOKEN_LENGTH];
+                    snprintf(tmp, MAX_TOKEN_LENGTH, ".address $%.4X", instr.address);
                     output = append_to_output(output, &output_len, tmp);
                 } else if (instr.expression[0].type == EXPR_STORE_ADDRESS) {
-                    char tmp[32];
-                    sprintf(tmp, ".store_address");
+                    char tmp[MAX_TOKEN_LENGTH];
+                    snprintf(tmp, MAX_TOKEN_LENGTH, ".store_address");
                     output = append_to_output(output, &output_len, tmp);
                 } else if (instr.expression[0].type == EXPR_RESTORE_ADDRESS) {
-                    char tmp[32];
-                    sprintf(tmp, ".restore_address");
+                    char tmp[MAX_TOKEN_LENGTH];
+                    snprintf(tmp, MAX_TOKEN_LENGTH, ".restore_address");
                     output = append_to_output(output, &output_len, tmp);
                 } else if (instr.expression[0].type == EXPR_PAD) {
-                    char tmp[32];
-                    sprintf(tmp, ".pad %s", instr.expression[0].tokens[1].raw);
+                    char tmp[16 + MAX_TOKEN_LENGTH];
+                    snprintf(tmp, 16 + MAX_TOKEN_LENGTH, ".pad %s", instr.expression[0].tokens[1].raw);
                     output = append_to_output(output, &output_len, tmp);
                 } else if (instr.expression[0].type == EXPR_RESERVE) {
-                    char tmp[32];
-                    sprintf(tmp, ".reserve %s", instr.expression[0].tokens[1].raw);
+                    char tmp[16 + MAX_TOKEN_LENGTH];
+                    snprintf(tmp, 16 + MAX_TOKEN_LENGTH, ".reserve %s", instr.expression[0].tokens[1].raw);
                     output = append_to_output(output, &output_len, tmp);
                 }
             } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {
@@ -85,18 +85,18 @@ char* canonicalizer_compile(char* content) {
                 output = append_to_output(output, &output_len, ".dw ");
                 uint16_t imm = parse_immediate(instr.expression[0].tokens[1].raw);
                 char tmp[16];
-                sprintf(tmp, "$%.4X", imm);
+                snprintf(tmp, 16, "$%.4X", imm);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].tokens[0].type == TT_DB) {
                 //log_msg(LP_INFO, "Label found");
                 output = append_to_output(output, &output_len, ".db ");
                 uint16_t imm = parse_immediate(instr.expression[0].tokens[1].raw);
                 char tmp[16];
-                sprintf(tmp, "$%.2X", imm);
+                snprintf(tmp, 16, "$%.2X", imm);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_DEREF_LABEL) {
-                char tmp[32];
-                sprintf(tmp, "*%s", instr.expression[0].tokens[1].raw);
+                char tmp[8 + MAX_TOKEN_LENGTH];
+                snprintf(tmp, 8 + MAX_TOKEN_LENGTH, "*%s", instr.expression[0].tokens[1].raw);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_INSTRUCTION) {
                 // here if instruction

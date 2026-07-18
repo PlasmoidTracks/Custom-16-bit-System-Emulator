@@ -157,7 +157,7 @@ char** assembler_split_to_words(char* lines[], int* token_count) {
 Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
     Token_t* token = calloc(word_count, sizeof(Token_t));
     for (int i = 0; i < word_count; i++) {
-        token[i].raw = word[i];
+        snprintf(token[i].raw, MAX_TOKEN_LENGTH, "%s", word[i]);
         token[i].type = -1;
         if (word[i][0] == '.') {
             if (strcmp(&word[i][1], "address") == 0) {
@@ -1488,8 +1488,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     instruction[instruction_index].expression[0].tokens[0].type = TT_DB;
 
                     instruction[instruction_index].expression[0].tokens[1].type = TT_IMMEDIATE;
-                    instruction[instruction_index].expression[0].tokens[1].raw = malloc(5);
-                    sprintf(instruction[instruction_index].expression[0].tokens[1].raw, "$%.2X", string_value[i]);
+                    snprintf(instruction[instruction_index].expression[0].tokens[1].raw, MAX_TOKEN_LENGTH, "$%.2X", string_value[i]);
 
                     instruction_index ++;
                     byte_index ++;

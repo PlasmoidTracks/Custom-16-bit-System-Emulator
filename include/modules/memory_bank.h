@@ -19,6 +19,7 @@ typedef struct MemoryBank_t {
 } MemoryBank_t;
 
 extern const uint16_t MMIO_REGISTER_ADDRESS;
+extern const uint16_t MMIO_BASE_ADDRESS;
 extern const uint16_t MMIO_BANK_WIDTH;
 
 extern MemoryBank_t* memory_bank_create(void);

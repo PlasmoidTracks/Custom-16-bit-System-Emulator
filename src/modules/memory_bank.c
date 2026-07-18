@@ -9,6 +9,8 @@
 #include "modules/memory_bank.h"
 
 const uint16_t MMIO_REGISTER_ADDRESS = SEGMENT_MMIO + 4;
+
+const uint16_t MMIO_BASE_ADDRESS = SEGMENT_MEMORY_BANK;
 const uint16_t MMIO_BANK_WIDTH = 0x2000;
 
 MemoryBank_t* memory_bank_create(void) {
@@ -16,11 +18,11 @@ MemoryBank_t* memory_bank_create(void) {
     memory_bank->device = device_create(DT_MEMORY_BANK);
     device_add_listening_region(
         &memory_bank->device, 
-        listening_region_create(MMIO_REGISTER_ADDRESS, MMIO_REGISTER_ADDRESS, 0, 1)
+        listening_region_create(MMIO_REGISTER_ADDRESS, MMIO_REGISTER_ADDRESS, LR_WRITE)
     );
     device_add_listening_region(
         &memory_bank->device, 
-        listening_region_create(SEGMENT_MEMORY_BANK, SEGMENT_MEMORY_BANK + MMIO_BANK_WIDTH - 1, 1, 1)
+        listening_region_create(MMIO_BASE_ADDRESS, MMIO_BASE_ADDRESS + MMIO_BANK_WIDTH - 1, LR_READ | LR_WRITE)
     );
     memory_bank->device.device_state = DS_IDLE;
     memory_bank->bank_index = 0;

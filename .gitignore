@@ -14,6 +14,7 @@ compile_commands.json
 *.asm
 *.ir
 *.bin
+*.pre
 *.can
 *.exp
 *.opt

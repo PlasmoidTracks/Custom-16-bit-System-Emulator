@@ -10,7 +10,8 @@ typedef enum {
     DT_RAM,             // Random Access Memory
     DT_CLOCK, 
     DT_TERMINAL, 
-    DT_MEMORY_BANK,     // swappable memory region
+    DT_MEMORY_BANK,     // Wwappable memory region
+    DT_FILESYSTEM,      // Filesystem (host access)
     DT_STORAGE,         // Storage, like hard drives
     DT_DISPLAY,         // Visual display
     DT_KEYBOARD,        // User input device
@@ -32,9 +33,13 @@ ram recieves write request  [STORE]
 ram is providing data       [REPLY]
 */
 
+typedef enum {
+    LR_READ  = 1 << 0, 
+    LR_WRITE = 1 << 1,
+} ListeningRegionAccess_t;
+
 typedef struct ListeningRegion_t {
-    int readable;                           // whether the device is readable
-    int writable;                           // whether the device is writable
+    ListeningRegionAccess_t access_type;    // access type of region (read/write)
     uint16_t address_listener_low;          // the lowest memory address this device is listening to
     uint16_t address_listener_high;         // the highest memory address this device is listening to
 } ListeningRegion_t;
@@ -54,7 +59,7 @@ typedef struct Device_t {
 
 extern Device_t device_create(DEVICE_TYPE_t type);
 
-extern ListeningRegion_t listening_region_create(uint16_t address_listener_low, uint16_t address_listener_high, int readable, int writable);
+extern ListeningRegion_t listening_region_create(uint16_t address_listener_low, uint16_t address_listener_high, ListeningRegionAccess_t access_type);
 
 // adds a listening region to the device
 extern void device_add_listening_region(Device_t* device, ListeningRegion_t listening_region);

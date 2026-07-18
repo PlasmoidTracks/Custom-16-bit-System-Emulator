@@ -11,6 +11,7 @@
 #include "modules/ticker.h"
 #include "modules/system.h"
 #include "modules/terminal.h"
+#include "modules/filesystem.h"
 
 int VERBOSE = 0;
 
@@ -29,6 +30,7 @@ System_t* system_create(
     system->ram = ram_create(1 << 16);
     system->terminal = terminal_create();
     system->memory_bank = memory_bank_create();
+    system->filesystem = filesystem_create();
 
     if (cache_active) {
         Cache_t* cache = cache_create(cache_capacity);
@@ -43,6 +45,7 @@ System_t* system_create(
     bus_add_device(system->bus, &system->ram->device);
     bus_add_device(system->bus, &system->terminal->device);
     bus_add_device(system->bus, &system->memory_bank->device);
+    bus_add_device(system->bus, &system->filesystem->device);
 
     if (ticker_active) {
         system->ticker = ticker_create(ticker_frequency);
@@ -56,6 +59,7 @@ System_t* system_create(
     system->clock_order[system->clock_order_size++] = SCD_RAM;
     system->clock_order[system->clock_order_size++] = SCD_BUS;
     system->clock_order[system->clock_order_size++] = SCD_TERMINAL;
+    system->clock_order[system->clock_order_size++] = SCD_FILESYSTEM;
     if (ticker_active) {
         system->clock_order[system->clock_order_size++] = SCD_BUS;
         system->clock_order[system->clock_order_size++] = SCD_TICKER;
@@ -105,6 +109,9 @@ void system_clock(System_t *system) {
                 break;
             case SCD_MEMORY_BANK:
                 memory_bank_clock(system->memory_bank);
+                break;
+            case SCD_FILESYSTEM:
+                filesystem_clock(system->filesystem);
                 break;
             default:
                 log_msg(LP_ERROR, "System: Unknown SCD clock [%s:%d]", __FILE__, __LINE__);

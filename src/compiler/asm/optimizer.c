@@ -662,26 +662,6 @@ char* optimizer_compile(char* content) {
             if (changes_applied) break;
 
 
-            // mov rN, ?
-            // call ?
-            // ->
-            // (remove)
-            // call/ret ?
-            if (i < instruction_count - 2) {
-                if (instruction[i].instruction == MOV && is_register_admr(instruction[i].admr) && instruction[i].admr != ADMR_SP) {
-                    if (instruction[i + 1].instruction == CALL || instruction[i + 1].instruction == RET) {
-                        if (!(is_same_adm(instruction[i].admr, instruction[i + 1].admx) || is_same_indirect_adm(instruction[i].admr, instruction[i + 1].admx))) {
-                            remove_instruction(instruction, &instruction_count, i);
-                            changes_applied = 1;
-                            #ifdef OPT_DEBUG
-                                log_msg(LP_DEBUG, "Optimizer: applied {mov rN, ?; call/ret} => {-; call/ret} [%s:%d]", __FILE__, __LINE__);
-                            #endif // OPT_DEBUG
-                        }
-                    }
-                }
-            }
-
-
             // mov rN, $xyz
             // push [rN]
             // ->
@@ -881,7 +861,7 @@ char* optimizer_compile(char* content) {
                                     // now need to validate that rN is unused until reset
                                     int k = j + 1;
                                     int valid = 1;
-                                    while (k < instruction_count - i) {
+                                    while (k < instruction_count) {
                                         if (
                                             is_same_adm(admr, instruction[k].admx) ||
                                             is_same_indirect_adm(admr, instruction[k].admx) ||
@@ -1268,19 +1248,20 @@ char* optimizer_compile(char* content) {
         } else if (instr.expression[0].type == EXPR_INCBIN) {
             output = append_to_output(output, &output_len, ".incbin ");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
+        } else if (instr.expression[0].type == EXPR_TEXT_DEFINITION) {
+            output = append_to_output(output, &output_len, ".text ");
+            output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else if (instr.expression[0].tokens[0].type == TT_LABEL) {
             //log_msg(LP_INFO, "Label found");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
             output = append_to_output(output, &output_len, " ");
         } else if (instr.expression[0].tokens[0].type == TT_DW) {
             //log_msg(LP_INFO, "Label found");
-            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-            output = append_to_output(output, &output_len, " ");
+            output = append_to_output(output, &output_len, ".dw ");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else if (instr.expression[0].tokens[0].type == TT_DB) {
             //log_msg(LP_INFO, "Label found");
-            output = append_to_output(output, &output_len, instr.expression[0].tokens[0].raw);
-            output = append_to_output(output, &output_len, " ");
+            output = append_to_output(output, &output_len, ".db ");
             output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
         } else {
             for (int j = 0; j < ec; j++) {

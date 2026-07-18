@@ -25,6 +25,7 @@ typedef struct CompileOption_t {
     unsigned int pad_zero : 1;      // [pad] segment breach with [zero]s
     unsigned int err_overlap : 1;   // [err]or on [overlap]
     unsigned int overwrite_overlap : 1;   // [overwrite] [overlap]
+    unsigned int skip_preasm : 1;   // [skip] [pre]processor of [as]se[m]bler
     // Disassembler
     unsigned int d : 1;             // [d]isassemble
     // Optimizer

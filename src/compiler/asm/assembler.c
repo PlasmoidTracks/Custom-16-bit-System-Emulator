@@ -621,7 +621,7 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression[expression_index].type = EXPR_TEXT_DEFINITION;
                 expression[expression_index].tokens[0] = tokens[token_index + 0];
                 expression[expression_index].tokens[1] = tokens[token_index + 1];
-                expression[expression_index].token_count = 1;
+                expression[expression_index].token_count = 2;
                 token_index += 2;
                 expression_index ++;
         }
@@ -751,6 +751,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         if (instruction_encoding[instruction[i].instruction].argument_count == 0) {
                             address -= 1;
                         }
+                        address += instruction[i].instruction / 0x80;   // account for instruction extension
                     }
                     jump_label[jump_label_index].value = address;
                     //log_msg(LP_INFO, "Parsing expressions: Added label \"%s\" with current value %d", jump_label[jump_label_index].name, jump_label[jump_label_index].value);
@@ -1304,7 +1305,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                                 // Allocate or reallocate the segment buffer
                                 uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
                                 if (!new_segment) {
-                                    fprintf(stderr, "Memory allocation for segment failed\n");
+                                    log_msg(LP_ERROR, "Assemler: Memory allocation for segment failed [%s:%d]", __FILE__, __LINE__);
                                     exit(1);
                                 }
                                 *segment = new_segment;
@@ -1315,6 +1316,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 }
 
                 for (int i = instruction_index_since_last_address_change; i < instruction_index; i++) {
+                    if (instruction[i].expression[0].type == EXPR_ADDRESS) {
+                        address = parse_immediate(instruction[i].expression[0].tokens[1].raw);
+                        continue;
+                    }
                     if (instruction[i].expression[0].type == EXPR_SEGMENT_CODE || 
                         instruction[i].expression[0].type == EXPR_SEGMENT_DATA ||
                         instruction[i].expression[0].tokens[0].type == TT_LABEL) {
@@ -1332,7 +1337,12 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         }
                         continue;
                     }
+                    if (instruction[i].expression[0].type == EXPR_DEREF_LABEL) {
+                        address += 2;
+                        continue;
+                    }
                     address += instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0);
+                    address += instruction[i].instruction / 0x80;   // account for instruction extension
                     // above was adjusted for the case of 1-byte encoded instructions
                     //log_msg(LP_DEBUG, "address adjusted by instruction (%s) increase of (%d) width: %.4x", instruction[i].expression[0].tokens[0].raw, instruction[i].argument_bytes + 2 - (instruction_encoding[instruction[i].instruction].argument_count == 0), address);
                     byte_index = address;
@@ -1463,38 +1473,32 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 continue;
             } else if (expression[expression_index].type == EXPR_TEXT_DEFINITION) {
                 char* string_value = expression[expression_index].tokens[1].raw;
+                // TODO: free the expression raw?
                 string_value[strlen(string_value) - 1] = '\0';  // this makes the output implicitly null terminated
-                int current_byte_align = 0;
-                for (size_t i = 1; i < strlen(string_value) + 1; i++) {
-                    printf("%d: %.2x\n", instruction_index, (uint8_t) string_value[i]);
-                    uint8_t value = 0x00;
-                    if (i < strlen(string_value)) {
-                        value = (uint8_t) string_value[i];
-                    }
-                    if (current_byte_align == 0) {
-                        instruction[instruction_index].raw_data = value;
-                        current_byte_align = 1;
+                for (size_t i = 1; i < strlen(string_value); i++) {
+                    instruction[instruction_index].expression_count = 1;
+                    instruction[instruction_index].is_address = 0;
+                    instruction[instruction_index].is_raw_data = 1;
+                    instruction[instruction_index].byte_aligned = 1;
 
-                        instruction[instruction_index].expression[0] = expression[expression_index];
-                        instruction[instruction_index].expression_count = 1;
-                        instruction[instruction_index].byte_aligned = 0;
-                    } else {
-                        instruction[instruction_index].raw_data = (value << 8) | (instruction[instruction_index].raw_data & 0x00ff);
-                        current_byte_align = 0;
-                        instruction[instruction_index].byte_aligned = 1;
-                        instruction_index ++;
+                    instruction[instruction_index].raw_data = string_value[i];
+                    instruction[instruction_index].data_size_in_bytes = 1;
 
-                        while (instruction_index >= allocated_instructions) {
-                            allocated_instructions *= 2;
-                            instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
-                            //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
-                        }
-                        
-                        instruction[instruction_index].expression[0] = expression[expression_index];
-                        instruction[instruction_index].expression_count = 1;
-                        instruction[instruction_index].byte_aligned = 1;
-                    }
+                    instruction[instruction_index].expression[0].type = EXPR_DATA;
+                    instruction[instruction_index].expression[0].tokens[0].type = TT_DB;
+
+                    instruction[instruction_index].expression[0].tokens[1].type = TT_IMMEDIATE;
+                    instruction[instruction_index].expression[0].tokens[1].raw = malloc(5);
+                    sprintf(instruction[instruction_index].expression[0].tokens[1].raw, "$%.2X", string_value[i]);
+
+                    instruction_index ++;
                     byte_index ++;
+
+                    while (instruction_index >= allocated_instructions) {
+                        allocated_instructions *= 2;
+                        instruction = realloc(instruction, sizeof(Instruction_t) * allocated_instructions);
+                        //log_msg(LP_INFO, "Reallocated instruction array to %d", allocated_instructions);
+                    }
                 }
                 expression_index ++;
                 continue;
@@ -2020,8 +2024,6 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     // build expression array
     int expression_count = 0;
     Expression_t* expression = assembler_parse_token(token, token_count, &expression_count);
-
-    // ToDo, resolve all include and incbin directives, then restart. No, lol
 
     // build instruction array
     int instruction_count = 0;

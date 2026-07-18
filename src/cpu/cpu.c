@@ -20,7 +20,7 @@
 
 #define _CPU_DEEP_DEBUG_
 #undef _CPU_DEEP_DEBUG_
-
+                
 
 
 #ifdef _CPU_DEBUG_
@@ -61,6 +61,7 @@ const char* cpu_state_name[CS_COUNT] = {
     "CS_INTERRUPT_JUMP", 
 
     "CS_HALT",                    // halts all execution indefinitely
+    "CS_SLEEP", 
 
     "CS_EXCEPTION", 
 };
@@ -221,7 +222,7 @@ void cpu_clock(CPU_t* cpu) {
     #endif
     if (cpu->device.device_state == DS_INTERRUPT) {
         #ifdef _CPU_DEBUG_
-        log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): PC %.4x - interrupt on CS %d", cpu->clock, cpu->state, cpu->device.device_state, cpu->regs.pc, cpu->state);
+        log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): PC %.4x - interrupt on CS %d, irqid %d", cpu->clock, cpu->state, cpu->device.device_state, cpu->regs.pc, cpu->state, cpu->device.address);
         #endif
         
         if (!cpu->regs.sr.MI && !cpu->regs.sr.MNI) {
@@ -243,8 +244,10 @@ void cpu_clock(CPU_t* cpu) {
                 #endif
                 cpu->regs.sr.MNI = 0;
                 uint16_t address = cpu->regs.pc;
-                cpu->intermediate.previous_pc = cpu->regs.pc;
-                cpu->intermediate.previous_sp = cpu->regs.sp;
+                if (cpu->intermediate.extension_index == 0) { // This check prevents prev values from updating when iterating over extension prefixes, keeping the prev at the base of the instruction. 
+                    cpu->intermediate.previous_pc = cpu->regs.pc;
+                    cpu->intermediate.previous_sp = cpu->regs.sp;
+                }
                 uint8_t data;
                 int success = cpu_read_memory(cpu, address, &data);
                 if (success) {
@@ -2257,6 +2260,11 @@ void cpu_clock(CPU_t* cpu) {
                         goto CS_FETCH_INSTRUCTION;
                         break;
                     
+                    case HWSLEEP:
+                        cpu->state = CS_SLEEP;
+                        goto CS_SLEEP;
+                        break;
+                    
                     // Extended instructions
 
                     case EXTNOP:
@@ -2566,7 +2574,7 @@ void cpu_clock(CPU_t* cpu) {
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW:
                 #ifdef _CPU_DEEP_DEBUG_
-                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low", cpu->clock, cpu->state, cpu->device.device_state);
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2);
                 #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
@@ -2583,7 +2591,7 @@ void cpu_clock(CPU_t* cpu) {
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH:
                 #ifdef _CPU_DEEP_DEBUG_
-                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high", cpu->clock, cpu->state, cpu->device.device_state);
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2);
                 #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
@@ -2604,6 +2612,15 @@ void cpu_clock(CPU_t* cpu) {
                     halted = 1;
                 }
                 //exit(1);
+                break;
+            }
+
+        case CS_SLEEP: 
+            {
+                CS_SLEEP:
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_DEBUG, "CPU (C:%d, I:%d CS:%d DS:%d): SLEEP [%s:%d]", cpu->clock, cpu->instruction, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
+                #endif
                 break;
             }
 

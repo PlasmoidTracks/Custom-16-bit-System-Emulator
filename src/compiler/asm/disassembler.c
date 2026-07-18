@@ -384,7 +384,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
         if (!valid_instruction) { // this includes "nop"
             //log_msg(LP_WARNING, "Disassembler: Encountered an invalid instruction. Realigning to the next byte and retrying [%s] [%s:%d]", instruction, __FILE__, __LINE__);
 
-            while (assembly_index + 3 >= allocated_space) {
+            while (assembly_index + 8 >= allocated_space) {
                 allocated_space *= 2;
                 //log_msg(LP_DEBUG, "Disassembler: Increased allocated space [%s:%d]", __FILE__, __LINE__);
                 disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));
@@ -588,7 +588,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
             return (Disassembly_t) {0};
         }
 
-        while (assembly_index >= allocated_space) {
+        while (assembly_index + 8 >= allocated_space) {
             allocated_space *= 2;
             //log_msg(LP_DEBUG, "Disassembler: Increased allocated space [%s:%d]", __FILE__, __LINE__);
             disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));
@@ -615,7 +615,7 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
             sprintf(disassembly.code[assembly_index], "%s", tmp);
             assembly_index++;
 
-            while (assembly_index >= allocated_space) {
+            while (assembly_index + 8 >= allocated_space) {
                 allocated_space *= 2;
                 //log_msg(LP_DEBUG, "Disassembler: Increased allocated space [%s:%d]", __FILE__, __LINE__);
                 disassembly.code = realloc(disassembly.code, allocated_space * sizeof(char[256]));

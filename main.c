@@ -4,7 +4,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "globals/memory_layout.h"
 #include "include/utils/Log.h"
 #include "modules/ram.h"
 #include "utils/IO.h"
@@ -13,12 +12,10 @@
 
 #include "cpu/cpu_utils.h"
 
-#include "compiler/ccan/ccan_lexer.h"
-#include "compiler/ccan/ccan_parser.h"
-
 #include "compiler/ir/ir_compiler.h"
 
 #include "compiler/asm/assembler.h"
+#include "compiler/asm/preprocessor.h"
 #include "compiler/asm/canonicalizer.h"
 #include "compiler/asm/optimizer.h"
 #include "compiler/asm/disassembler.h"
@@ -28,7 +25,6 @@
 
 #include <stdarg.h>
 
-#include "compiler/linker/linker.h"
 #include "compiler/transpiler/transpiler.h"
 
 
@@ -81,28 +77,6 @@ int main(int argc, char* argv[]) {
     */
 
 
-    if (co.cft >= CFT_CCAN)
-    {
-        long filesize;
-        long lexer_token_count;
-        long parser_root_count;
-        char* content = read_file(argv[1], &filesize);
-        CCANLexerToken_t* lexer = ccan_lexer_parse(content, filesize, &lexer_token_count);
-
-        log_msg(LP_INFO, "token count: %d", lexer_token_count);
-        for (int i = 0; i < lexer_token_count; i++) {
-            log_msg(LP_INFO, "%d :: %s", i, lexer[i].raw);
-        }
-        
-        CCANParserToken_t** parser = ccan_parser_parse(lexer, lexer_token_count, &parser_root_count);
-        (void) parser;
-
-        log_msg(LP_ERROR, "Main: CCAN compilation is not implemented [%s:%d]", __FILE__, __LINE__);
-
-        return 0;
-    }
-
-
     char* filename = malloc(128);
     sprintf(filename, "%s", co.input_filename);
     
@@ -119,6 +93,21 @@ int main(int argc, char* argv[]) {
     }
 
     if (co.cft >= CFT_ASM) {
+        if (!co.skip_preasm) {
+            // apply preprocessor on the assembly
+            char* preproc_asm = assembly_preprocessor_compile_from_file(filename);
+            if (!preproc_asm) {
+                log_msg(LP_ERROR, "Main: Preprocessor returned NULL [%s:%d]", __FILE__, __LINE__);
+                return 1;
+            }
+            if (!co.save_temps && co.cft >= CFT_IR) {
+                remove(filename);
+            }
+            filename = append_filename(filename, ".pre");
+            data_export(filename, preproc_asm, strlen(preproc_asm));
+            free(preproc_asm);
+        }
+
         if (!co.no_c) {
             // canonicalizes the assembly code to a standard format
             char* canon_asm = canonicalizer_compile_from_file(filename);
@@ -126,7 +115,7 @@ int main(int argc, char* argv[]) {
                 log_msg(LP_ERROR, "Main: Canonicalizer returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
-            if (co.cft >= CFT_IR && !co.save_temps) {
+            if (!co.save_temps && (co.cft >= CFT_IR || !co.skip_preasm)) {
                 remove(filename);
             }
             filename = append_filename(filename, ".can");
@@ -141,7 +130,7 @@ int main(int argc, char* argv[]) {
                 log_msg(LP_ERROR, "Main: Optimizer returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
-            if (!co.save_temps && !co.no_c) {
+            if (!co.save_temps && (co.cft >= CFT_IR || !co.skip_preasm || !co.no_c)) {
                 remove(filename);
             }
             filename = append_filename(filename, ".opt");

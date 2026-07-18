@@ -11,7 +11,7 @@ RAM_t* ram_create(uint32_t capacity) {
     ram->device = device_create(DT_RAM);
     device_add_listening_region(
         &ram->device, 
-        listening_region_create(SEGMENT_CODE, SEGMENT_CODE_END, 1, 1)
+        listening_region_create(SEGMENT_CODE, SEGMENT_CODE_END, LR_READ | LR_WRITE)
     );
 
     ram->capacity = capacity;

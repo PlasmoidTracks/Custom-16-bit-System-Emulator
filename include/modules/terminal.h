@@ -14,6 +14,8 @@ typedef struct Terminal_t {
     Device_t device;
 } Terminal_t;
 
+extern const uint16_t MMIO_INPUT_REGISTER;
+
 
 extern Terminal_t* terminal_create(void);
 

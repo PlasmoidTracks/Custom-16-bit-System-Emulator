@@ -22,6 +22,7 @@ ASSEMBLER:\n\
   -pad-zero               Pad segment breach with zeros when binary exceeds memory bounds\n\
   -noerr-overlap          No error when binary overwrites itself (for example, on address overflow)\n\
   -overwrite-overlap      Overwrite old values with new values on overwrites\n\
+  -skip-preasm            Skip assembler preprocessor\n\
 \n\
 DISASSEMBLER:\n\
   -d                      Enable disassembly\n\
@@ -61,6 +62,7 @@ const CompileOption_t CO_DEFAULT = {
     .pad_zero = 1, 
     .err_overlap = 1, 
     .overwrite_overlap = 0, 
+    .skip_preasm = 0, 
     // Disassembler
     .d = 0, 
     // Optimizer
@@ -154,6 +156,11 @@ CompileOption_t cli_parse_arguments(int argc, char** argv, int* error) {
         }
         if (strcmp(argv[arg_index], "-overwrite-overlap") == 0) {
             co.overwrite_overlap = 1;
+            arg_index ++;
+            continue;
+        }
+        if (strcmp(argv[arg_index], "-skip-preasm") == 0) {
+            co.skip_preasm = 1;
             arg_index ++;
             continue;
         }

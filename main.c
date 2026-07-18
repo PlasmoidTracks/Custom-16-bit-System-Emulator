@@ -15,6 +15,7 @@
 #include "compiler/ir/ir_compiler.h"
 
 #include "compiler/asm/assembler.h"
+#include "compiler/asm/preprocessor.h"
 #include "compiler/asm/canonicalizer.h"
 #include "compiler/asm/optimizer.h"
 #include "compiler/asm/disassembler.h"
@@ -92,6 +93,21 @@ int main(int argc, char* argv[]) {
     }
 
     if (co.cft >= CFT_ASM) {
+        if (!co.skip_preasm) {
+            // apply preprocessor on the assembly
+            char* preproc_asm = assembly_preprocessor_compile_from_file(filename);
+            if (!preproc_asm) {
+                log_msg(LP_ERROR, "Main: Preprocessor returned NULL [%s:%d]", __FILE__, __LINE__);
+                return 1;
+            }
+            if (!co.save_temps && co.cft >= CFT_IR) {
+                remove(filename);
+            }
+            filename = append_filename(filename, ".pre");
+            data_export(filename, preproc_asm, strlen(preproc_asm));
+            free(preproc_asm);
+        }
+
         if (!co.no_c) {
             // canonicalizes the assembly code to a standard format
             char* canon_asm = canonicalizer_compile_from_file(filename);
@@ -99,7 +115,7 @@ int main(int argc, char* argv[]) {
                 log_msg(LP_ERROR, "Main: Canonicalizer returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
-            if (co.cft >= CFT_IR && !co.save_temps) {
+            if (!co.save_temps && (co.cft >= CFT_IR || !co.skip_preasm)) {
                 remove(filename);
             }
             filename = append_filename(filename, ".can");
@@ -114,7 +130,7 @@ int main(int argc, char* argv[]) {
                 log_msg(LP_ERROR, "Main: Optimizer returned NULL [%s:%d]", __FILE__, __LINE__);
                 return 1;
             }
-            if (!co.save_temps && !co.no_c) {
+            if (!co.save_temps && (co.cft >= CFT_IR || !co.skip_preasm || !co.no_c)) {
                 remove(filename);
             }
             filename = append_filename(filename, ".opt");

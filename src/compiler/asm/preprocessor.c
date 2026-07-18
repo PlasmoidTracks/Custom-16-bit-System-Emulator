@@ -52,10 +52,6 @@ char* assembly_preprocessor_compile(const char* content) {
             i --;
         }
     }
-    log_msg(LP_DEBUG, "map_length: %d", map_length);
-    for (int i = 0; i < map_length; i++) {
-        log_msg(LP_DEBUG, "%d: %s -> %s", i, map[i].match, map[i].replacement);
-    }
 
     // replace with definition map
     for (int i = 0; i < token_count; i++) {
@@ -87,7 +83,7 @@ char* assembly_preprocessor_compile_from_file(const char* filename) {
     // load raw text from file
     char* content = read_file(filename, NULL);
     if (!content) {
-        log_msg(LP_ERROR, "Canonicalizer: read_file failed [%s:%d]", __FILE__, __LINE__);
+        log_msg(LP_ERROR, "Preprocessor: read_file failed [%s:%d]", __FILE__, __LINE__);
         return NULL;
     }
     char* asm = assembly_preprocessor_compile(content);

@@ -1806,8 +1806,8 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
         return NULL;
     }
     
-    uint8_t* bin = calloc(0xffff, sizeof(uint8_t));
-    uint8_t* written = calloc(0xffff, sizeof(uint8_t));
+    uint8_t* bin = calloc(0x10000, sizeof(uint8_t));
+    uint8_t* written = calloc(0x10000, sizeof(uint8_t));
     uint16_t index = 0;
     int instruction_index = 0;
     int error = 0;

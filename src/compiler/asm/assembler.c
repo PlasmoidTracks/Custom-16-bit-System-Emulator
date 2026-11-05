@@ -87,7 +87,6 @@ void assembler_reset(void) {
 
 char** assembler_split_to_separate_lines(const char text[]) {
     char** lines = split(text, "\n", "");
-    free((void*) text);
     return lines;
 }
 
@@ -1993,9 +1992,11 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
 
     assembler_reset();
 
+    long binary_size_fallback;
+
     if (!binary_size) {
-        log_msg(LP_ERROR, "binary_size is a required argument for assembler_compile [%s:%d]", __FILE__, __LINE__);
-        return NULL;
+        log_msg(LP_WARNING, "binary_size was not provided. Consider providing it in order to retrieve final binary size [%s:%d]", __FILE__, __LINE__);
+        binary_size = &binary_size_fallback;
     }
     *binary_size = 0;
     if (segment_count && segment) {
@@ -2055,6 +2056,7 @@ uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, ui
         return NULL;
     }
     uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count, options);
+    free(content);
     
     return machine_code;
 }

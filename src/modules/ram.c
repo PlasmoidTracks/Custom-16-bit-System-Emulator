@@ -79,6 +79,12 @@ void ram_write(RAM_t* ram, uint16_t address, uint8_t data) {
     ram->data[hw_address] = data;
 }
 
+void ram_flash(RAM_t* ram, uint8_t* data, long bytes) {
+    for (long i = 0; i < bytes; i++) {
+        ram_write(ram, i, data[i]);
+    }
+}
+
 void ram_clock(RAM_t* ram) {
     // check device for commands
     if (ram->device.processed == 1) {

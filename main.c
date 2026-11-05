@@ -231,9 +231,7 @@ int main(int argc, char* argv[]) {
             );
         #endif
 
-        for (long i = 0; i < binary_size; i++) {
-            ram_write(system->ram, i, bin[i]);
-        }
+        ram_flash(system->ram, bin, binary_size);
 
         uint32_t frequency = 1000000;
 

@@ -52,6 +52,22 @@ char* assembly_preprocessor_compile(const char* content) {
         }
     }
 
+    // check for infinite recursion
+    for (int i = 0; i < map_length; i++) {
+        for (int j = 0; j < map_length; j++) {
+            if (strcmp(map[i].replacement, map[j].match) == 0) {
+                if (i == j) {
+                    log_msg(LP_ERROR, "Preprocessor: Potential infinite recursion detected with matche \"%s\"->\"%s\" (id:%d) [%s:%d]", map[i].match, map[i].replacement, i, __FILE__, __LINE__);
+                    return NULL;
+                } else {
+                    int condition = (strcmp(map[j].replacement, map[i].match) == 0);
+                    log_msg(condition ? LP_ERROR : LP_WARNING, "Preprocessor: Potential infinite recursion detected with matches \"%s\" -> \"%s\" (id:%d) & \"%s\" -> \"%s\" (id:%d) [%s:%d]", map[i].match, map[i].replacement, i, map[j].match, map[j].replacement, j, __FILE__, __LINE__);
+                    if (condition) return NULL;
+                }
+            }
+        }
+    }
+
     // replace with definition map
     for (int i = 0; i < token_count; i++) {
         int replacement = 1;

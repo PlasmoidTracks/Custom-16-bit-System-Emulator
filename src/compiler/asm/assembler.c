@@ -87,7 +87,6 @@ void assembler_reset(void) {
 
 char** assembler_split_to_separate_lines(const char text[]) {
     char** lines = split(text, "\n", "");
-    free((void*) text);
     return lines;
 }
 
@@ -157,7 +156,7 @@ char** assembler_split_to_words(char* lines[], int* token_count) {
 Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
     Token_t* token = calloc(word_count, sizeof(Token_t));
     for (int i = 0; i < word_count; i++) {
-        token[i].raw = word[i];
+        snprintf(token[i].raw, MAX_TOKEN_LENGTH, "%s", word[i]);
         token[i].type = -1;
         if (word[i][0] == '.') {
             if (strcmp(&word[i][1], "address") == 0) {
@@ -1488,8 +1487,7 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     instruction[instruction_index].expression[0].tokens[0].type = TT_DB;
 
                     instruction[instruction_index].expression[0].tokens[1].type = TT_IMMEDIATE;
-                    instruction[instruction_index].expression[0].tokens[1].raw = malloc(5);
-                    sprintf(instruction[instruction_index].expression[0].tokens[1].raw, "$%.2X", string_value[i]);
+                    snprintf(instruction[instruction_index].expression[0].tokens[1].raw, MAX_TOKEN_LENGTH, "$%.2X", string_value[i]);
 
                     instruction_index ++;
                     byte_index ++;
@@ -1807,8 +1805,8 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
         return NULL;
     }
     
-    uint8_t* bin = calloc(0xffff, sizeof(uint8_t));
-    uint8_t* written = calloc(0xffff, sizeof(uint8_t));
+    uint8_t* bin = calloc(0x10000, sizeof(uint8_t));
+    uint8_t* written = calloc(0x10000, sizeof(uint8_t));
     uint16_t index = 0;
     int instruction_index = 0;
     int error = 0;
@@ -1994,9 +1992,11 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
 
     assembler_reset();
 
+    long binary_size_fallback;
+
     if (!binary_size) {
-        log_msg(LP_ERROR, "binary_size is a required argument for assembler_compile [%s:%d]", __FILE__, __LINE__);
-        return NULL;
+        log_msg(LP_WARNING, "binary_size was not provided. Consider providing it in order to retrieve final binary size [%s:%d]", __FILE__, __LINE__);
+        binary_size = &binary_size_fallback;
     }
     *binary_size = 0;
     if (segment_count && segment) {
@@ -2056,6 +2056,7 @@ uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, ui
         return NULL;
     }
     uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count, options);
+    free(content);
     
     return machine_code;
 }

@@ -18,7 +18,7 @@ typedef enum {
     M_CREATE_FILE,  // if the path doesnt exist, create a file with the path name, otherwise leave file alone
     M_MOUNT_FILE,   // take the current set path and (return 1 on success, else 0)
     M_CLOSE_FILE,   
-} Mode_t;
+} FileSystemMode_t;
 
 // set cursor position as value (where negative is like pythons [-1])
     // is -1 the very end, or one before the very end?
@@ -44,7 +44,7 @@ typedef enum {
     MM_CREATE_ON_MISSING = 1 << 1, 
 
     MM_OTHER = 1 << 0, 
-} ModeModifiert_t;
+} FileSystemModeModifiert_t;
 
 typedef struct FileSystem_t {
     char path[64];
@@ -66,8 +66,8 @@ extern const uint16_t MMIO_OUTPUT_REGISTER_ADDRESS;     // returns misc. informa
 
 extern FileSystem_t* filesystem_create(void);
 
-extern void filesystem_delete(FileSystem_t** memory_bank);
+extern void filesystem_delete(FileSystem_t** filesystem);
 
-extern void filesystem_clock(FileSystem_t* memory_bank);
+extern void filesystem_clock(FileSystem_t* filesystem);
 
 #endif // _FILESYSTEM_H_

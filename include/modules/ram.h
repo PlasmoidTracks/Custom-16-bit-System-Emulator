@@ -41,6 +41,8 @@ extern uint8_t ram_read(RAM_t* ram, uint16_t address);
 
 extern void ram_write(RAM_t* ram, uint16_t address, uint8_t data);
 
+extern void ram_flash(RAM_t* ram, uint8_t* data, long bytes);
+
 extern void ram_clock(RAM_t* ram);
 
 

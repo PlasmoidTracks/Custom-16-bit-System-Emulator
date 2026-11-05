@@ -293,7 +293,7 @@ char* optimizer_compile(char* content) {
                     if (instruction[i].admr == ADMR_R0 && instruction[i + 1].admr == ADMR_IND_R0 && instruction[i].admx == ADMX_IMM16) {
                         //if (instruction[i].expression[2].tokens[0].type != TT_LABEL) {
                             instruction[i + 1].admr = ADMR_IND16;
-                            sprintf(instruction[i + 1].expression[1].tokens[1].raw, "%s", instruction[i].expression[2].tokens[0].raw);
+                            snprintf(instruction[i + 1].expression[1].tokens[1].raw, MAX_TOKEN_LENGTH, "%s", instruction[i].expression[2].tokens[0].raw);
                             changes_applied = 1;
                             #ifdef OPT_DEBUG
                                 log_msg(LP_DEBUG, "Optimizer: applied {mov r0, $xyz; mov [r0], ?} => {mov r0, $xyz; mov [$xyz], ?} [%s:%d]", __FILE__, __LINE__);
@@ -435,8 +435,6 @@ char* optimizer_compile(char* content) {
                         instruction[i + 1].expression[2].type = instruction[i].expression[2].type;
                         for (int j = 0; j < instruction[i].expression[2].token_count; j++) {
                             instruction[i + 1].expression[2].tokens[j].type = instruction[i].expression[2].tokens[j].type;
-                            instruction[i + 1].expression[2].tokens[j].raw = realloc(instruction[i + 1].expression[2].tokens[j].raw, strlen(instruction[i].expression[2].tokens[j].raw) + 1);
-                            memcpy(instruction[i + 1].expression[2].tokens[j].raw, instruction[i].expression[2].tokens[j].raw, strlen(instruction[i].expression[2].tokens[j].raw) + 1);
                         }
                         instruction[i + 1].admx = instruction[i].admx;
                         remove_instruction(instruction, &instruction_count, i);
@@ -462,9 +460,6 @@ char* optimizer_compile(char* content) {
                     instruction[i + 1].instruction == SUB)) {
                     if (instruction[i].admr == instruction[i + 1].admr && is_register_admx(instruction[i].admx) && instruction[i + 1].admx == ADMX_IMM16) {
                         //log_msg(LP_DEBUG, "Optimizer: combined arithmetic addressing with register offset lea (line %d)", i);
-                        for (int j = 1; j < 5; j++) {
-                            instruction[i].expression[2].tokens[j].raw = malloc(32);
-                        }
                         sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[LEA].instruction_string);                             // replace "MOV" with "LEA"
                         sprintf(instruction[i].expression[2].tokens[3].raw, "%s", instruction[i].expression[2].tokens[0].raw);              // add "rM" in "[rM + x]"
                         sprintf(instruction[i].expression[2].tokens[0].raw, "[");                                                           // add "[" in "[rM + x]"
@@ -514,14 +509,10 @@ char* optimizer_compile(char* content) {
                             sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[LEA].instruction_string);
                             instruction[i].admx = ADMX_IND16;
                             
-                            instruction[i].expression[2].tokens[1].raw = malloc(16);
                             sprintf(instruction[i].expression[2].tokens[1].raw, "%s", instruction[i].expression[2].tokens[0].raw);
                             sprintf(instruction[i].expression[2].tokens[0].raw, "[");
-                            instruction[i].expression[2].tokens[2].raw = malloc(16);
                             sprintf(instruction[i].expression[2].tokens[2].raw, "+");
-                            instruction[i].expression[2].tokens[3].raw = malloc(16);
                             sprintf(instruction[i].expression[2].tokens[3].raw, "%s", instruction[i + 1].expression[2].tokens[0].raw);
-                            instruction[i].expression[2].tokens[4].raw = malloc(16);
                             sprintf(instruction[i].expression[2].tokens[4].raw, "]");
                             instruction[i].expression[2].token_count = 5;
 
@@ -709,7 +700,6 @@ char* optimizer_compile(char* content) {
                                 instruction[j + 1].instruction = PUSH;
                                 sprintf(instruction[j + 1].expression[0].tokens[0].raw, "%s", instruction_encoding[PUSH].instruction_string);
                                 for (int t = 0; t < instruction[j + 1].expression[2].token_count; t++) {
-                                    if (!instruction[j + 1].expression[1].tokens[t].raw) {instruction[j + 1].expression[1].tokens[t].raw = malloc(16);}
                                     sprintf(instruction[j + 1].expression[1].tokens[t].raw, "%s", instruction[j + 1].expression[2].tokens[t].raw);
                                     instruction[j + 1].expression[1].tokens[t].type = instruction[j + 1].expression[2].tokens[t].type;
                                 }
@@ -765,16 +755,11 @@ char* optimizer_compile(char* content) {
                         )
                     ) {
                         //log_msg(LP_DEBUG, "Optimizer: reduced two step deref to one step (line %d)", i);
-                        char tmp[32];
-                        for (int t = 0; t < 3; t++) {
-                            if (!instruction[i + 2].expression[2].tokens[t].raw) {
-                                instruction[i + 2].expression[2].tokens[t].raw = malloc(16);
-                            }
-                        }
-                        sprintf(tmp, "%s", instruction[i + 2].expression[2].tokens[0].raw);
-                        sprintf(instruction[i + 2].expression[2].tokens[0].raw, "[");
-                        sprintf(instruction[i + 2].expression[2].tokens[1].raw, "%s", tmp);
-                        sprintf(instruction[i + 2].expression[2].tokens[2].raw, "]");
+                        char tmp[MAX_TOKEN_LENGTH];
+                        snprintf(tmp, MAX_TOKEN_LENGTH, "%s", instruction[i + 2].expression[2].tokens[0].raw);
+                        snprintf(instruction[i + 2].expression[2].tokens[0].raw, MAX_TOKEN_LENGTH, "[");
+                        snprintf(instruction[i + 2].expression[2].tokens[1].raw, MAX_TOKEN_LENGTH, "%s", tmp);
+                        snprintf(instruction[i + 2].expression[2].tokens[2].raw, MAX_TOKEN_LENGTH, "]");
                         instruction[i + 2].expression[2].token_count = 3;
                         instruction[i + 2].admx = ADMX_IND_R0 + instruction[i + 2].admx - ADMX_R0;
 
@@ -886,10 +871,9 @@ char* optimizer_compile(char* content) {
                                     if (valid) {
                                         instruction[j].admx = instruction[i].admx;
                                         for (int t = 0; t < instruction[i].expression[2].token_count; t++) {
-                                            if (!instruction[j].expression[2].tokens[t].raw) {
-                                                instruction[j].expression[2].tokens[t].raw = malloc(16);
-                                            }
-                                            sprintf(instruction[j].expression[2].tokens[t].raw, "%s", instruction[i].expression[2].tokens[t].raw);
+                                            char tmp[MAX_TOKEN_LENGTH];
+                                            snprintf(tmp, MAX_TOKEN_LENGTH, "%s", instruction[i].expression[2].tokens[t].raw);
+                                            snprintf(instruction[j].expression[2].tokens[t].raw, MAX_TOKEN_LENGTH, "%s", tmp);
                                         }
                                         instruction[j].expression[2].token_count = instruction[i].expression[2].token_count;
                                         remove_instruction(instruction, &instruction_count, i);
@@ -1049,7 +1033,6 @@ char* optimizer_compile(char* content) {
                 ) {
                     if (instruction[i].expression[2].token_count == 3) {    // if more than 3, then its something like "[.L + $xyz]"
                         //log_msg(LP_DEBUG, "Optimizer: replaced lea with direct move instruction (line %d)", i);
-                        instruction[i].expression[0].tokens[0].raw = realloc(instruction[i].expression[0].tokens[0].raw, strlen(instruction_encoding[MOV].instruction_string) + 1);
                         sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
                         instruction[i].instruction = MOV;
                         if (instruction[i].admx == ADMX_IND16) {
@@ -1221,24 +1204,24 @@ char* optimizer_compile(char* content) {
         int ec = instr.expression_count;
         if (instr.is_address) {
             if (instr.expression[0].type == EXPR_ADDRESS) {
-                char tmp[32];
-                sprintf(tmp, ".address $%.4X", instr.address);
+                char tmp[32 + MAX_TOKEN_LENGTH];
+                snprintf(tmp, 32 + MAX_TOKEN_LENGTH, ".address $%.4X", instr.address);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_STORE_ADDRESS) {
-                char tmp[32];
-                sprintf(tmp, ".store_address");
+                char tmp[32 + MAX_TOKEN_LENGTH];
+                snprintf(tmp, 32 + MAX_TOKEN_LENGTH, ".store_address");
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_RESTORE_ADDRESS) {
-                char tmp[32];
-                sprintf(tmp, ".restore_address");
+                char tmp[32 + MAX_TOKEN_LENGTH];
+                snprintf(tmp, 32 + MAX_TOKEN_LENGTH, ".restore_address");
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_PAD) {
-                char tmp[32];
-                sprintf(tmp, ".pad %s", instr.expression[0].tokens[1].raw);
+                char tmp[32 + MAX_TOKEN_LENGTH];
+                snprintf(tmp, 32 + MAX_TOKEN_LENGTH, ".pad %s", instr.expression[0].tokens[1].raw);
                 output = append_to_output(output, &output_len, tmp);
             } else if (instr.expression[0].type == EXPR_RESERVE) {
-                char tmp[32];
-                sprintf(tmp, ".reserve %s", instr.expression[0].tokens[1].raw);
+                char tmp[32 + MAX_TOKEN_LENGTH];
+                snprintf(tmp, 32 + MAX_TOKEN_LENGTH, ".reserve %s", instr.expression[0].tokens[1].raw);
                 output = append_to_output(output, &output_len, tmp);
             }
         } else if (instr.expression[0].type == EXPR_SEGMENT_CODE) {

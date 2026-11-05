@@ -80,10 +80,12 @@ typedef struct {
     // memory layout...?
 } Function_t;
 
+// THIS MIGHT NOT EVEN BE NECESSARY, since we track the scope-index of functions and variables now
+// TODO: Delete at earliest convenience
 typedef enum {
-    CT_FUNCTION_BODY
+    CT_FUNCTION_BODY, 
+    CT_GLOBAL
 } ContextType_t;
-
 
 typedef struct {
     IRParserToken_t* parent;        // temporary, will change
@@ -100,10 +102,17 @@ typedef struct {
 
 
 extern IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];
-
 extern int ir_identifier_index[IR_MAX_DEPTH];
-
 extern int ir_identifier_scope_depth;
+
+
+extern int show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST);
+
+extern void ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int* scope_index_ptr);
+
+extern void ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, int* scope_index_ptr);
+
+extern char* ir_codegen(IRParserToken_t** roots, int parser_root_count, const Variable_t* variable_list, const int variable_list_lenght, const Function_t* function_list, const int function_list_lenght);
 
 extern char* ir_compile(char* source, long source_length, const char* const source_identifier, IRCompileOption_t options);
 

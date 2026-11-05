@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "compiler/ir/ir_parser.h"
 #include "utils/Log.h"
 #include "utils/String.h"
 #include "utils/IO.h"
@@ -43,7 +44,7 @@ static void _get_all_tokens_of_lines(IRParserToken_t* root, IRParserToken_t** li
     }
 }
 
-int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, int* last_column, int pad, int newline_on_first_line_change) {
+static int _show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* last_line_shown, int* last_column, int pad, int newline_on_first_line_change) {
     // first, get the line interval of the error
     unsigned int first_line = -1, last_line = 0;
     _get_lines(root, &first_line, &last_line);
@@ -98,22 +99,15 @@ int show_error_in_syntax_ext(IRParserToken_t* root, IRParserToken_t* AST, int* l
     return 1;
 }
 
-int show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
-    int err = show_error_in_syntax_ext(root, AST, NULL, NULL, 1, 0);
-    //putchar('\n');
-    return err;
-}
-
-
 // int* at and int* padalign MUST to be initialized as -1
-static VariableModifier_t ir_prepass_variable_declaration_get_type_definition(IRParserToken_t* type_definition, int* at, int* padalign) {
+static VariableModifier_t _prepass_variable_declaration_get_type_definition(IRParserToken_t* type_definition, int* at, int* padalign) {
     if ((IRParserTokenType_t) type_definition->token.type != IR_PAR_TYPE_DEFINITION) {
         return 0;
     }
     VariableModifier_t modifier = 0;
     for (int i = 0; i < type_definition->child_count; i++) {
         if ((IRParserTokenType_t) type_definition->child[i]->token.type == IR_PAR_TYPE_DEFINITION) {
-            modifier |= ir_prepass_variable_declaration_get_type_definition(type_definition->child[i], at, padalign);
+            modifier |= _prepass_variable_declaration_get_type_definition(type_definition->child[i], at, padalign);
         } else {
             switch (type_definition->child[i]->token.type) {
                 case IR_LEX_STACK:
@@ -158,16 +152,15 @@ static VariableModifier_t ir_prepass_variable_declaration_get_type_definition(IR
     return modifier;
 }
 
-
 // int* interrupt and int* align MUST to be initialized as -1
-static FunctionModifier_t ir_prepass_function_declaration_get_type_definition(IRParserToken_t* type_definition, int* interrupt, int* align) {
+static FunctionModifier_t _prepass_function_declaration_get_type_definition(IRParserToken_t* type_definition, int* interrupt, int* align) {
     if ((IRParserTokenType_t) type_definition->token.type != IR_PAR_FUNCTION_MODIFIER) {
         return 0;
     }
     FunctionModifier_t modifier = 0;
     for (int i = 0; i < type_definition->child_count; i++) {
         if ((IRParserTokenType_t) type_definition->child[i]->token.type == IR_PAR_FUNCTION_MODIFIER) {
-            modifier |= ir_prepass_function_declaration_get_type_definition(type_definition->child[i], interrupt, align);
+            modifier |= _prepass_function_declaration_get_type_definition(type_definition->child[i], interrupt, align);
         } else {
             switch (type_definition->child[i]->token.type) {
                 case IR_LEX_PERILOGUE:
@@ -205,7 +198,7 @@ static FunctionModifier_t ir_prepass_function_declaration_get_type_definition(IR
 }
 
 
-static void list_append(void** list, int* list_length, size_t size, void* data) {
+static void _list_append(void** list, int* list_length, size_t size, void* data) {
     if (!list_length) {
         log_msg(LP_ERROR, "NULL pointer [%s:%d]", __FILE__, __LINE__);
         return;
@@ -216,7 +209,7 @@ static void list_append(void** list, int* list_length, size_t size, void* data) 
 }
 
 
-static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int inside_function_definition, int* scope_index_ptr) {
+static void _prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int inside_function_definition, int* scope_index_ptr) {
     //log_msg(LP_DEBUG, "%s: %d", ir_token_name[AST->token.type], inside_function_definition);
     if ((IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION) {
         (*scope_index_ptr) ++;
@@ -225,7 +218,7 @@ static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_lis
     if ((IRParserTokenType_t) AST->token.type == IR_PAR_VARIABLE_DECLARATION) {
         int at = -1;
         int padalign = -1;
-        VariableModifier_t modifier = ir_prepass_variable_declaration_get_type_definition(AST->child[0], &at, &padalign);
+        VariableModifier_t modifier = _prepass_variable_declaration_get_type_definition(AST->child[0], &at, &padalign);
         char* name = AST->child[4]->token.raw;
         int size = 0;
         switch (AST->child[2]->token.type) {
@@ -250,25 +243,25 @@ static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_lis
             .scope_index = inside_function_definition ? (*scope_index_ptr) : -1, 
         };
 
-        list_append((void*) variable_list_ptr, variable_list_length_ptr, sizeof(Variable_t), &variable);
+        _list_append((void*) variable_list_ptr, variable_list_length_ptr, sizeof(Variable_t), &variable);
 
         return;
     }
 
     for (int i = 0; i < AST->child_count; i++) {
-        _ir_prepass_variable(AST->child[i], variable_list_ptr, variable_list_length_ptr, inside_function_definition || (IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION, scope_index_ptr);
+        _prepass_variable(AST->child[i], variable_list_ptr, variable_list_length_ptr, inside_function_definition || (IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION, scope_index_ptr);
     }
 }
 
 
-static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, FunctionModifier_t modifier, int interrupt, int align, int* scope_index_ptr) {
+static void _prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, FunctionModifier_t modifier, int interrupt, int align, int* scope_index_ptr) {
 
     if ((IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION) {
         (*scope_index_ptr) ++;
 
         if (AST->variant == 2) {
-            FunctionModifier_t fetched_modifier = ir_prepass_function_declaration_get_type_definition(AST->child[0], &interrupt, &align);
-            _ir_prepass_function(AST->child[1], function_list_ptr, function_list_length_ptr, fetched_modifier, interrupt, align, scope_index_ptr);
+            FunctionModifier_t fetched_modifier = _prepass_function_declaration_get_type_definition(AST->child[0], &interrupt, &align);
+            _prepass_function(AST->child[1], function_list_ptr, function_list_length_ptr, fetched_modifier, interrupt, align, scope_index_ptr);
         } else {
             char* name = AST->child[0]->token.raw;
 
@@ -281,34 +274,44 @@ static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_lis
                 .scope_index = (*scope_index_ptr), 
             };
 
-            list_append((void*) function_list_ptr, function_list_length_ptr, sizeof(Function_t), &function);
+            _list_append((void*) function_list_ptr, function_list_length_ptr, sizeof(Function_t), &function);
         }
 
         return;
     }
 
     for (int i = 0; i < AST->child_count; i++) {
-        _ir_prepass_function(AST->child[i], function_list_ptr, function_list_length_ptr, 0, -1, -1, scope_index_ptr);
+        _prepass_function(AST->child[i], function_list_ptr, function_list_length_ptr, 0, -1, -1, scope_index_ptr);
     }
 }
 
 
+int show_error_in_syntax(IRParserToken_t* root, IRParserToken_t* AST) {
+    int err = _show_error_in_syntax_ext(root, AST, NULL, NULL, 1, 0);
+    //putchar('\n');
+    return err;
+}
+
 void ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, int* variable_list_length_ptr, int* scope_index_ptr) {
-    _ir_prepass_variable(AST, variable_list_ptr, variable_list_length_ptr, 0, scope_index_ptr);
+    _prepass_variable(AST, variable_list_ptr, variable_list_length_ptr, 0, scope_index_ptr);
 }
 
 void ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, int* scope_index_ptr) {
-    _ir_prepass_function(AST, function_list_ptr, function_list_length_ptr, 0, -1, -1, scope_index_ptr);
+    _prepass_function(AST, function_list_ptr, function_list_length_ptr, 0, -1, -1, scope_index_ptr);
 }
 
 
-void ir_codegen_recurse(IRParserToken_t* node, CodeGen_t* codegen, const Variable_t* variable_list, const int variable_list_lenght, const Function_t* function_list, const int function_list_lenght) {
+static void _codegen_recurse(IRParserToken_t* node, CodeGen_t* codegen, const Variable_t* variable_list, const int variable_list_lenght, const Function_t* function_list, const int function_list_lenght) {
     if ((IRParserTokenType_t) node->token.type == IR_PAR_FUNCTION_DEFINITION) {
         log_msg(LP_DEBUG, "Now in context of a function");
         codegen->context.context = CT_FUNCTION_BODY;
     }
+    if ((IRParserTokenType_t) node->token.type == IR_PAR_SCOPEEND) {
+        log_msg(LP_DEBUG, "Now in global context");
+        codegen->context.context = CT_GLOBAL;
+    }
     for (int i = 0; i < node->child_count; i++) {
-        ir_codegen_recurse(node->child[i], codegen, variable_list, variable_list_lenght, function_list, function_list_lenght);
+        _codegen_recurse(node->child[i], codegen, variable_list, variable_list_lenght, function_list, function_list_lenght);
     }
     return;
 }
@@ -317,14 +320,6 @@ char* ir_codegen(IRParserToken_t** roots, int parser_root_count, const Variable_
 
     // Context object, to keep track of stuff like, are we in a function, or outside, function modifiers, and whatnot
     // TODO
-
-    for (int i = 0; i < variable_list_lenght; i++) {
-        log_msg(LP_DEBUG, "%s (%d)", variable_list[i].name, variable_list[i].scope_index);
-    }
-
-    for (int i = 0; i < function_list_lenght; i++) {
-        log_msg(LP_DEBUG, "%s (%d)", function_list[i].name, function_list[i].scope_index);
-    }
     
     char* assembly = malloc(128);
     long assembly_size = 128;
@@ -340,7 +335,7 @@ char* ir_codegen(IRParserToken_t** roots, int parser_root_count, const Variable_
 
     for (int i = 0; i < parser_root_count; i++) {
         // do recursion here, keeping context through pointer
-        ir_codegen_recurse(roots[i], &codegen, variable_list, variable_list_lenght, function_list, function_list_lenght);
+        _codegen_recurse(roots[i], &codegen, variable_list, variable_list_lenght, function_list, function_list_lenght);
     }
 
     (void) roots;
@@ -376,7 +371,7 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
                         __LINE__
                     );
                 }
-                show_error_in_syntax_ext(parse[i], parse[i], &last_line_shown, &last_column_shown, 1, i > 0);
+                _show_error_in_syntax_ext(parse[i], parse[i], &last_line_shown, &last_column_shown, 1, i > 0);
                 invalid = 1;
         }
     }

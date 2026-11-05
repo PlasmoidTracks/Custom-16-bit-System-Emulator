@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+#include "compiler/ir/ir_parser.h"
+
 typedef enum {
     IRCO_POSITION_INDEPENDENT_CODE = 0001, 
     IRCO_ADD_PREAMBLE = 0002, 
@@ -31,6 +33,70 @@ typedef struct IRIdentifier_t {
     int initialized;
     int identifier_index;
 } IRIdentifier_t;
+
+typedef enum {
+    STACK       = 0001, 
+    STATIC      = 0002, 
+    VOLATILE    = 0004, 
+    REGISTER    = 0010, 
+    MMIO        = 0020, 
+    TEMP        = 0040, 
+    AT          = 0100, 
+    PADALIGN    = 0200, 
+} VariableModifier_t;
+
+typedef enum {
+    PERILOGUE   = 0001, 
+    ATOMIC      = 0002, 
+    REENTRANT   = 0004, 
+    INTERRUPT   = 0010, 
+    ADDRESS     = 0020, 
+    LOCAL       = 0040, 
+    ALIGN       = 0100, 
+} FunctionModifier_t;
+
+typedef struct Variable_t {
+    IRParserToken_t* token; // hold what? Parent Statement?
+    VariableModifier_t modifier;
+    int at;
+    int padalign;
+    char* name;
+    int size;
+    int scope_index;    // -1 is global
+    union {
+        int offset;     // for stack variables
+        int address;    // for static variables
+    };
+} Variable_t;
+
+typedef struct {
+    IRParserToken_t* token; // hold what? Parent Statement?
+    FunctionModifier_t modifier;
+    int interrupt;
+    int align;
+    char* name;
+    int scope_index;        // same as the variables scope_index for identification/linking purposes
+    // epilogue size (how many bytes in the epilogue ends and function body starts)
+    // memory layout...?
+} Function_t;
+
+typedef enum {
+    CT_FUNCTION_BODY
+} ContextType_t;
+
+
+typedef struct {
+    IRParserToken_t* parent;        // temporary, will change
+    ContextType_t context;
+} CodeGenContext_t;
+
+typedef struct {
+    char* assembly;             // the whole assembly script
+    long allocated;             // the amount of allocated memory for 'char* assembly'
+    long index;                 // the current "cursor" position
+    CodeGenContext_t context;   // preserved context between codegen sections
+    int tmp;
+} CodeGen_t;
 
 
 extern IRIdentifier_t ir_identifier[IR_MAX_DEPTH][IR_MAX_IDENT];

@@ -10,69 +10,9 @@
 
 #include "compiler/asm/assembler.h"
 
-#include "compiler/ir/ir_parser.h"
 #include "compiler/ir/ir_token_name_table.h"
 #include "compiler/ir/ir_lexer.h"
 #include "compiler/ir/ir_compiler.h"
-
-
-typedef enum {
-    STACK       = 0001, 
-    STATIC      = 0002, 
-    VOLATILE    = 0004, 
-    REGISTER    = 0010, 
-    MMIO        = 0020, 
-    TEMP        = 0040, 
-    AT          = 0100, 
-    PADALIGN    = 0200, 
-} VariableModifier_t;
-
-typedef enum {
-    PERILOGUE   = 0001, 
-    ATOMIC      = 0002, 
-    REENTRANT   = 0004, 
-    INTERRUPT   = 0010, 
-    ADDRESS     = 0020, 
-    LOCAL       = 0040, 
-    ALIGN       = 0100, 
-} FunctionModifier_t;
-
-
-typedef struct Variable_t {
-    IRParserToken_t* token; // hold what? Parent Statement?
-    VariableModifier_t modifier;
-    int at;
-    int padalign;
-    char* name;
-    int size;
-    int scope_index;    // -1 is global
-    union {
-        int offset;     // for stack variables
-        int address;    // for static variables
-    };
-} Variable_t;
-
-typedef struct {
-    IRParserToken_t* token; // hold what? Parent Statement?
-    FunctionModifier_t modifier;
-    int interrupt;
-    int align;
-    char* name;
-    // epilogue size (how many bytes in the epilogue ends and function body starts)
-    // memory layout...?
-} Function_t;
-
-
-typedef struct {
-    IRParserToken_t* parent;        // temporary, will change
-} CodeGenContext_t;
-
-typedef struct {
-    char* assembly;             // the whole assembly script
-    long allocated;             // the amount of allocated memory for 'char* assembly'
-    long index;                 // the current "cursor" position
-    CodeGenContext_t context;   // preserved context between codegen sections
-} CodeGen_t;
 
 
 static void _get_lines(IRParserToken_t* root, unsigned int* first_line, unsigned int* last_line) {
@@ -299,7 +239,6 @@ static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_lis
                 break;
         }
 
-        int scope_index = inside_function_definition ? (*scope_index_ptr) : -1;
         //log_msg(LP_DEBUG, "tm:%.4x, n:%s, s:%d, si:%d, v:%d, at:%.4x", modifier, name, size, scope_index, vla, at);
 
         Variable_t variable = {
@@ -308,7 +247,7 @@ static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_lis
             .modifier = modifier, 
             .name = name, 
             .size = size, 
-            .scope_index = scope_index, 
+            .scope_index = inside_function_definition ? (*scope_index_ptr) : -1, 
         };
 
         list_append((void*) variable_list_ptr, variable_list_length_ptr, sizeof(Variable_t), &variable);
@@ -322,12 +261,14 @@ static void _ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_lis
 }
 
 
-static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, FunctionModifier_t modifier, int interrupt, int align) {
+static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, FunctionModifier_t modifier, int interrupt, int align, int* scope_index_ptr) {
 
     if ((IRParserTokenType_t) AST->token.type == IR_PAR_FUNCTION_DEFINITION) {
+        (*scope_index_ptr) ++;
+
         if (AST->variant == 2) {
             FunctionModifier_t fetched_modifier = ir_prepass_function_declaration_get_type_definition(AST->child[0], &interrupt, &align);
-            _ir_prepass_function(AST->child[1], function_list_ptr, function_list_length_ptr, fetched_modifier, interrupt, align);
+            _ir_prepass_function(AST->child[1], function_list_ptr, function_list_length_ptr, fetched_modifier, interrupt, align, scope_index_ptr);
         } else {
             char* name = AST->child[0]->token.raw;
 
@@ -337,6 +278,7 @@ static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_lis
                 .name = name, 
                 .interrupt = interrupt, 
                 .align = align, 
+                .scope_index = (*scope_index_ptr), 
             };
 
             list_append((void*) function_list_ptr, function_list_length_ptr, sizeof(Function_t), &function);
@@ -346,7 +288,7 @@ static void _ir_prepass_function(IRParserToken_t* AST, Function_t** function_lis
     }
 
     for (int i = 0; i < AST->child_count; i++) {
-        _ir_prepass_function(AST->child[i], function_list_ptr, function_list_length_ptr, 0, -1, -1);
+        _ir_prepass_function(AST->child[i], function_list_ptr, function_list_length_ptr, 0, -1, -1, scope_index_ptr);
     }
 }
 
@@ -355,30 +297,50 @@ void ir_prepass_variable(IRParserToken_t* AST, Variable_t** variable_list_ptr, i
     _ir_prepass_variable(AST, variable_list_ptr, variable_list_length_ptr, 0, scope_index_ptr);
 }
 
-void ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr) {
-    _ir_prepass_function(AST, function_list_ptr, function_list_length_ptr, 0, -1, -1);
+void ir_prepass_function(IRParserToken_t* AST, Function_t** function_list_ptr, int* function_list_length_ptr, int* scope_index_ptr) {
+    _ir_prepass_function(AST, function_list_ptr, function_list_length_ptr, 0, -1, -1, scope_index_ptr);
 }
 
 
+void ir_codegen_recurse(IRParserToken_t* node, CodeGen_t* codegen, const Variable_t* variable_list, const int variable_list_lenght, const Function_t* function_list, const int function_list_lenght) {
+    if ((IRParserTokenType_t) node->token.type == IR_PAR_FUNCTION_DEFINITION) {
+        log_msg(LP_DEBUG, "Now in context of a function");
+        codegen->context.context = CT_FUNCTION_BODY;
+    }
+    for (int i = 0; i < node->child_count; i++) {
+        ir_codegen_recurse(node->child[i], codegen, variable_list, variable_list_lenght, function_list, function_list_lenght);
+    }
+    return;
+}
 
-char* ir_codegen(IRParserToken_t** roots, int parser_root_count) {
+char* ir_codegen(IRParserToken_t** roots, int parser_root_count, const Variable_t* variable_list, const int variable_list_lenght, const Function_t* function_list, const int function_list_lenght) {
 
     // Context object, to keep track of stuff like, are we in a function, or outside, function modifiers, and whatnot
     // TODO
+
+    for (int i = 0; i < variable_list_lenght; i++) {
+        log_msg(LP_DEBUG, "%s (%d)", variable_list[i].name, variable_list[i].scope_index);
+    }
+
+    for (int i = 0; i < function_list_lenght; i++) {
+        log_msg(LP_DEBUG, "%s (%d)", function_list[i].name, function_list[i].scope_index);
+    }
     
     char* assembly = malloc(128);
     long assembly_size = 128;
     sprintf(assembly, "hlt\n");
 
     CodeGen_t codegen = {
-        assembly = NULL, 
+        .assembly = NULL, 
         .allocated = 0, 
         .index = 0, 
-        .context = (CodeGenContext_t) {0}
+        .context = (CodeGenContext_t) {0}, 
+        .tmp = 0
     };
 
     for (int i = 0; i < parser_root_count; i++) {
-        
+        // do recursion here, keeping context through pointer
+        ir_codegen_recurse(roots[i], &codegen, variable_list, variable_list_lenght, function_list, function_list_lenght);
     }
 
     (void) roots;
@@ -521,8 +483,9 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
     // Prepass, collecting all functions and their modifiers
     Function_t* function_list = NULL;
     int function_list_lenght = 0;
+    int scope_index_ptr = -1;
     for (int i = 0; i < parser_root_count; i++) {
-        ir_prepass_function(parse[i], &function_list, &function_list_lenght);
+        ir_prepass_function(parse[i], &function_list, &function_list_lenght, &scope_index_ptr);
     }
 
     for (int i = 0; i < function_list_lenght; i++) {
@@ -568,9 +531,9 @@ char* ir_compile(char* source, long source_length, const char* const source_iden
     if (error) return NULL;
 
     // So all offsets are stored, VLAs are tracked, type modifiers set, statics delegated and indexed, etc. required files, 
-    
+
     // codegen
-    char* binary = ir_codegen(parse, parser_root_count);
+    char* binary = ir_codegen(parse, parser_root_count, variable_list, variable_list_lenght, function_list, function_list_lenght);
     if (!binary) {
         log_msg(LP_ERROR, "\"%s\" - binary is NULL [%s:%d]", source_identifier, __FILE__, __LINE__);
         return NULL;

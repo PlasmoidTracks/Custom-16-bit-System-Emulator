@@ -18,6 +18,7 @@ compile_commands.json
 *.exp
 *.opt
 *.ccan
+*.pre
 
 # Ignore editor/IDE folders
 .vscode/

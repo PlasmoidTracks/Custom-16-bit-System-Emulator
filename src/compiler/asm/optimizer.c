@@ -72,7 +72,7 @@ static int is_register_offset_admx(CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     return result;
 }
 
-static int register_offset_admx_contains_admr_register(CPU_EXTENDED_ADDRESSING_MODE_t admx, CPU_REDUCED_ADDRESSING_MODE_t admr) {
+static int register_offset_admx_contains_admr_register(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
     int result = 0;
     result |= (admr == ADMR_R0 && admx == ADMX_IND_R0_OFFSET16);
     result |= (admr == ADMR_R1 && admx == ADMX_IND_R1_OFFSET16);
@@ -246,12 +246,12 @@ char* optimizer_compile(char* content) {
                                 (admr == ADMR_R0 && instruction[j].admr == ADMR_IND_R0) ||
                                 is_same_adm(admr, instruction[j].admx) ||
                                 (instruction[j].admx == ADMX_IMM16 && instruction[j].expression[2].tokens[0].type == TT_LABEL) ||
-                                (instruction[j].admr == admr && (is_same_indirect_adm(admr, instruction[j].admx) || register_offset_admx_contains_admr_register(instruction[j].admx, admr))) ||
+                                (instruction[j].admr == admr && (is_same_indirect_adm(admr, instruction[j].admx) || register_offset_admx_contains_admr_register(admr, instruction[j].admx))) ||
                                 instruction[j].instruction == HLT ||
                                 (is_arithmetic_operation(instruction[j].instruction) && instruction[j].admr == admr) ||
-                                register_offset_admx_contains_admr_register(instruction[j].admx, admr)
+                                register_offset_admx_contains_admr_register(admr, instruction[j].admx)
                             ) {
-                                    break;
+                                break;
                             }
                             if (instruction[j].instruction == MOV || instruction[j].instruction == LEA) {
                                 if (instruction[j].admr == admr) {
@@ -435,6 +435,7 @@ char* optimizer_compile(char* content) {
                         instruction[i + 1].expression[2].type = instruction[i].expression[2].type;
                         for (int j = 0; j < instruction[i].expression[2].token_count; j++) {
                             instruction[i + 1].expression[2].tokens[j].type = instruction[i].expression[2].tokens[j].type;
+                            memcpy(instruction[i + 1].expression[2].tokens[j].raw, instruction[i].expression[2].tokens[j].raw, 64);
                         }
                         instruction[i + 1].admx = instruction[i].admx;
                         remove_instruction(instruction, &instruction_count, i);
@@ -786,7 +787,7 @@ char* optimizer_compile(char* content) {
                 if (instruction[i].instruction == LEA               // lea
                     && is_register_admr(instruction[i].admr)        // rN
                     && is_register_offset_admx(instruction[i].admx) // [$x + rO]
-                    && register_offset_admx_contains_admr_register(instruction[i + 1].admx, instruction[i].admr)    // lea -rN-, [...] == lea rM, [$y + -rN-]
+                    && register_offset_admx_contains_admr_register(instruction[i].admr, instruction[i + 1].admx)    // lea -rN-, [...] == lea rM, [$y + -rN-]
                     && instruction[i].admr == instruction[i + 2].admr   // lea -rN-, [...] == mov -rN-, rM
                     && is_same_adm(instruction[i + 1].admr, instruction[i + 2].admx)    // lea -rM-, [...] == mov rN, -rM-
                     && instruction[i + 1].admr == instruction[i + 3].admr
@@ -829,11 +830,11 @@ char* optimizer_compile(char* content) {
                                 ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && instruction[j].admr == admr) ||
                                 instruction_encoding[instruction[j].instruction].is_jump_instruction ||
                                 (instruction[j].admx == ADMX_IMM16 && instruction[j].expression[2].tokens[0].type == TT_LABEL) ||
-                                (instruction[j].admr == admr && (is_same_indirect_adm(admr, instruction[j].admx) || register_offset_admx_contains_admr_register(instruction[j].admx, admr))) ||
+                                (instruction[j].admr == admr && (is_same_indirect_adm(admr, instruction[j].admx) || register_offset_admx_contains_admr_register(admr, instruction[j].admx))) ||
                                 instruction[j].instruction == HLT ||
                                 (is_arithmetic_operation(instruction[j].instruction) && instruction[j].admr == admr) ||
                                 (is_arithmetic_operation(instruction[j].instruction) && is_same_adm(instruction[j].admr, instruction[i].admx)) ||
-                                register_offset_admx_contains_admr_register(instruction[j].admx, admr) || 
+                                register_offset_admx_contains_admr_register(admr, instruction[j].admx) || 
                                 ((instruction[j].instruction == MOV || instruction[j].instruction == LEA) && is_same_adm(instruction[j].admr, instruction[i].admx)) ||
                                 (is_move_operator(instruction[j].instruction) && instruction[j].admr == admr)
                             ) {
@@ -850,7 +851,7 @@ char* optimizer_compile(char* content) {
                                         if (
                                             is_same_adm(admr, instruction[k].admx) ||
                                             is_same_indirect_adm(admr, instruction[k].admx) ||
-                                            register_offset_admx_contains_admr_register(instruction[k].admx, admr) ||
+                                            register_offset_admx_contains_admr_register(admr, instruction[k].admx) ||
                                             instruction[k].instruction == CALL ||
                                             instruction[k].instruction == RET ||
                                             instruction[k].instruction == HLT || 

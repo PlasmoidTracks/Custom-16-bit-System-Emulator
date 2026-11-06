@@ -263,7 +263,11 @@ int parse_immediate(const char text[]) {
         return bf16_from_float(strtof(&text[1], NULL));
     }
     if (text[0] == 'l') {
-        return fi16_from_long_long(strtof(&text[1], NULL));
+        float value = strtof(&text[1], NULL);
+        if (value == -0.0) {
+            return 0x8000;
+        }
+        return fi16_from_long_long((int64_t) value);
     }
     if (text[0] == 'i') {
         return strtol(&text[1], NULL, 10);

@@ -27,6 +27,18 @@ static int is_same_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSI
     result |= (admr == ADMR_R3 && admx == ADMX_R3);
     result |= (admr == ADMR_SP && admx == ADMX_SP);
     result |= (admr == ADMR_IND_R0 && admx == ADMX_IND_R0);
+    result |= (admr == ADMR_IND16 && admx == ADMX_IND16);
+    return result;
+}
+
+static int is_same_register_adm(CPU_REDUCED_ADDRESSING_MODE_t admr, CPU_EXTENDED_ADDRESSING_MODE_t admx) {
+    int result = 0;
+    result |= (admr == ADMR_R0 && admx == ADMX_R0);
+    result |= (admr == ADMR_R1 && admx == ADMX_R1);
+    result |= (admr == ADMR_R2 && admx == ADMX_R2);
+    result |= (admr == ADMR_R3 && admx == ADMX_R3);
+    result |= (admr == ADMR_SP && admx == ADMX_SP);
+    result |= (admr == ADMR_IND_R0 && admx == ADMX_IND_R0);
     return result;
 }
 
@@ -147,6 +159,60 @@ static int is_move_operator(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr == CMOVNAO;
     result |= instr == CMOVMI;
     result |= instr == CMOVNMI;
+    return result;
+}
+
+static int is_jump_operator(CPU_INSTRUCTION_MNEMONIC_t instr) {
+    int result = 0;
+    result |= instr == JAO;
+    result |= instr == JDL;
+    result |= instr == JFL;
+    result |= instr == JL;
+    result |= instr == JLL;
+    result |= instr == JMP;
+    result |= instr == JNAO;
+    result |= instr == JNDL;
+    result |= instr == JNFL;
+    result |= instr == JNL;
+    result |= instr == JNLL;
+    result |= instr == JNUL;
+    result |= instr == JNAO;
+    result |= instr == JNDL;
+    result |= instr == JNZ;
+    result |= instr == JUL;
+    result |= instr == JZ;
+    return result;
+}
+
+static int is_indirect_admr(CPU_REDUCED_ADDRESSING_MODE_t admr) {
+    return admr == ADMR_IND16 || admr == ADMR_IND_R0;
+}
+
+
+static int is_status_checking_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
+    int result = 0;
+    result |= instr >= JZ && instr <= JNAO;
+    result |= instr >= RJZ && instr <= RJNAO;
+    result |= instr >= CMOVZ && instr <= CMOVNMI;
+    return result;
+}
+
+static int is_updating_status_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
+    int result = 0;
+    result |= instr >= CLZ && instr <= SEMI;
+    result |= instr == CMP;
+    result |= instr == TST;
+    return result;
+}
+
+static int is_pc_changing_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
+    int result = 0;
+    result |= instr >= JMP && instr <= JNAO;
+    result |= instr >= RJMP && instr <= RJNAO;
+    result |= instr == CALL;
+    result |= instr == RCALL;
+    result |= instr == RET;
+    result |= instr == INT;
     return result;
 }
 
@@ -338,13 +404,16 @@ char* optimizer_compile(char* content) {
             // (removed)
             if (i < instruction_count - 1) {
                 if (instruction[i].instruction == MOV && instruction[i + 1].instruction == MOV) {
-                    if (is_same_adm(instruction[i].admr, instruction[i + 1].admx) && is_same_adm(instruction[i + 1].admr, instruction[i].admx)) {
-                        remove_instruction(instruction, &instruction_count, i + 1);
+                    if (is_register_admr(instruction[i].admr)) {
+                        if (is_same_adm(instruction[i].admr, instruction[i + 1].admx) && 
+                            is_same_adm(instruction[i + 1].admr, instruction[i].admx)) {
+                                remove_instruction(instruction, &instruction_count, i + 1);
 
-                        #ifdef OPT_DEBUG
-                            log_msg(LP_DEBUG, "Optimizer: applied {mov rN, rM; mov rM, rN} => {mov rN, rM; -} [%s:%d]", __FILE__, __LINE__);
-                        #endif // OPT_DEBUG
-                        changes_applied = 1;
+                                #ifdef OPT_DEBUG
+                                    log_msg(LP_DEBUG, "Optimizer: applied {mov rN, rM; mov rM, rN} => {mov rN, rM; -} [%s:%d]", __FILE__, __LINE__);
+                                #endif // OPT_DEBUG
+                                changes_applied = 1;
+                        }
                     }
                 }
             }
@@ -429,7 +498,10 @@ char* optimizer_compile(char* content) {
                     instruction[i + 1].instruction == OR ||
                     instruction[i + 1].instruction == XOR
                 ) && instruction[i + 2].instruction == MOV) {
-                    if (instruction[i].admr == instruction[i + 2].admr && is_same_adm(instruction[i].admr, instruction[i + 1].admx)) {
+                    if (instruction[i].admr == instruction[i + 2].admr && is_same_register_adm(instruction[i].admr, instruction[i + 1].admx)) {
+                        if (is_indirect_admr(instruction[i].admr) && instruction[i + 1].no_cache) {
+                            break;
+                        }
                         //log_msg(LP_DEBUG, "Optimizer: eliminated temporary register forwarding (line %d)", i);
                         instruction[i + 1].expression[2].token_count = instruction[i].expression[2].token_count;
                         instruction[i + 1].expression[2].type = instruction[i].expression[2].type;
@@ -916,7 +988,7 @@ char* optimizer_compile(char* content) {
             // =>
             // (removed)
             if (instruction[i].instruction == MOV) {
-                if (is_same_adm(instruction[i].admr, instruction[i].admx)) {
+                if (is_same_register_adm(instruction[i].admr, instruction[i].admx)) {
                     //log_msg(LP_DEBUG, "Optimizer: removed self assigning mov instruction (line %d)", i);
                     remove_instruction(instruction, &instruction_count, i);
                     i --;
@@ -1129,8 +1201,6 @@ char* optimizer_compile(char* content) {
                             instruction[i].admr == ADMR_R2 || instruction[i].admr == ADMR_R3 || 
                             instruction[i].admr == ADMR_SP) {
                             if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0 && string_is_immediate(instruction[i].expression[2].tokens[0].raw)) {
-                                // now also check if any conditional instruction is present before another statur-register changing operation is done
-                            
                                 //log_msg(LP_DEBUG, "Optimizer: removed redundant and operation (line %d)", i);
                                 remove_instruction(instruction, &instruction_count, i);
                                 i --;
@@ -1138,6 +1208,130 @@ char* optimizer_compile(char* content) {
                                 #ifdef OPT_DEBUG
                                     log_msg(LP_DEBUG, "Optimizer: applied {or x, 0} => {-} [%s:%d]", __FILE__, __LINE__);
                                 #endif // OPT_DEBUG
+                            }
+                        }
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+            // sub(f/d/l) rN, rN
+            // =>
+            // mov rN, 0 
+            // NOTE: This actually worsens performance and is only used for intermediate representations, for further optimizations. Luckily optimizable via xor-ing
+            if (instruction[i].instruction == SUB || instruction[i].instruction == SUBF || instruction[i].instruction == SUBD || instruction[i].instruction == SUBL) {
+                if (is_register_admr(instruction[i].admr)) {
+                    if (is_same_adm(instruction[i].admr, instruction[i].admx)) {
+                        //log_msg(LP_DEBUG, "Optimizer: replaced 0-mov with xor operation (rationale: reduce size of executable) (line %d)", i);
+                        sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
+                        sprintf(instruction[i].expression[2].tokens[0].raw, "0x0000");
+                        instruction[i].instruction = MOV;
+                        instruction[i].admx = ADMX_IMM16;
+                        changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {sub rN, rN} => {mov rN, 0} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+            // mul(f/d/l) rN, 0
+            // =>
+            // mov rN, 0 
+            if (instruction[i].instruction == MUL || instruction[i].instruction == MULF || instruction[i].instruction == MULD || instruction[i].instruction == MULL) {
+                if (instruction[i].admx == ADMX_IMM16) {
+                    if (is_register_admr(instruction[i].admr)) {
+                        if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0 && string_is_immediate(instruction[i].expression[2].tokens[0].raw)) {
+                            //log_msg(LP_DEBUG, "Optimizer: replaced 0-mov with xor operation (rationale: reduce size of executable) (line %d)", i);
+                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
+                            sprintf(instruction[i].expression[2].tokens[0].raw, "0x0000");
+                            instruction[i].instruction = MOV;
+                            instruction[i].admx = ADMX_IMM16;
+                            changes_applied = 1;
+                            #ifdef OPT_DEBUG
+                                log_msg(LP_DEBUG, "Optimizer: applied {sub rN, rN} => {mov rN, 0} [%s:%d]", __FILE__, __LINE__);
+                            #endif // OPT_DEBUG
+                        }
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+
+            // mul rN, 0x0002
+            // =>
+            // add rN, rN
+            if (instruction[i].instruction == MUL) {
+                if (is_register_admr(instruction[i].admr)) {
+                    if (instruction[i].admx == ADMX_IMM16) {
+                        if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0x0002) {
+                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[ADD].instruction_string);
+                            sprintf(instruction[i].expression[2].tokens[0].raw, "%s", instruction[i].expression[1].tokens[0].raw);
+                            instruction[i].instruction = ADD;
+                            instruction[i].admx = ADMX_R0 + instruction[i].admr - 1;
+                            changes_applied = 1;
+                            #ifdef OPT_DEBUG
+                                log_msg(LP_DEBUG, "Optimizer: applied {mul rN, 0x0002} => {add rN, rN} [%s:%d]", __FILE__, __LINE__);
+                            #endif // OPT_DEBUG
+                        }
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+
+            // jmp .L
+            // .L
+            // =>
+            // (removed)
+            if (i < instruction_count - 1) {
+                if (is_jump_operator(instruction[i].instruction)) {
+                    if (instruction[i].expression[1].tokens[0].type == TT_LABEL) {
+                        if (instruction[i + 1].expression[0].tokens[0].type == TT_LABEL) {
+                            if (strcmp(instruction[i].expression[1].tokens[0].raw, instruction[i + 1].expression[0].tokens[0].raw) == 0) {
+                                remove_instruction(instruction, &instruction_count, i);
+                                changes_applied = 1;
+                                #ifdef OPT_DEBUG
+                                    log_msg(LP_DEBUG, "Optimizer: applied {jmp .L; .L} => { - } [%s:%d]", __FILE__, __LINE__);
+                                #endif // OPT_DEBUG
+                            }
+                        }
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+
+            // jxx .L (conditional jump)
+            // mov x, y
+            // .L
+            // =>
+            // (removed)
+            // cmovxx x, y
+            // .L
+            if (i < instruction_count - 2) {
+                if (is_jump_operator(instruction[i].instruction)) {
+                    if (instruction[i].expression[1].tokens[0].type == TT_LABEL) {
+                        if (instruction[i + 1].instruction == MOV) {
+                            if (instruction[i + 2].expression[0].tokens[0].type == TT_LABEL) {
+                                if (strcmp(instruction[i].expression[1].tokens[0].raw, instruction[i + 2].expression[0].tokens[0].raw) == 0) {
+                                    char tmp[80];
+                                    if ((instruction[i].instruction - JZ) % 2 == 0) {
+                                        // here if jump was not negated
+                                        snprintf(tmp, 80, "cmovn%s", &instruction[i].expression[0].tokens[0].raw[1]);
+                                    } else {
+                                        // here if jump was negated
+                                        snprintf(tmp, 80, "cmov%s", &instruction[i].expression[0].tokens[0].raw[2]);
+                                    }
+                                    memcpy(instruction[i + 1].expression[0].tokens[0].raw, tmp, 64);
+                                    instruction[i + 1].instruction = CMOVZ + instruction[i].instruction - JZ;
+                                    remove_instruction(instruction, &instruction_count, i);
+                                    changes_applied = 1;
+                                    #ifdef OPT_DEBUG
+                                        log_msg(LP_DEBUG, "Optimizer: applied {jxx .L; mov x, y; .L} => { - ; cmovxx x, y; .L} [%s:%d]", __FILE__, __LINE__);
+                                    #endif // OPT_DEBUG
+                                }
                             }
                         }
                     }
@@ -1175,7 +1369,7 @@ char* optimizer_compile(char* content) {
             // mov r0, 0
             // =>
             // xor r0, r0 
-            // if no status register reads follow
+            // if no status register reads follow (Well, no, neither mov nor xor change SR)
             // Issue: It can cause more cache misses!
             if (instruction[i].instruction == MOV) {
                 if (instruction[i].admx == ADMX_IMM16) {

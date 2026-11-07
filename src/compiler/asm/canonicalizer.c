@@ -70,6 +70,10 @@ char* canonicalizer_compile(char* content) {
                 output = append_to_output(output, &output_len, ".code");
             } else if (instr.expression[0].type == EXPR_SEGMENT_DATA) {
                 output = append_to_output(output, &output_len, ".data");
+            } else if (instr.expression[0].type == EXPR_SECTION_START_NOCACHE) {
+                output = append_to_output(output, &output_len, ".start_nocache");
+            } else if (instr.expression[0].type == EXPR_SECTION_END_NOCACHE) {
+                output = append_to_output(output, &output_len, ".end_nocache");
             } else if (instr.expression[0].type == EXPR_INCBIN) {
                 output = append_to_output(output, &output_len, ".incbin ");
                 output = append_to_output(output, &output_len, instr.expression[0].tokens[1].raw);
@@ -315,6 +319,10 @@ char* canonicalizer_compile(char* content) {
                 } else {
                     if (instr.expression[j].type == EXPR_INSTRUCTION && instr.expression[j].token_count > 1 && instr.expression[j].tokens[1].type == TT_NOCACHE) {
                         output = append_to_output(output, &output_len, "%");
+                        output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
+                        output = append_to_output(output, &output_len, " ");
+                    } else if (instr.expression[j].type == EXPR_INSTRUCTION && instr.expression[j].token_count > 1 && instr.expression[j].tokens[1].type == TT_NONOCACHE) {
+                        output = append_to_output(output, &output_len, "#");
                         output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
                         output = append_to_output(output, &output_len, " ");
                     } else {

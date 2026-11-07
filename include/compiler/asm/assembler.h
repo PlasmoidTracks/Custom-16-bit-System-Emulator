@@ -42,6 +42,9 @@ typedef enum TokenType_t {
     TT_TEXT, 
     TT_STRING, 
     TT_NOCACHE, 
+    TT_NONOCACHE, 
+    TT_SECTION_START_NOCACHE, 
+    TT_SECTION_END_NOCACHE, 
     TT_DB, 
     TT_DW, 
 } TokenType_t;
@@ -62,6 +65,8 @@ typedef enum {
     EXPR_ADDRESS, 
     EXPR_STORE_ADDRESS, 
     EXPR_RESTORE_ADDRESS, 
+    EXPR_SECTION_START_NOCACHE, 
+    EXPR_SECTION_END_NOCACHE, 
     EXPR_PAD, 
     EXPR_DATA,
     EXPR_TEXT_DEFINITION, 

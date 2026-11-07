@@ -1447,6 +1447,10 @@ char* optimizer_compile(char* content) {
                     output = append_to_output(output, &output_len, "%");
                     output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
                     output = append_to_output(output, &output_len, " ");
+                } else if (instr.expression[j].type == EXPR_INSTRUCTION && instr.expression[j].token_count > 1 && instr.expression[j].tokens[1].type == TT_NONOCACHE) {
+                    output = append_to_output(output, &output_len, "#");
+                    output = append_to_output(output, &output_len, instr.expression[j].tokens[0].raw);
+                    output = append_to_output(output, &output_len, " ");
                 } else {
                     int tc = instr.expression[j].token_count;
                     for (int k = 0; k < tc; k++) {

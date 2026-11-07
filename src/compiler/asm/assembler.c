@@ -20,6 +20,7 @@ Label_t const_label[MAX_LABELS];
 
 int jump_label_index = 0;
 int const_label_index = 0;
+int nocache_section = 0;
 
 uint16_t stashed_address = 0x0000;
 int stash_calls = 0;        // +1 for every store and -1 for every restore. If the value ever goes beyond [0, 1], a warning is shown
@@ -50,6 +51,9 @@ const char* token_type_string[] = {
     [TT_TEXT]                       = "text",
     [TT_STRING]                     = "string",
     [TT_NOCACHE]                    = "nocache", 
+    [TT_NONOCACHE]                  = "nonocache", 
+    [TT_SECTION_START_NOCACHE]      = "section_start_nocache", 
+    [TT_SECTION_END_NOCACHE]        = "section_end_nocache", 
     [TT_DB]                         = "db", 
     [TT_DW]                         = "dw"
 };
@@ -70,6 +74,8 @@ const char* expression_type_string[] = {
     [EXPR_ADDRESS]                  = "address", 
     [EXPR_STORE_ADDRESS]            = "save_address", 
     [EXPR_RESTORE_ADDRESS]          = "restore_address", 
+    [EXPR_SECTION_START_NOCACHE]    = "start_nocache", 
+    [EXPR_SECTION_END_NOCACHE]      = "end_nocache", 
     [EXPR_PAD]                      = "pad", 
     [EXPR_DATA]                     = "data", 
     [EXPR_TEXT_DEFINITION]          = "text definition", 
@@ -80,6 +86,7 @@ const char* expression_type_string[] = {
 void assembler_reset(void) {
     jump_label_index = 0;
     const_label_index = 0;
+    nocache_section = 0;
 
     stashed_address = 0x0000;
     stash_calls = 0;
@@ -115,7 +122,7 @@ char** assembler_split_to_words(char* lines[], int* token_count) {
     int count = 0;
     int index = 0;
     while (lines[index]) {
-        char** line_token_string = split(lines[index], "\t, []%*", "[]%*");
+        char** line_token_string = split(lines[index], "\t, []%*#", "[]%*#");
         free(lines[index]);
         int index2 = 0;
         while (line_token_string[index2]) {
@@ -158,62 +165,66 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
     for (int i = 0; i < word_count; i++) {
         snprintf(token[i].raw, MAX_TOKEN_LENGTH, "%s", word[i]);
         token[i].type = -1;
-        if (word[i][0] == '.') {
-            if (strcmp(&word[i][1], "address") == 0) {
+        if (token[i].raw[0] == '.') {
+            if (strcmp(&token[i].raw[1], "address") == 0) {
                 token[i].type = TT_ADDRESS;
-            } else if (strcmp(&word[i][1], "store_address") == 0) {
+            } else if (strcmp(&token[i].raw[1], "store_address") == 0) {
                 token[i].type = TT_STORE_ADDRESS;
-            } else if (strcmp(&word[i][1], "restore_address") == 0) {
+            } else if (strcmp(&token[i].raw[1], "restore_address") == 0) {
                 token[i].type = TT_RESTORE_ADDRESS;
-            } else if (strcmp(&word[i][1], "pad") == 0) {
+            } else if (strcmp(&token[i].raw[1], "pad") == 0) {
                 token[i].type = TT_PAD;
-            } else if (strcmp(&word[i][1], "code") == 0) {
+            } else if (strcmp(&token[i].raw[1], "code") == 0) {
                 token[i].type = TT_SEGMENT_CODE;
-            } else if (strcmp(&word[i][1], "data") == 0) {
+            } else if (strcmp(&token[i].raw[1], "data") == 0) {
                 token[i].type = TT_SEGMENT_DATA;
-            } else if (strcmp(&word[i][1], "include") == 0) {
+            } else if (strcmp(&token[i].raw[1], "include") == 0) {
                 token[i].type = TT_INCLUDE;
-            } else if (strcmp(&word[i][1], "incbin") == 0) {
+            } else if (strcmp(&token[i].raw[1], "incbin") == 0) {
                 token[i].type = TT_INCBIN;
-            } else if (strcmp(&word[i][1], "text") == 0) {
+            } else if (strcmp(&token[i].raw[1], "text") == 0) {
                 token[i].type = TT_TEXT;
-            } else if (strcmp(&word[i][1], "reserve") == 0) {
+            } else if (strcmp(&token[i].raw[1], "reserve") == 0) {
                 token[i].type = TT_RESERVE;
-            } else if (strcmp(&word[i][1], "db") == 0) {
+            } else if (strcmp(&token[i].raw[1], "start_nocache") == 0) {
+                token[i].type = TT_SECTION_START_NOCACHE;
+            } else if (strcmp(&token[i].raw[1], "end_nocache") == 0) {
+                token[i].type = TT_SECTION_END_NOCACHE;
+            } else if (strcmp(&token[i].raw[1], "db") == 0) {
                 token[i].type = TT_DB;
-            } else if (strcmp(&word[i][1], "dw") == 0) {
+            } else if (strcmp(&token[i].raw[1], "dw") == 0) {
                 token[i].type = TT_DW;
             } else {
                 token[i].type = TT_LABEL;
             }
-        } else if (word[i][0] == '[') {
+        } else if (token[i].raw[0] == '[') {
             token[i].type = TT_BRACKET_OPEN;
-        } else if (word[i][0] == ']') {
+        } else if (token[i].raw[0] == ']') {
             token[i].type = TT_BRACKET_CLOSE;
-        } else if (string_is_asm_immediate(word[i]) || word[i][0] == '_') {
+        } else if (string_is_asm_immediate(token[i].raw) || token[i].raw[0] == '_') {
             token[i].type = TT_IMMEDIATE;
-        } else if (word[i][0] == '+') {
+        } else if (token[i].raw[0] == '+') {
             token[i].type = TT_PLUS;
-        } else if (word[i][0] == '*') {
+        } else if (token[i].raw[0] == '*') {
             token[i].type = TT_STAR;
-        } else if (word[i][0] == 'r' && contains(word[i][1], "0123")) {
+        } else if (token[i].raw[0] == 'r' && contains(token[i].raw[1], "0123")) {
             token[i].type = TT_REGISTER;
-        } else if (word[i][0] == 's' && word[i][1] == 'p') {
+        } else if (token[i].raw[0] == 's' && token[i].raw[1] == 'p') {
             token[i].type = TT_REGISTER;
-        } else if (word[i][0] == 'f' && word[i][1] == 'p') {
+        } else if (token[i].raw[0] == 'f' && token[i].raw[1] == 'p') {
             token[i].type = TT_REGISTER;
-        } else if (word[i][0] == 'p' && word[i][1] == 'c') {
+        } else if (token[i].raw[0] == 'p' && token[i].raw[1] == 'c') {
             token[i].type = TT_REGISTER;
-        } else if (string_is_string(word[i])) {
+        } else if (string_is_string(token[i].raw)) {
             token[i].type = TT_STRING;
         } else if (word[i][0] == '%' || strcmp(&word[i][0], "nc") == 0) {
             token[i].type = TT_NOCACHE;
+        } else if (word[i][0] == '#' || strcmp(&word[i][0], "c") == 0) {
+            token[i].type = TT_NONOCACHE;
         } else {
             token[i].type = TT_INSTRUCTION; // TODO: check if its really part of the mnemonic vocab
         }
-        //free(word[i]);
     }
-    //free(word);
 
     if (token_count) {
         *token_count = word_count;
@@ -506,6 +517,20 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression_index ++;
         }
 
+        // no-no-cache instruction
+        else if (token_index + 1 < token_count &&
+            tokens[token_index + 0].type == TT_NONOCACHE &&
+            tokens[token_index + 1].type == TT_INSTRUCTION) {
+
+                expression[expression_index].type = EXPR_INSTRUCTION;
+                // here no.no-cache modifier is token AFTER instruction
+                expression[expression_index].tokens[0] = tokens[token_index + 1];
+                expression[expression_index].tokens[1] = tokens[token_index + 0];
+                expression[expression_index].token_count = 2;
+                token_index += 2;
+                expression_index ++;
+        }
+
         // instruction
         else if (token_index + 0 < token_count &&
             tokens[token_index + 0].type == TT_INSTRUCTION) {
@@ -561,6 +586,28 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 expression[expression_index].tokens[1] = tokens[token_index + 1];
                 expression[expression_index].token_count = 2;
                 token_index += 2;
+                expression_index ++;
+        }
+
+        // .start_nocache
+        else if (token_index + 0 < token_count &&
+            tokens[token_index + 0].type == TT_SECTION_START_NOCACHE) {
+
+                expression[expression_index].type = EXPR_SECTION_START_NOCACHE;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
+                expression_index ++;
+        }
+
+        // .end_nocache
+        else if (token_index + 0 < token_count &&
+            tokens[token_index + 0].type == TT_SECTION_END_NOCACHE) {
+
+                expression[expression_index].type = EXPR_SECTION_END_NOCACHE;
+                expression[expression_index].tokens[0] = tokens[token_index];
+                expression[expression_index].token_count = 1;
+                token_index += 1;
                 expression_index ++;
         }
 
@@ -860,6 +907,22 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     instruction_index ++;
                     expression_index ++;
                     continue;
+                } else if (expression[expression_index].type == EXPR_SECTION_START_NOCACHE) {
+                    instruction_index ++;
+                    expression_index ++;
+                    if (nocache_section) {
+                        log_msg(LP_WARNING, "Parsing expressions: .start_nocache is already set. Setting it twice does nothing [%s:%d]", __FILE__, __LINE__);
+                    }
+                    nocache_section = 1;
+                    continue;
+                } else if (expression[expression_index].type == EXPR_SECTION_END_NOCACHE) {
+                    instruction_index ++;
+                    expression_index ++;
+                    if (!nocache_section) {
+                        log_msg(LP_WARNING, "Parsing expressions: .start_nocache is already unset. Unsetting it twice does nothing [%s:%d]", __FILE__, __LINE__);
+                    }
+                    nocache_section = 0;
+                    continue;
                 } else if (expression[expression_index].type == EXPR_INCBIN) {
                     log_msg(LP_ERROR, "Parsing expressions: .incbin may only be used within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
                     return NULL;
@@ -894,10 +957,15 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 return NULL;
             }
 
-            // Do a check for no-cache modifier
-            if (expression[expression_index].token_count > 1 && expression[expression_index].tokens[1].type == TT_NOCACHE) {
-                instruction[instruction_index].no_cache = 1;
-            } 
+            // Do a check for no-cache modifier, or nocache section active
+            if ((expression[expression_index].token_count > 1 && expression[expression_index].tokens[1].type == TT_NOCACHE) || nocache_section) {
+                    instruction[instruction_index].no_cache = 1;
+            }
+
+            // Do a check for no-no-cache modifier, during active nocache section
+            if ((expression[expression_index].token_count > 1 && expression[expression_index].tokens[1].type == TT_NONOCACHE) && nocache_section) {
+                    instruction[instruction_index].no_cache = 0;
+            }
 
             // 2. get instruction argument count
             int argument_count = instruction_encoding[instruction[instruction_index].instruction].argument_count;
@@ -1761,6 +1829,8 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
                 case EXPR_RESERVE:
                 case EXPR_INCBIN:
                 case EXPR_TEXT_DEFINITION:
+                case EXPR_SECTION_START_NOCACHE:
+                case EXPR_SECTION_END_NOCACHE:
                 case EXPR_DATA:
                 // etc.
                     break;
@@ -1865,21 +1935,17 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
             //log_msg(LP_DEBUG, "is_address");
             continue;
         }
-        if (instruction[instruction_index].expression[0].type == EXPR_SEGMENT_CODE) {
+        if (instruction[instruction_index].expression[0].type == EXPR_SEGMENT_CODE ||
+            instruction[instruction_index].expression[0].type == EXPR_SEGMENT_DATA ||
+            instruction[instruction_index].expression[0].tokens[0].type == TT_LABEL ||
+            instruction[instruction_index].expression[0].type == EXPR_SECTION_START_NOCACHE ||
+            instruction[instruction_index].expression[0].type == EXPR_SECTION_END_NOCACHE
+        ) {
             instruction_index ++;
             //log_msg(LP_DEBUG, "seg code");
             continue;
         } 
-        if (instruction[instruction_index].expression[0].type == EXPR_SEGMENT_DATA) {
-            instruction_index ++;
-            //log_msg(LP_DEBUG, "seg data");
-            continue;
-        } 
-        if (instruction[instruction_index].expression[0].tokens[0].type == TT_LABEL) {
-            instruction_index ++;
-            //log_msg(LP_DEBUG, "label");
-            continue;
-        }
+        
         if (index <= SEGMENT_CODE_END || (index > SEGMENT_CODE_END && (options & AO_PAD_SEGMENT_BREACH_WITH_ZERO))) {
             if (instruction[instruction_index].expression[0].type == EXPR_DEREF_LABEL) {
                 error |= safe_write(bin, index++, instruction[instruction_index].raw_data & 0x00ff, written, options);

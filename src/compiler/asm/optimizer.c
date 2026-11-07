@@ -194,6 +194,7 @@ static int is_status_checking_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr >= JZ && instr <= JNAO;
     result |= instr >= RJZ && instr <= RJNAO;
     result |= instr >= CMOVZ && instr <= CMOVNMI;
+    result |= instr == PUSHSR;
     return result;
 }
 
@@ -202,6 +203,7 @@ static int is_updating_status_operation(CPU_INSTRUCTION_MNEMONIC_t instr) {
     result |= instr >= CLZ && instr <= SEMI;
     result |= instr == CMP;
     result |= instr == TST;
+    result |= instr == POPSR;
     return result;
 }
 
@@ -690,30 +692,55 @@ char* optimizer_compile(char* content) {
 
                         sprintf(instruction[i].expression[2].tokens[0].raw, "$%.4X", (uint16_t) value);
                         
-                        Instruction_t new_instruction = {
-                            .instruction = SEAO, 
-                            .address = instruction[i].address, 
-                            .admr = ADMR_NONE, 
-                            .admx = ADMX_NONE, 
-                            .argument_bytes = 0, 
-                            .expression_count = 1, 
-                            .is_address = 0, 
-                            .is_raw_data = 0, 
-                            .expression = {
-                                (Expression_t) {
-                                    .token_count = 1, 
-                                    .type = EXPR_INSTRUCTION, 
-                                    .tokens = {
-                                        (Token_t) {
-                                            .type = TT_INSTRUCTION, 
-                                            .raw = "seao"
+                        
+                        remove_instruction(instruction, &instruction_count, i + 1);
+                        if (set_AO) {
+                            Instruction_t new_instruction = {
+                                .instruction = SEAO, 
+                                .address = instruction[i].address, 
+                                .admr = ADMR_NONE, 
+                                .admx = ADMX_NONE, 
+                                .argument_bytes = 0, 
+                                .expression_count = 1, 
+                                .is_address = 0, 
+                                .is_raw_data = 0, 
+                                .expression = {
+                                    (Expression_t) {
+                                        .token_count = 1, 
+                                        .type = EXPR_INSTRUCTION, 
+                                        .tokens = {
+                                            (Token_t) {
+                                                .type = TT_INSTRUCTION, 
+                                                .raw = "seao"
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        };
-                        remove_instruction(instruction, &instruction_count, i + 1);
-                        if (set_AO) {
+                            };
+                            insert_instruction(&instruction, new_instruction, &instruction_count, i + 1);
+                        } else {
+                            Instruction_t new_instruction = {
+                                .instruction = CLAO, 
+                                .address = instruction[i].address, 
+                                .admr = ADMR_NONE, 
+                                .admx = ADMX_NONE, 
+                                .argument_bytes = 0, 
+                                .expression_count = 1, 
+                                .is_address = 0, 
+                                .is_raw_data = 0, 
+                                .expression = {
+                                    (Expression_t) {
+                                        .token_count = 1, 
+                                        .type = EXPR_INSTRUCTION, 
+                                        .tokens = {
+                                            (Token_t) {
+                                                .type = TT_INSTRUCTION, 
+                                                .raw = "clao"
+                                            }
+                                        }
+                                    }
+                                }
+                            };
                             insert_instruction(&instruction, new_instruction, &instruction_count, i + 1);
                         }
                         changes_applied = 1;
@@ -1227,6 +1254,31 @@ char* optimizer_compile(char* content) {
                         sprintf(instruction[i].expression[2].tokens[0].raw, "0x0000");
                         instruction[i].instruction = MOV;
                         instruction[i].admx = ADMX_IMM16;
+
+                        Instruction_t new_instruction = {
+                            .instruction = CLAO, 
+                            .address = instruction[i].address, 
+                            .admr = ADMR_NONE, 
+                            .admx = ADMX_NONE, 
+                            .argument_bytes = 0, 
+                            .expression_count = 1, 
+                            .is_address = 0, 
+                            .is_raw_data = 0, 
+                            .expression = {
+                                (Expression_t) {
+                                    .token_count = 1, 
+                                    .type = EXPR_INSTRUCTION, 
+                                    .tokens = {
+                                        (Token_t) {
+                                            .type = TT_INSTRUCTION, 
+                                            .raw = "clao"
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        insert_instruction(&instruction, new_instruction, &instruction_count, i + 1);
+
                         changes_applied = 1;
                         #ifdef OPT_DEBUG
                             log_msg(LP_DEBUG, "Optimizer: applied {sub rN, rN} => {mov rN, 0} [%s:%d]", __FILE__, __LINE__);
@@ -1334,6 +1386,118 @@ char* optimizer_compile(char* content) {
                                 }
                             }
                         }
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+            // sexx
+            // ... (no status read)
+            // clxx
+            // =>
+            // (remove)
+            // ...
+            // clxx
+            if (instruction[i].instruction >= CLZ && instruction[i].instruction <= SEMI) {
+                // now check for next status instr. and abort on jumps, or status changes
+                int j = i + 1;
+                int abort = 0;
+                while (j < instruction_count) {
+                    if (instruction[j].instruction >= CLZ && instruction[j].instruction <= SEMI) {
+                        break;
+                    }
+                    if (is_status_checking_operation(instruction[j].instruction)) {
+                        abort = 1;
+                        break;
+                    }
+                    if (is_updating_status_operation(instruction[j].instruction)) {
+                        abort = 1;
+                        break;
+                    }
+                    j ++;
+                }
+                if (!abort) {
+                    int cond = 0;
+                    if ((instruction[i].instruction % 2) != (instruction[j].instruction % 2)) {
+                        if ((instruction[i].instruction % 2) == (CLZ % 2) && instruction[j].instruction == instruction[i].instruction + 1) {
+                            // now we know instruction i is a clear operation and j needs to be one higher to be the corresponding set instruction
+                            cond = 1;
+                        }
+                        if ((instruction[i].instruction % 2) == (SEZ % 2) && instruction[j].instruction == instruction[i].instruction - 1) {
+                            // now we know instruction i is a clear operation and j needs to be one lower to be the corresponding set instruction
+                            cond = 1;
+                        }
+                    }
+                    if (cond) {
+                        remove_instruction(instruction, &instruction_count, i);
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {sexx; ...; clxx} => {-; ...; clxx} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
+                    }
+                }
+            }
+            if (changes_applied) break;
+
+
+            // sexx/clxx
+            // ... (no status read or write)
+            // cmovxx x, y ; can be negated
+            // =>
+            // sexx/clxx
+            // ...
+            // mov x, y / (removed) ; depending on combination
+            if (instruction[i].instruction >= CLZ && instruction[i].instruction <= SEMI) {
+                // now check for next status instr. and abort on jumps, or status changes
+                int j = i + 1;
+                int abort = 0;
+                while (j < instruction_count) {
+                    if (instruction[j].instruction >= CMOVZ && instruction[j].instruction <= CMOVNMI) {
+                        break;
+                    }
+                    if (is_status_checking_operation(instruction[j].instruction) ||
+                        is_updating_status_operation(instruction[j].instruction) ||
+                        is_pc_changing_operation(instruction[j].instruction)
+                    ) {
+                        abort = 1;
+                        break;
+                    }
+                    j ++;
+                }
+                if (!abort) {
+
+                    int cond = 0;
+                    if ((instruction[i].instruction % 2) == (CLZ % 2)) {
+                        // now we know instruction i is a clear operation
+                        if (instruction[j].instruction - CMOVZ == instruction[i].instruction - CLZ || 
+                            instruction[j].instruction - CMOVZ == instruction[i].instruction - CLZ + 1
+                        ) {
+                            // now we know the set/clean and cmov instruction use the same flag
+                            // and since it IS a clear operation, we dont have to worry about the boundaries to other flag types
+                            cond = 1;
+                        }
+                    } else {
+                        // now we know instruction i is a set operation
+                        if (instruction[j].instruction - CMOVZ == instruction[i].instruction - CLZ || 
+                            instruction[j].instruction - CMOVZ == instruction[i].instruction - CLZ - 1
+                        ) {
+                            // now we know the set/clean and cmov instruction use the same flag
+                            // and since it IS a set operation, we dont have to worry about the boundaries to other flag types
+                            cond = 1;
+                        }
+                    }
+                    if (cond) {
+                        if (!(((instruction[i].instruction - CLZ) % 2) == ((instruction[j].instruction - CMOVZ) % 2))) {
+                            // meaning ex.: clz followed by cmovz, which would never be true, thus we can remove cmov
+                            remove_instruction(instruction, &instruction_count, j);
+                        } else {
+                            // meaning ex.: sez followed by cmovz or clz followed by cmovnz, which is always true, thus we can replace the cmov with a mov
+                            sprintf(instruction[j].expression[0].tokens[0].raw, "%s", instruction_encoding[MOV].instruction_string);
+                            instruction[j].instruction = MOV;
+                        }
+                        changes_applied = 1;
+                        #ifdef OPT_DEBUG
+                            log_msg(LP_DEBUG, "Optimizer: applied {sexx/clxx; ...; cmovxx} => {sexx/clxx; ...; mov/-} [%s:%d]", __FILE__, __LINE__);
+                        #endif // OPT_DEBUG
                     }
                 }
             }

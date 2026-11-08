@@ -12,6 +12,7 @@
 #include "modules/system.h"
 #include "modules/terminal.h"
 #include "modules/filesystem.h"
+#include "modules/coprocessor.h"
 
 int VERBOSE = 0;
 
@@ -31,6 +32,7 @@ System_t* system_create(
     system->terminal = terminal_create();
     system->memory_bank = memory_bank_create();
     system->filesystem = filesystem_create();
+    system->coprocessor = coprocessor_create();
 
     if (cache_active) {
         Cache_t* cache = cache_create(cache_capacity);
@@ -67,6 +69,8 @@ System_t* system_create(
     system->clock_order[system->clock_order_size++] = SCD_BUS;
     system->clock_order[system->clock_order_size++] = SCD_MEMORY_BANK;
     system->clock_order[system->clock_order_size++] = SCD_BUS;
+    system->clock_order[system->clock_order_size++] = SCD_COPROCESSOR;
+    system->clock_order[system->clock_order_size++] = SCD_BUS;
 
     system->hook = NULL;
     system->hook_count = 0;
@@ -81,6 +85,8 @@ void system_delete(System_t** system) {
     bus_delete(&(*system)->bus);
     ticker_delete(&(*system)->ticker);
     terminal_delete(&(*system)->terminal);
+    memory_bank_delete(&(*system)->memory_bank);
+    coprocessor_delete(&(*system)->coprocessor);
     *system = NULL;
 }
 
@@ -112,6 +118,9 @@ void system_clock(System_t *system) {
                 break;
             case SCD_FILESYSTEM:
                 filesystem_clock(system->filesystem);
+                break;
+            case SCD_COPROCESSOR:
+                coprocessor_clock(system->coprocessor);
                 break;
             default:
                 log_msg(LP_ERROR, "System: Unknown SCD clock [%s:%d]", __FILE__, __LINE__);

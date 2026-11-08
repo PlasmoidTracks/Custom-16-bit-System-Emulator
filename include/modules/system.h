@@ -3,6 +3,7 @@
 
 #include "cpu/cpu.h"
 #include "modules/bus.h"
+#include "modules/coprocessor.h"
 #include "modules/memory_bank.h"
 #include "modules/ram.h"
 #include "modules/ticker.h"
@@ -19,6 +20,7 @@ typedef enum {
     SCD_TERMINAL, 
     SCD_FILESYSTEM, 
     SCD_MEMORY_BANK, 
+    SCD_COPROCESSOR, 
 } SystemClockDevice_t;
 
 typedef enum {
@@ -44,6 +46,7 @@ typedef struct System_t {
     Terminal_t* terminal;
     MemoryBank_t* memory_bank;
     FileSystem_t* filesystem;
+    Coprocessor_t* coprocessor;
     int clock_order_size;
     SystemClockDevice_t* clock_order;
     Hook_t* hook;

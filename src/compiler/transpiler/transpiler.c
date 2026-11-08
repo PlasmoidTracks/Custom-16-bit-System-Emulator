@@ -1873,13 +1873,93 @@ int generate_code_for_single_instruction(Instruction_t instruction, char output[
             }
             break;
     
-        case SEMI: {
-            sprintf(output, "%ssr.MI = 0x0001;", prefix);
+        case CLZ: {
+            sprintf(output, "%ssr.Z = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEZ: {
+            sprintf(output, "%ssr.Z = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLFZ: {
+            sprintf(output, "%ssr.FZ = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEFZ: {
+            sprintf(output, "%ssr.FZ = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLL: {
+            sprintf(output, "%ssr.L = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEL: {
+            sprintf(output, "%ssr.L = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLUL: {
+            sprintf(output, "%ssr.UL = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEUL: {
+            sprintf(output, "%ssr.UL = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLFL: {
+            sprintf(output, "%ssr.FL = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEFL: {
+            sprintf(output, "%ssr.FL = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLDL: {
+            sprintf(output, "%ssr.DL = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEDL: {
+            sprintf(output, "%ssr.DL = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLLL: {
+            sprintf(output, "%ssr.LL = 0x0000;", prefix);
+            break;
+        }
+    
+        case SELL: {
+            sprintf(output, "%ssr.LL = 0x0001;", prefix);
+            break;
+        }
+    
+        case CLAO: {
+            sprintf(output, "%ssr.AO = 0x0000;", prefix);
+            break;
+        }
+    
+        case SEAO: {
+            sprintf(output, "%ssr.AO = 0x0001;", prefix);
             break;
         }
     
         case CLMI: {
             sprintf(output, "%ssr.MI = 0x0000;", prefix);
+            break;
+        }
+
+        case SEMI: {
+            sprintf(output, "%ssr.MI = 0x0001;", prefix);
             break;
         }
     

@@ -1199,6 +1199,10 @@ void cpu_clock(CPU_t* cpu) {
                             cpu->regs.sr.Z = (value == 0);
                             cpu->regs.sr.FZ = ((value & 0x7fff) == 0);
                             cpu->regs.sr.L = ((value & 0x8000) != 0);
+                            cpu->regs.sr.UL = 0;
+                            cpu->regs.sr.FL = 0;
+                            cpu->regs.sr.DL = 0;
+                            cpu->regs.sr.LL = 0;
                             cpu->instruction ++;
                             cpu->state = CS_FETCH_INSTRUCTION;
                             goto CS_FETCH_INSTRUCTION;
@@ -1254,16 +1258,10 @@ void cpu_clock(CPU_t* cpu) {
                         break;
 
                     case INT:
-                        #ifdef _CPU_DEEP_DEBUG_
-                        log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): undefined instruction INT [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
-                        #endif
-                        //printf("%c", cpu->intermediate.data_address_extended & 0xffff);
-                        //cpu->instruction ++;
-                        //cpu->state = CS_FETCH_INSTRUCTION;
+                        cpu->intermediate.irq_id = cpu->intermediate.data_address_extended;
                         cpu->instruction ++;
                         cpu->state = CS_INTERRUPT_PUSH_PC_HIGH;
                         goto CS_INTERRUPT_PUSH_PC_HIGH;
-                        //cpu->intermediate.irq_id = ;
                         break;
 
                     case HLT:
@@ -2540,11 +2538,11 @@ void cpu_clock(CPU_t* cpu) {
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_LOW:
                 #ifdef _CPU_DEEP_DEBUG_
-                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2);
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector low (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id);
                 #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
-                int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2, &data);
+                int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id, &data);
                 if (success) {
                     cpu->intermediate.data_address_extended = (uint8_t) data;
                     cpu->state = CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH;
@@ -2557,11 +2555,11 @@ void cpu_clock(CPU_t* cpu) {
             {
                 CS_INTERRUPT_FETCH_IRQ_VECTOR_HIGH:
                 #ifdef _CPU_DEEP_DEBUG_
-                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2);
+                log_msg(LP_INFO, "CPU (C:%d CS:%d DS:%d): Interrupt fetch irq vector high (0x%.4x)", cpu->clock, cpu->state, cpu->device.device_state, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id);
                 #endif
                 cpu->regs.sr.MNI = 1;
                 uint8_t data;
-                int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id * 2 + 1, &data);
+                int success = cpu_read_memory(cpu, SEGMENT_IRQ_TABLE + cpu->intermediate.irq_id + 1, &data);
                 if (success) {
                     cpu->intermediate.data_address_extended |= ((uint16_t) data) << 8;
                     cpu->regs.pc = cpu->intermediate.data_address_extended;

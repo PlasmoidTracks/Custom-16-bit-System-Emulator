@@ -1196,7 +1196,7 @@ char* optimizer_compile(char* content) {
             
             // and ?, $ffff
             // =>
-            // (removed, if no status register reads follow)
+            // (removed)
             if (i < instruction_count) {
                 if (instruction[i].instruction == AND) {
                     if (instruction[i].admx == ADMX_IMM16) {
@@ -1243,6 +1243,30 @@ char* optimizer_compile(char* content) {
                 }
             }
             if (changes_applied) break;
+
+            
+            // cmp ?, 0
+            // =>
+            // tst ?
+            if (i < instruction_count) {
+                if (instruction[i].instruction == CMP) {
+                    if (instruction[i].admx == ADMX_IMM16) {
+                        if (parse_immediate(instruction[i].expression[2].tokens[0].raw) == 0 && string_is_immediate(instruction[i].expression[2].tokens[0].raw)) {
+                            sprintf(instruction[i].expression[0].tokens[0].raw, "%s", instruction_encoding[TST].instruction_string);
+                            instruction[i].expression_count = 2;
+                            instruction[i].instruction = TST;
+                            instruction[i].admx = ADMX_NONE;
+                            i --;
+                            changes_applied = 1;
+                            #ifdef OPT_DEBUG
+                                log_msg(LP_DEBUG, "Optimizer: applied {cmp ?, 0} => {tst ?} [%s:%d]", __FILE__, __LINE__);
+                            #endif // OPT_DEBUG
+                        }
+                    }
+                }
+            }
+            if (changes_applied) break;
+
 
             // sub(f/d/l) rN, rN
             // =>

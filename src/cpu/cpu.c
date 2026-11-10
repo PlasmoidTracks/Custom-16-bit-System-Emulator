@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "Log.h"
 #include "globals/memory_layout.h"
 
 #include "utils/ExtendedTypes.h"
@@ -2226,6 +2227,7 @@ void cpu_clock(CPU_t* cpu) {
                     
                     case HWSLEEP:
                         cpu->state = CS_SLEEP;
+                        cpu->intermediate.previous_pc = cpu->regs.pc;
                         goto CS_SLEEP;
                         break;
                     

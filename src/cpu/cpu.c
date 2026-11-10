@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "Log.h"
 #include "globals/memory_layout.h"
 
 #include "utils/ExtendedTypes.h"

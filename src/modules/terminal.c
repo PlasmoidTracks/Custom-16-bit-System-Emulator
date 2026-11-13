@@ -44,6 +44,7 @@ void terminal_clock(Terminal_t* terminal) {
         //log_msg(LP_INFO, "Terminal %d: recieved store request", terminal->clock);
         uint8_t data = terminal->device.data;
         printf("%c", data);
+        fflush(stdout);
         terminal->device.processed = 1;
         //log_msg(LP_INFO, "Terminal %d: written %.2x", terminal->clock, terminal->device.data);
     }

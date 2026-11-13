@@ -1259,7 +1259,6 @@ void cpu_clock(CPU_t* cpu) {
 
                     case INT:
                         cpu->intermediate.irq_id = cpu->intermediate.data_address_extended;
-                        cpu->instruction ++;
                         cpu->state = CS_INTERRUPT_PUSH_PC_HIGH;
                         goto CS_INTERRUPT_PUSH_PC_HIGH;
                         break;
@@ -2297,7 +2296,7 @@ void cpu_clock(CPU_t* cpu) {
                             default:
                                 break;
                         }
-                        cpu->instruction ++;
+                        //cpu->instruction ++;
                         cpu->state = CS_WRITEBACK_HIGH;
                         goto CS_WRITEBACK_HIGH;
                         break;
@@ -2564,6 +2563,7 @@ void cpu_clock(CPU_t* cpu) {
                 if (success) {
                     cpu->intermediate.data_address_extended |= ((uint16_t) data) << 8;
                     cpu->regs.pc = cpu->intermediate.data_address_extended;
+                    cpu->instruction ++;
                     cpu->state = CS_FETCH_INSTRUCTION;
                     goto CS_FETCH_INSTRUCTION;
                 }

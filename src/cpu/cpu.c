@@ -141,10 +141,10 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Requesting write to cache", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         if (!cpu->regs.sr.NC) {
-            cache_write(cpu->cache, cpu->device.address, (uint8_t*) &response, sizeof(response));
+            cache_write(cpu->cache, (cpu->device.address & 0xfff8), (uint8_t*) &response, sizeof(response));
         }
 
-        *data = (uint8_t) response;
+        *data = *(((uint8_t*) &response) + (address & 0x0007));
         #ifdef _CPU_DEEP_DEBUG_
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Data %.2x from Address %.4x found in reply in device", cpu->clock, cpu->state, cpu->device.device_state, *data, cpu->device.address);
         #endif

@@ -119,7 +119,7 @@ void cpu_print_state(CPU_t* cpu) {
     if (!cpu->cache) {
         printf("\n\033[1;33m No cache available\033[0m\n");
     } else {
-        printf("\n\033[1;33m Cache\033[0m\n");
+        printf("\n\033[1;33m Cache (%uB)\033[0m\n", cpu->cache->capacity);
         printf(" \033[1;32mHits\033[0m [%lu]  \033[1;32mMiss\033[0m [%lu]  \033[1;32mRate\033[0m [%2.2f%%]\n", cpu->cache->hit, cpu->cache->miss, (double) cpu->cache->hit / (double) (cpu->cache->hit + cpu->cache->miss) * 100.0);
     }
 

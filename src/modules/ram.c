@@ -65,6 +65,19 @@ uint8_t ram_read(RAM_t* ram, uint16_t address) {
     return ram->data[hw_address];
 }
 
+uint64_t ram_read_cacheline(RAM_t* ram, uint16_t address) {
+    uint64_t data = 0;
+    //log_msg(LP_DEBUG, "RAM %d: Creating cacheline from 0x%.4x to 0x%.4x", ram->clock, address & 0xfff8, address | 0x0007);
+    for (size_t i = 0; i < sizeof(data); i++) {
+        uint8_t byte = ram_read(ram, (address & 0xfff8) + i);
+        //log_msg(LP_DEBUG, "RAM %d: Cachline data at 0x%.4x: $%.2x", ram->clock, (address & 0xfff8) + i, byte);
+        data |= ((uint64_t) byte << (8 * i));
+        //data |= ((uint64_t) ram_read(ram, (address & ~(sizeof(data) - 1ULL)) + i) << (8 * i));
+    }
+
+    return data;
+}
+
 void ram_write(RAM_t* ram, uint16_t address, uint8_t data) {
     if (ram->capacity == 0) {
         //log_msg(LP_CRITICAL, "RAM %d: capacity is zero!", ram->clock);
@@ -96,11 +109,7 @@ void ram_clock(RAM_t* ram) {
     if (ram->device.device_state == DS_FETCH) {
         //log_msg(LP_INFO, "RAM %d: recieved fetch request", ram->clock);
         uint16_t address = (uint16_t) ram->device.address;
-        uint64_t data = 0;
-        for (size_t i = 0; i < sizeof(data); i++) {
-            data |= ((uint64_t) ram_read(ram, address + i) << (8 * i));
-            //data |= ((uint64_t) ram_read(ram, (address & ~(sizeof(data) - 1ULL)) + i) << (8 * i));
-        }
+        uint64_t data = ram_read_cacheline(ram, address);
         ram->device.data = data;
         ram->device.processed = 1;
         //log_msg(LP_INFO, "RAM %d: fetch [%.8x] = %.8x", ram->clock, ram->device.address, ram->device.data);

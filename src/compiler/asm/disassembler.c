@@ -8,6 +8,7 @@
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"
+#include "utils/StackTracer.h"
 
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu_instructions.h"
@@ -26,6 +27,9 @@ uint16_t disassembler_read_u16(uint8_t* data) {
 
 
 char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_index, int* valid_instruction, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx, int* instruction_bytes, DisassembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] char* disassembler_decompile_single_instruction(uint8_t* binary=%p, int* binary_index=%p, int* valid_instruction=%p, CPU_REDUCED_ADDRESSING_MODE_t* extern_admr=%p, CPU_EXTENDED_ADDRESSING_MODE_t* extern_admx=%p, int* instruction_bytes=%p, DisassembleOption_t options=0o%o)", __FILE__, __LINE__, binary, binary_index, valid_instruction, extern_admr, extern_admx, instruction_bytes, options);
+    #endif
     int instruction = binary[(*binary_index) ++];
     if (instruction_bytes) *instruction_bytes = 0;
 
@@ -39,6 +43,9 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     // check if the instruction is even properly encoded
     if (instruction != 0x00 && instruction_encoding[instruction].mnemonic == 0) {
         if (valid_instruction) *valid_instruction = 0;
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_free();    
+        #endif
         return strdup("");
     }
 
@@ -61,11 +68,17 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     if (instruction >= INSTRUCTION_COUNT) {
         log_msg(LP_ERROR, "Disassembler: Unknown instruction [%.2x] [%s:%d]", instruction, __FILE__, __LINE__);
         if (valid_instruction) *valid_instruction = 0;
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_free();    
+        #endif
         return strdup("");  // makes it heap allocated
     }
     if (instruction == NOP) {
         if (valid_instruction) *valid_instruction = 0;
         if (instruction_bytes) *instruction_bytes += 2 - one_byte_instruction;
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_free();    
+        #endif
         if (no_cache) {return strdup("%nop");}
         return strdup("nop");  // makes it heap allocated
     }
@@ -96,6 +109,9 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
         if (admr != 0 || admx != 0) {
             //log_msg(LP_DEBUG, "Instructions with no argument, but set adm is not realistic. Assuming it is raw data instead [%s:%d]", __FILE__, __LINE__);
             if (valid_instruction) *valid_instruction = 0;
+            #ifdef STACKTRACE_SAFEGUARD
+                stacktrace_free();    
+            #endif
             return "";
         }
     } else if (argument_count == 1) {
@@ -152,6 +168,9 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
         sprintf(instruction_string_newline, "%s", instruction_string);
         free(instruction_string);
 
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_free();    
+        #endif
         return instruction_string_newline;
     }
     
@@ -343,11 +362,16 @@ char* disassembler_decompile_single_instruction(uint8_t* binary, int* binary_ind
     sprintf(instruction_string_newline, "%s", instruction_string);
     free(instruction_string);
 
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();    
+    #endif
     return instruction_string_newline;
 }
 
 Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_size, int* assembly_lines, uint16_t* segment, int segment_count, DisassembleOption_t options) {
-
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] Disassembly_t disassembler_naive_decompile(uint8_t* machine_code=%p, long binary_size=%ld, int* assembly_lines=%p, uint16_t* segment=%p, int segment_count=%d, DisassembleOption_t options=0o%o)", __FILE__, __LINE__, machine_code, binary_size, assembly_lines, segment, segment_count, options);
+    #endif
     unsigned long allocated_space = binary_size;
     Disassembly_t disassembly;
     disassembly.code = calloc(allocated_space, sizeof(char[256]));
@@ -585,6 +609,10 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
         if (instruction == NULL) {
             log_msg(LP_ERROR, "Disassembler: Decompilation failed [%s:%d]", __FILE__, __LINE__);
+            #ifdef STACKTRACE_SAFEGUARD
+                stacktrace_print();
+                stacktrace_free();    
+            #endif
             return (Disassembly_t) {0};
         }
 
@@ -637,12 +665,18 @@ Disassembly_t disassembler_naive_decompile(uint8_t* machine_code, long binary_si
 
     *assembly_lines = assembly_index;
 
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();    
+    #endif
     return disassembly;
 }
 
 
 
 char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* segment, int segment_count, DisassembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] char* disassembler_decompile(uint8_t* machine_code=%p, long binary_size=%ld, uint16_t* segment=%p, int segment_count=%d, DisassembleOption_t options=0o%o)", __FILE__, __LINE__, machine_code, binary_size, segment, segment_count, options);
+    #endif
 
     // first pass, naive disassembly
     int assembly_lines;
@@ -1181,14 +1215,23 @@ char* disassembler_decompile(uint8_t* machine_code, long binary_size, uint16_t* 
     //free(assembly_code.binary_index);
     free(assembly_code.is_label);
 
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();    
+    #endif
     return assembly_code_reduced;
 }
 
 void disassembler_decompile_to_file(uint8_t* machine_code, const char filename[], long binary_size, uint16_t* segment, int segment_count, DisassembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] void disassembler_decompile_to_file(uint8_t* machine_code=%p, const char filename[]=%p, long binary_size=%ld, uint16_t* segment=%p, int segment_count=%d, DisassembleOption_t options=0o%o)", __FILE__, __LINE__, machine_code, filename, binary_size, segment, segment_count, options);
+    #endif
 
     char* assembly = disassembler_decompile(machine_code, binary_size, segment, segment_count, options);
     data_export(filename, assembly, strlen(assembly));
     free(assembly);
-
+    
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();    
+    #endif
 }
 

@@ -6,6 +6,7 @@
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"
+#include "utils/StackTracer.h"
 
 #include "cpu/cpu_addressing_modes.h"
 #include "cpu/cpu_instructions.h"
@@ -234,6 +235,9 @@ Token_t* assembler_parse_words(char** word, int word_count, int* token_count) {
 }
 
 Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expression_count) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] Expression_t* assembler_parse_token(Token_t* tokens=%p, int token_count=%d, int* expression_count=%p)", __FILE__, __LINE__, tokens, token_count, expression_count);
+    #endif
     Expression_t* expression = calloc(token_count, sizeof(Expression_t));
     
     int token_index = 0;
@@ -684,6 +688,10 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
                 }
             }
             //exit(1);
+            #ifdef STACKTRACE_SAFEGUARD
+                stacktrace_print();
+                stacktrace_free();
+            #endif
             return NULL;
             token_index ++;
         }
@@ -693,11 +701,17 @@ Expression_t* assembler_parse_token(Token_t* tokens, int token_count, int* expre
         *expression_count = expression_index;
     }
 
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return expression;
 }
 
 
 Instruction_t* assembler_parse_expression(Expression_t* expression, int expression_count, int* instruction_count, uint16_t** segment, int* segment_count, AssembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] Instruction_t* assembler_parse_expression(Expression_t* expression=%p, int expression_count=%d, int* instruction_count=%p, uint16_t** segment=%p, int* segment_count=%p, AssembleOption_t options=0o%o)", __FILE__, __LINE__, expression, expression_count, instruction_count, segment, segment_count, options);
+    #endif
     int allocated_instructions = 16;
     Instruction_t* instruction = calloc(allocated_instructions, sizeof(Instruction_t));
     instruction[0].instruction = -1;
@@ -723,6 +737,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 log_msg(lp, "Parsing expressions: Binary exceeds memory boundary of 0x0000 - 0x%.4X (current index: 0x%.4X) [%s:%d]", SEGMENT_CODE_END, byte_index, __FILE__, __LINE__);
                 if (options & AO_ERROR_ON_CODE_SEGMENT_BREACH) {
                     // abort
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                 }
                 if (options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) {
@@ -931,15 +949,31 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     continue;
                 } else if (expression[expression_index].type == EXPR_INCBIN) {
                     log_msg(LP_ERROR, "Parsing expressions: .incbin may only be used within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                 } else if (expression[expression_index].type == EXPR_DEREF_LABEL) {
                     log_msg(LP_ERROR, "Parsing expressions: label dereferences may only be used within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                 } else if (expression[expression_index].type == EXPR_DATA) {
                     log_msg(LP_ERROR, "Parsing expressions: data may only be defined within .data segments, not inside .code segments [%s:%d]", __FILE__, __LINE__);
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                 } else {
                     log_msg(LP_ERROR, "Parsing expressions: Expected an INSTRUCTION or a LABEL, got \"%s\" instead [%s:%d]", expression_type_string[expression[expression_index].type], __FILE__, __LINE__);
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                 }
             }
@@ -960,6 +994,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
 
             if (!found) {
                 log_msg(LP_ERROR, "Parsing expressions: Unknown instruction \"%s\" [%s:%d]", expression[expression_index].tokens[0].raw, __FILE__, __LINE__);
+                #ifdef STACKTRACE_SAFEGUARD
+                    stacktrace_print();
+                    stacktrace_free();
+                #endif
                 return NULL;
             }
 
@@ -1041,6 +1079,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                         printf("%s ", expression[expression_index].tokens[t].raw);
                     }
                     printf("...\n");
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                     //exit(1);
                 }
@@ -1445,6 +1487,10 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 } else if (expression[expression_index].tokens[0].type == TT_DB) {
                     if (value > 0x00ff) {
                         log_msg(LP_ERROR, "Parsing expression: Byte definition has value greater than 0xff ($%X) [%s:%d]", value, __FILE__, __LINE__);
+                        #ifdef STACKTRACE_SAFEGUARD
+                            stacktrace_print();
+                            stacktrace_free();
+                        #endif
                         return NULL;
                     }
                     instruction[instruction_index].raw_data = value;
@@ -1607,12 +1653,21 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
     }
 
     *instruction_count = instruction_index;
-
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return instruction;
 }
 
 Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruction_count) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] Instruction_t* assembler_resolve_labels(Instruction_t* instruction=%p, int instruction_count=%d)", __FILE__, __LINE__, instruction, instruction_count);
+    #endif
     if (!instruction) {
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();
+        #endif
         return NULL;
     }
     for (int i = 0; i < instruction_count; i++) {
@@ -1847,10 +1902,16 @@ Instruction_t* assembler_resolve_labels(Instruction_t* instruction, int instruct
             }
         }
     }
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return instruction;
 }
 
 static int safe_write(uint8_t* bin, uint16_t index, uint8_t value, uint8_t* written, AssembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] static int safe_write(uint8_t* bin=%p, uint16_t index=0x%.4x, uint8_t value=0x%.2x, uint8_t* written=%p, AssembleOption_t options=0o%o)", __FILE__, __LINE__, bin, index, value, written, options);
+    #endif
     static int error_shown = 0;
     if (written[index]) {
         if (!error_shown) {
@@ -1860,23 +1921,44 @@ static int safe_write(uint8_t* bin, uint16_t index, uint8_t value, uint8_t* writ
             error_shown = 1;
         }
         if (options & AO_ERROR_ON_OVERLAP) {
+            #ifdef STACKTRACE_SAFEGUARD
+                stacktrace_print();
+                stacktrace_free();
+            #endif
             return 1;
         }
         if (options & AO_OVERWRITE_ON_OVERLAP) {
             bin[index] = value;
         }
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_free();
+        #endif
         return 0;
     }
     if ((options & AO_PAD_SEGMENT_BREACH_WITH_ZERO) && index > SEGMENT_CODE_END) {
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();
+        #endif
         return 1;
     }
     written[index] = 1;
     bin[index] = value;
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return 0;
 }
 
 uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction_count, long* binary_size, AssembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] uint8_t* assembler_parse_instruction(Instruction_t* instruction=%p, int instruction_count=%d, long* binary_size=%p, AssembleOption_t options=0o%o)", __FILE__, __LINE__, instruction, instruction_count, binary_size, options);
+    #endif
     if (!instruction) {
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();
+        #endif
         return NULL;
     }
     
@@ -1902,6 +1984,10 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     uint16_t pad = instruction[instruction_index].address;
                     if (!(pad && (!(pad & (pad - 1))))) {
                         log_msg(LP_ERROR, ".pad is not a power of 2 [%s:%d]", __FILE__, __LINE__);
+                        #ifdef STACKTRACE_SAFEGUARD
+                            stacktrace_print();
+                            stacktrace_free();
+                        #endif
                         return NULL;
                     }
                     index = ((index - 1) & ~(pad - 1)) + pad;
@@ -2008,6 +2094,10 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
                     }
                 } else {
                     log_msg(LP_ERROR, "Parsing instruction: data size does not match word or byte size (%d) [%s:%d]", instruction[instruction_index].data_size_in_bytes, __FILE__, __LINE__);
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();
+                    #endif
                     return NULL;
                 }
                 //log_msg(LP_DEBUG, "raw data");
@@ -2043,6 +2133,10 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
     
     if (error && (options & AO_ERROR_ON_OVERLAP)) {
         log_msg(LP_ERROR, "Parsing instruction: The machine code produced is overlapping with existing code, likely due to missplaced \".address\" operations [%s:%d]", __FILE__, __LINE__);
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();
+        #endif
         return NULL;
     }
 
@@ -2050,11 +2144,17 @@ uint8_t* assembler_parse_instruction(Instruction_t* instruction, int instruction
 
     //*binary_size = 0xffff; //index;
     //bin = realloc(bin, (size_t) index);
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return bin;
 }
 
 
 uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] uint8_t* assembler_compile(char* content=%p, long* binary_size=%p, uint16_t** segment=%p, int* segment_count=%p, AssembleOption_t options=0o%o)", __FILE__, __LINE__, content, binary_size, segment, segment_count, options);
+    #endif
     // char* content - holds the raw assembly in text form
     // long* binary_size - deref will be overwritten with the final binary size in bytes
     // uint16_t** segment - will be allocated to hold the segment offsets
@@ -2116,18 +2216,31 @@ uint8_t* assembler_compile(char* content, long* binary_size, uint16_t** segment,
     free(expression);
     free(instruction);
 
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return machine_code;
 }
 
 uint8_t* assembler_compile_from_file(const char* filename, long* binary_size, uint16_t** segment, int* segment_count, AssembleOption_t options) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] uint8_t* assembler_compile_from_file(const char* filename=%p, long* binary_size=%p, uint16_t** segment=%p, int* segment_count=%p, AssembleOption_t options=0o%o)", __FILE__, __LINE__, filename, binary_size, segment, segment_count, options);
+    #endif
     // load raw text from file
     char* content = read_file(filename, binary_size);
     if (!content) {
         log_msg(LP_ERROR, "read_file failed [%s:%d]", __FILE__, __LINE__);
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();
+        #endif
         return NULL;
     }
     uint8_t* machine_code = assembler_compile(content, binary_size, segment, segment_count, options);
     free(content);
-    
+
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return machine_code;
 }

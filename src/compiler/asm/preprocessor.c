@@ -1,10 +1,10 @@
 
-
 #include <string.h>
 
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"
+#include "utils/StackTracer.h"
 
 #include "compiler/asm/preprocessor.h"
 
@@ -19,6 +19,9 @@ char** assembly_preprocessor_split_to_tokens(const char text[]) {
 }
 
 char* assembly_preprocessor_compile(const char* content) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] char* assembly_preprocessor_compile(const char* content=%p)", __FILE__, __LINE__, content);
+    #endif
     char* output = malloc(128);         // final assembly string
     long output_len = 0;         // current length of code output
 
@@ -58,11 +61,21 @@ char* assembly_preprocessor_compile(const char* content) {
             if (strcmp(map[i].replacement, map[j].match) == 0) {
                 if (i == j) {
                     log_msg(LP_ERROR, "Preprocessor: Potential infinite recursion detected with matche \"%s\"->\"%s\" (id:%d) [%s:%d]", map[i].match, map[i].replacement, i, __FILE__, __LINE__);
+                    #ifdef STACKTRACE_SAFEGUARD
+                        stacktrace_print();
+                        stacktrace_free();    
+                    #endif
                     return NULL;
                 } else {
                     int condition = (strcmp(map[j].replacement, map[i].match) == 0);
                     log_msg(condition ? LP_ERROR : LP_WARNING, "Preprocessor: Potential infinite recursion detected with matches \"%s\" -> \"%s\" (id:%d) & \"%s\" -> \"%s\" (id:%d) [%s:%d]", map[i].match, map[i].replacement, i, map[j].match, map[j].replacement, j, __FILE__, __LINE__);
-                    if (condition) return NULL;
+                    if (condition) {
+                        #ifdef STACKTRACE_SAFEGUARD
+                            stacktrace_print();
+                            stacktrace_free();    
+                        #endif
+                        return NULL;
+                    }
                 }
             }
         }
@@ -90,18 +103,29 @@ char* assembly_preprocessor_compile(const char* content) {
             output = append_to_output(output, &output_len, " ");
         }
     }
-
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();    
+    #endif
     return output;
 }
 
 char* assembly_preprocessor_compile_from_file(const char* filename) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] char* assembly_preprocessor_compile_from_file(const char* filename=%p)", __FILE__, __LINE__, filename);
+    #endif
     // load raw text from file
     char* content = read_file(filename, NULL);
     if (!content) {
         log_msg(LP_ERROR, "Preprocessor: read_file failed [%s:%d]", __FILE__, __LINE__);
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();    
+        #endif
         return NULL;
     }
     char* asm = assembly_preprocessor_compile(content);
-    
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();    
+    #endif
     return asm;
 }

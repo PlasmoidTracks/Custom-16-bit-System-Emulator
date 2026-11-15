@@ -6,6 +6,7 @@
 #include "utils/Log.h"
 #include "utils/IO.h"
 #include "utils/String.h"
+#include "utils/StackTracer.h"
 
 #include "cpu/cpu_addressing_modes.h"
 
@@ -13,6 +14,9 @@
 
 
 char* canonicalizer_compile(char* content) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] char* canonicalizer_compile(char* content=%p)", __FILE__, __LINE__, content);
+    #endif
     char* output = NULL;         // final assembly string
     long output_len = 0;         // current length of code output
 
@@ -363,17 +367,30 @@ char* canonicalizer_compile(char* content) {
         memcpy(output, "; empty\0", sizeof("; empty\0"));
     }
 
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return output;
 }
 
 char* canonicalizer_compile_from_file(const char* filename) {
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_mark("[%s:%d] char* canonicalizer_compile_from_file(const char* filename=%p)", __FILE__, __LINE__, filename);
+    #endif
     // load raw text from file
     char* content = read_file(filename, NULL);
     if (!content) {
         log_msg(LP_ERROR, "Canonicalizer: read_file failed [%s:%d]", __FILE__, __LINE__);
+        #ifdef STACKTRACE_SAFEGUARD
+            stacktrace_print();
+            stacktrace_free();
+        #endif
         return NULL;
     }
     char* machine_code = canonicalizer_compile(content);
     
+    #ifdef STACKTRACE_SAFEGUARD
+        stacktrace_free();
+    #endif
     return machine_code;
 }

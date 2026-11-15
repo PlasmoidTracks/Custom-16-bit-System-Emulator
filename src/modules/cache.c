@@ -79,10 +79,32 @@ int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_siz
     return 0;
 }
 
-int cache_invalidate(Cache_t* cache) {
+int cache_invalidate(Cache_t* cache, uint16_t address) {
+    if (!cache) return 0;
+    for (int i = 0; i < cache->capacity; i++) {
+        if (cache->address[i] != address) continue;
+        cache->state[i].valid = 0;
+    }
+    return 1;
+}
+
+int cache_invalidate_all(Cache_t* cache) {
     if (!cache) return 0;
     for (int i = 0; i < cache->capacity; i++) {
         cache->state[i].valid = 0;
     }
     return 1;
 }
+
+
+/*
+
+OP; in cache; NC; evict
+
+READ; 0; 0; 0 -> read from ram, fill cache
+READ; 1; 0; 0 -> read from cache
+READ; 0; 1; 0 -> read from ram, DONT fill cache
+READ; 1; 1; 0 -> read from ram, DONT fill cache, invalidate read byte in cache
+
+
+*/

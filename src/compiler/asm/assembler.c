@@ -765,25 +765,31 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                     int address = 0;
 
                     int instruction_index_since_last_address_change = instruction_index;
-                    while (instruction_index_since_last_address_change > 0 && !instruction[instruction_index_since_last_address_change].is_address) {
+                    while (instruction_index_since_last_address_change > 0 && 
+                        (!instruction[instruction_index_since_last_address_change].is_address || instruction[instruction_index_since_last_address_change].expression[0].type == EXPR_PAD)) {
                         instruction_index_since_last_address_change --;
                     }
                     if (instruction[instruction_index_since_last_address_change].is_address) {
-                        address = instruction[instruction_index_since_last_address_change].address - 2;
-                        if (segment && segment_count) {
-                            // Allocate or reallocate the segment buffer
-                            uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
-                            if (!new_segment) {
-                                log_msg(LP_ERROR, "Parsing expressions: Memory allocation for segment failed [%s:%d]", __FILE__, __LINE__);
-                                exit(1);
-                            }
-                            *segment = new_segment;
-                            (*segment)[*segment_count] = instruction[instruction_index_since_last_address_change].address;
-                            (*segment_count)++;
+                            address = instruction[instruction_index_since_last_address_change].address - 2;
+                            if (segment && segment_count) {
+                                // Allocate or reallocate the segment buffer
+                                uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
+                                if (!new_segment) {
+                                    log_msg(LP_ERROR, "Parsing expressions: Memory allocation for segment failed [%s:%d]", __FILE__, __LINE__);
+                                    exit(1);
+                                }
+                                *segment = new_segment;
+                                (*segment)[*segment_count] = instruction[instruction_index_since_last_address_change].address;
+                                (*segment_count)++;
                         }
                     }
 
                     for (int i = instruction_index_since_last_address_change; i < instruction_index; i++) {
+                        if (instruction[i].expression[0].type == EXPR_PAD) {
+                            uint16_t pad = parse_immediate(instruction[i].expression[0].tokens[1].raw);
+                            address = ((address - 1) & ~(pad - 1)) + pad;
+                            continue;
+                        }
                         if (instruction[i].expression[0].type == EXPR_SEGMENT_CODE || 
                             instruction[i].expression[0].type == EXPR_SEGMENT_DATA ||
                             instruction[i].expression[0].tokens[0].type == TT_LABEL) {
@@ -1360,31 +1366,30 @@ Instruction_t* assembler_parse_expression(Expression_t* expression, int expressi
                 int address = 0;
                 
                 int instruction_index_since_last_address_change = instruction_index;
-                while (instruction_index_since_last_address_change > 0 && !instruction[instruction_index_since_last_address_change].is_address) {
+                while (instruction_index_since_last_address_change > 0 && 
+                    (!instruction[instruction_index_since_last_address_change].is_address || instruction[instruction_index_since_last_address_change].expression[0].type == EXPR_PAD)) {
                     instruction_index_since_last_address_change --;
                 }
                 if (instruction[instruction_index_since_last_address_change].is_address) {
-                    //if (instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_STORE_ADDRESS
-                    // && instruction[instruction_index_since_last_address_change].expression[0].type != EXPR_RESTORE_ADDRESS) {
-                            address = instruction[instruction_index_since_last_address_change].address - 2 + (instruction_encoding[instruction_index_since_last_address_change].argument_count == 0);
-                            //if (address < 0) address = 0;
-                            if (segment && segment_count) {
-                                // Allocate or reallocate the segment buffer
-                                uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
-                                if (!new_segment) {
-                                    log_msg(LP_ERROR, "Assemler: Memory allocation for segment failed [%s:%d]", __FILE__, __LINE__);
-                                    exit(1);
-                                }
-                                *segment = new_segment;
-                                (*segment)[*segment_count] = instruction[instruction_index_since_last_address_change].address;
-                                (*segment_count)++;
-                            }
-                    //}
+                    address = instruction[instruction_index_since_last_address_change].address - 2 + (instruction_encoding[instruction_index_since_last_address_change].argument_count == 0);
+                    //if (address < 0) address = 0;
+                    if (segment && segment_count) {
+                        // Allocate or reallocate the segment buffer
+                        uint16_t* new_segment = realloc(*segment, sizeof(uint16_t) * (*segment_count + 1));
+                        if (!new_segment) {
+                            log_msg(LP_ERROR, "Assemler: Memory allocation for segment failed [%s:%d]", __FILE__, __LINE__);
+                            exit(1);
+                        }
+                        *segment = new_segment;
+                        (*segment)[*segment_count] = instruction[instruction_index_since_last_address_change].address;
+                        (*segment_count)++;
+                    }
                 }
 
                 for (int i = instruction_index_since_last_address_change; i < instruction_index; i++) {
-                    if (instruction[i].expression[0].type == EXPR_ADDRESS) {
-                        address = parse_immediate(instruction[i].expression[0].tokens[1].raw);
+                    if (instruction[i].expression[0].type == EXPR_PAD) {
+                        uint16_t pad = parse_immediate(instruction[i].expression[0].tokens[1].raw);
+                        address = ((address - 1) & ~(pad - 1)) + pad;
                         continue;
                     }
                     if (instruction[i].expression[0].type == EXPR_SEGMENT_CODE || 

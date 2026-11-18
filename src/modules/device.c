@@ -45,7 +45,7 @@ int device_check_response(Device_t* device) {
 }
 
 // returns the data of the device
-uint64_t device_get_data(Device_t* device) {
+buswidth_t device_get_data(Device_t* device) {
     return device->data;
 }
 

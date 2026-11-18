@@ -33,6 +33,8 @@ ram recieves write request  [STORE]
 ram is providing data       [REPLY]
 */
 
+typedef uint64_t buswidth_t;
+
 typedef enum {
     LR_READ  = 1 << 0, 
     LR_WRITE = 1 << 1,
@@ -50,8 +52,8 @@ typedef struct Device_t {
     DEVICE_TYPE_t device_type;              // What device type the holder is, i.e. CPU
     DEVICE_STATE_t device_state;            // The current state of the device (idle, busy, read, write, fetch, dispatch)
     int processed;                          // Flag to indicated that the current request has been processed
-    uint64_t address;                       // the request body, like address
-    uint64_t data;                          // the response to the request
+    buswidth_t address;                       // the request body, like address
+    buswidth_t data;                          // the response to the request
 
     int listening_region_count;
     ListeningRegion_t* listening_region;
@@ -71,9 +73,7 @@ extern void device_reset(Device_t* device);
 extern int device_check_response(Device_t* device);
 
 // returns the data of the device
-extern uint64_t device_get_data(Device_t* device);
-
-extern int device_make_request(Device_t* device, uint64_t address, uint64_t data);
+extern buswidth_t device_get_data(Device_t* device);
 
 
 #endif

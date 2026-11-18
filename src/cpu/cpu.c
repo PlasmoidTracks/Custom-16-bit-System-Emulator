@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "Log.h"
 #include "globals/memory_layout.h"
 
 #include "utils/ExtendedTypes.h"
@@ -113,14 +114,61 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Attempting to request memory at address 0x%.4x", cpu->clock, cpu->state, cpu->device.device_state, address);
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking cache first", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
+    // If no-cache modifier is NOT active, then attempt to read from cache directly, skipping ram entirely
     if (!cpu->regs.sr.NC) {
         if (cache_read(cpu->cache, address, data)) return 1;
     }
     #ifdef _CPU_DEEP_DEBUG_
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tCache miss", cpu->clock, cpu->state, cpu->device.device_state);
+    log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking for dirty writeback", cpu->clock, cpu->state, cpu->device.device_state);
+    #endif
+
+    // Since cache didnt hit, we can assume that we will have to fetch from ram anyway. 
+    // So this is the place where we will evict the entire cacheline anyway. 
+    // Thus we will first writeback all dirty bytes from cache to ram, before making any fetches
+    int dirty_byte = 0;
+    uint16_t base_address = address & 0xfff8;
+    for (size_t i = base_address; i < base_address + sizeof(buswidth_t); i++) {
+        #ifdef _CPU_DEEP_DEBUG_
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tChecking if address %.4x is dirty: %d", cpu->clock, cpu->state, cpu->device.device_state, i, cache_is_dirty(cpu->cache, i));
+        #endif
+        if (cache_is_dirty(cpu->cache, i)) {
+            // if it already processed the writeback, ignore and set non-dirty
+            #ifdef _CPU_DEEP_DEBUG_
+            log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Evicting dirty cache entry for ram writeback", cpu->clock, cpu->state, cpu->device.device_state);
+            #endif
+            if (cpu->device.processed) {
+                cpu->device.processed = 0;
+                cpu->device.device_state = DS_IDLE;
+                cache_set_dirty_value(cpu->cache, i, 0);
+                #ifdef _CPU_DEEP_DEBUG_
+                log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tSuccessful writeback of dirty cache entry", cpu->clock, cpu->state, cpu->device.device_state);
+                #endif
+                continue;
+            }
+            dirty_byte = 1;
+            cpu->device.address = cache_get_occupied_address(cpu->cache, i);
+            uint8_t cread;
+            if (!cache_read(cpu->cache, (uint16_t) cpu->device.address, &cread)) {
+                log_msg(LP_ERROR, "CPU: An error occured during dirty cache writeback. A previously existing cache entry does no longer exist [%s:%d]", __FILE__, __LINE__);
+                exit(1);
+            }
+            cpu->device.data = cread;
+            cpu->device.processed = 0;
+            cpu->device.device_state = DS_STORE;
+            break;
+        }
+    }
+    if (dirty_byte) {
+        return 0;
+    }
+
+    #ifdef _CPU_DEEP_DEBUG_
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Checking device response", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
+    // This only gets executed when a request to ram has been made already
     if (cpu->device.processed) {
+        // If the request from ram is not the result from the target address, skip it and wait for the proper result
         if (cpu->device.address != address) {
             #ifdef _CPU_DEEP_DEBUG_
             log_msg(LP_ERROR, "CPU (C:%d CS:%d DS:%d): \tThe device responded with the wrong address. Making new request [%s:%d]", cpu->clock, cpu->state, cpu->device.device_state, __FILE__, __LINE__);
@@ -133,19 +181,22 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
         #ifdef _CPU_DEEP_DEBUG_
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tDevice responded", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
-        uint64_t response = cpu->device.data;
+        buswidth_t response = cpu->device.data;
         cpu->device.processed = 0;
         cpu->device.device_state = DS_IDLE;
 
         #ifdef _CPU_DEEP_DEBUG_
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Requesting write to cache", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
+        // If the read was no-cache, invalidate the cached value, as we are consulting ram directly and cannot trust a volatile accessed value anyway
+        // otherwise, cache away the whole cacheline
         if (cpu->regs.sr.NC) {
             cache_invalidate(cpu->cache, address);
         } else {
-            cache_write(cpu->cache, (cpu->device.address & 0xfff8), (uint8_t*) &response, sizeof(response));
+            cache_write(cpu->cache, (cpu->device.address & 0xfff8), (uint8_t*) &response, sizeof(buswidth_t), 0);
         }
 
+        // Finally, set data to fetched data
         *data = *(((uint8_t*) &response) + (address & 0x0007));
         #ifdef _CPU_DEEP_DEBUG_
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Data %.2x from Address %.4x found in reply in device", cpu->clock, cpu->state, cpu->device.device_state, *data, cpu->device.address);
@@ -156,12 +207,15 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     #ifdef _CPU_DEEP_DEBUG_
     log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tNo device response. Making request", cpu->clock, cpu->state, cpu->device.device_state);
     #endif
-        if (cpu->device.device_state != DS_IDLE) {
+    // This gets executed when the request has been dispatched to ram, but no results have returned yet
+    if (cpu->device.device_state != DS_IDLE) {
         #ifdef _CPU_DEEP_DEBUG_
         log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tDevice is not idle, cannot make request", cpu->clock, cpu->state, cpu->device.device_state);
         #endif
         return 0;
     }
+
+    // We only get here when we didnt hit cache and when we havent dispatched to ram yet, so make a request. 
     cpu->device.address = address;
     cpu->device.processed = 0;
     cpu->device.device_state = DS_FETCH;
@@ -194,16 +248,23 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
         #endif
         return 0;
     }
-    cpu->device.address = address;
-    cpu->device.data = data;
-    cpu->device.processed = 0;
-    cpu->device.device_state = DS_STORE;
-
-    int accept_dirty_write = 0;
-    if (!cpu->regs.sr.NC) {
-        accept_dirty_write = cache_write(cpu->cache, cpu->device.address, (uint8_t*) &data, 1);
+    // if it doesnt contain the value, write to memory, otherwise do a dirty write
+    int dirty_write = 1;
+    if (!cache_contains_value(cpu->cache, address)) {
+        cpu->device.address = address;
+        cpu->device.data = data;
+        cpu->device.processed = 0;
+        cpu->device.device_state = DS_STORE;
+        dirty_write = 0;
     }
-    return accept_dirty_write;
+
+    if (!cpu->regs.sr.NC) {
+        #ifdef _CPU_DEEP_DEBUG_
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Write %.2x to cache at address %.4x with dirty set to %d", cpu->clock, cpu->state, cpu->device.device_state, data, address, dirty_write);
+        #endif
+        cache_write(cpu->cache, address, (uint8_t*) &data, 1, dirty_write);
+    }
+    return dirty_write;
 }
 
 

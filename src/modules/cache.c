@@ -44,10 +44,14 @@ void cache_delete(Cache_t** cache) {
     *cache = NULL;
 }
 
+uint16_t cache_resolve_address(Cache_t* cache, uint16_t address) {
+    return address & (cache->capacity - 1);
+}
+
 int cache_read(Cache_t* cache, uint16_t address, uint8_t* data) {
     if (!cache) return 0;
 
-    uint16_t cache_address = address & (cache->capacity - 1);
+    uint16_t cache_address = cache_resolve_address(cache, address);
 
     //cache->state[cache_address].age += (cache->state[cache_address].age == 0xff) ? 0 : 1;
     if (!cache->state[cache_address].valid || cache->address[cache_address] != address /*|| cache->state[cache_address].dirty*/) {
@@ -61,16 +65,16 @@ int cache_read(Cache_t* cache, uint16_t address, uint8_t* data) {
     return 1;
 }
 
-int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size) {
+int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size, int dirty) {
     if (!cache) return 0;
 
-    uint16_t cache_address = address & (cache->capacity - 1);
+    uint16_t cache_address = cache_resolve_address(cache, address);
 
     for (size_t byte = 0; byte < data_size; byte++) {
         int index = (cache_address + byte) % cache->capacity;
         cache->address[index] = address + byte;
         cache->data[index] = data[byte];
-        //cache->state[index].dirty = 0;
+        cache->state[index].dirty = dirty;
         cache->state[index].valid = 1;
         //cache->state[index].uses = (byte == 0); // only set use to 1 for the first byte, else 0. Why? I forgor
         //cache->state[index].age = 0;
@@ -79,12 +83,25 @@ int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_siz
     return 0;
 }
 
+int cache_is_dirty(Cache_t* cache, uint16_t address) {
+    if (!cache) return 0;
+    uint16_t cache_address = cache_resolve_address(cache, address);
+    if (cache->address[cache_address] != cache_address) return 0;
+    return cache->state[cache_address].dirty;
+}
+
+int cache_set_dirty_value(Cache_t* cache, uint16_t address, int dirty) {
+    if (!cache) return 0;
+    uint16_t cache_address = cache_resolve_address(cache, address);
+    if (cache->address[cache_address] != cache_address) return 0;
+    cache->state[cache_address].dirty = dirty;
+    return 1;
+}
+
 int cache_invalidate(Cache_t* cache, uint16_t address) {
     if (!cache) return 0;
-    for (int i = 0; i < cache->capacity; i++) {
-        if (cache->address[i] != address) continue;
-        cache->state[i].valid = 0;
-    }
+    uint16_t cache_address = cache_resolve_address(cache, address);
+    cache->state[cache_address].valid = 0;
     return 1;
 }
 
@@ -94,6 +111,19 @@ int cache_invalidate_all(Cache_t* cache) {
         cache->state[i].valid = 0;
     }
     return 1;
+}
+
+int cache_contains_value(Cache_t* cache, uint16_t address) {
+    if (!cache) return 0;
+    uint16_t cache_address = cache_resolve_address(cache, address);
+    if (cache->address[cache_address] != address) return 0;
+    return cache->state[cache_address].valid;
+}
+
+uint16_t cache_get_occupied_address(Cache_t* cache, uint16_t address) {
+    if (!cache) return 0;
+    uint16_t cache_address = cache_resolve_address(cache, address);
+    return cache->address[cache_address];
 }
 
 

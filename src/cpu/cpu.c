@@ -17,7 +17,7 @@
 
 
 #define _CPU_DEBUG_
-#undef _CPU_DEBUG_
+//#undef _CPU_DEBUG_
 
 #define _CPU_DEEP_DEBUG_
 #undef _CPU_DEEP_DEBUG_
@@ -235,7 +235,7 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
         #endif
         cpu->device.processed = 0;
         cpu->device.device_state = DS_IDLE;
-        
+        cache_write(cpu->cache, address, (uint8_t*) &data, 1, 0);
         return 1;
     }
 
@@ -250,12 +250,14 @@ int cpu_write_memory(CPU_t* cpu, uint16_t address, uint8_t data) {
     }
     // if it doesnt contain the value, write to memory, otherwise do a dirty write
     int dirty_write = 1;
-    if (!cache_contains_value(cpu->cache, address)) {
+    int value_contained = cache_contains_address(cpu->cache, address);
+    if (!value_contained) {
         cpu->device.address = address;
         cpu->device.data = data;
         cpu->device.processed = 0;
         cpu->device.device_state = DS_STORE;
         dirty_write = 0;
+        return 0;
     }
 
     if (!cpu->regs.sr.NC) {

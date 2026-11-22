@@ -113,7 +113,8 @@ int cache_invalidate_all(Cache_t* cache) {
     return 1;
 }
 
-int cache_contains_value(Cache_t* cache, uint16_t address) {
+// returns 1 if the cache has a value associated with the given address (dirty or not)
+int cache_contains_address(Cache_t* cache, uint16_t address) {
     if (!cache) return 0;
     uint16_t cache_address = cache_resolve_address(cache, address);
     if (cache->address[cache_address] != address) return 0;

@@ -17,7 +17,7 @@
 
 
 #define _CPU_DEBUG_
-//#undef _CPU_DEBUG_
+#undef _CPU_DEBUG_
 
 #define _CPU_DEEP_DEBUG_
 #undef _CPU_DEEP_DEBUG_
@@ -129,10 +129,11 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
     int dirty_byte = 0;
     uint16_t base_address = address & 0xfff8;
     for (size_t i = base_address; i < base_address + sizeof(buswidth_t); i++) {
+        uint16_t cache_address = cache_resolve_address(cpu->cache, i);
         #ifdef _CPU_DEEP_DEBUG_
-        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tChecking if address %.4x is dirty: %d", cpu->clock, cpu->state, cpu->device.device_state, i, cache_is_dirty(cpu->cache, i));
+        log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \t\tChecking if cache_address %d of address %.4x is dirty: %d", cpu->clock, cpu->state, cpu->device.device_state, cache_address, i, cache_slot_is_dirty(cpu->cache, cache_address));
         #endif
-        if (cache_is_dirty(cpu->cache, i)) {
+        if (cache_slot_is_dirty(cpu->cache, cache_address)) {
             // if it already processed the writeback, ignore and set non-dirty
             #ifdef _CPU_DEEP_DEBUG_
             log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): Evicting dirty cache entry for ram writeback", cpu->clock, cpu->state, cpu->device.device_state);
@@ -140,20 +141,22 @@ int cpu_read_memory(CPU_t* cpu, uint16_t address, uint8_t *data) {
             if (cpu->device.processed) {
                 cpu->device.processed = 0;
                 cpu->device.device_state = DS_IDLE;
-                cache_set_dirty_value(cpu->cache, i, 0);
+                cache_slot_set_dirty_value(cpu->cache, cache_address, 0);
+                //cache_invalidate(cpu->cache, i);
                 #ifdef _CPU_DEEP_DEBUG_
                 log_msg(LP_DEBUG, "CPU (C:%d CS:%d DS:%d): \tSuccessful writeback of dirty cache entry", cpu->clock, cpu->state, cpu->device.device_state);
                 #endif
                 continue;
             }
             dirty_byte = 1;
+            // prepare writeback to the address whose value is currently dirty to the appropriate address
             cpu->device.address = cache_get_occupied_address(cpu->cache, i);
-            uint8_t cread;
-            if (!cache_read(cpu->cache, (uint16_t) cpu->device.address, &cread)) {
+            uint8_t dirty_value;
+            if (!cache_read(cpu->cache, (uint16_t) cpu->device.address, &dirty_value)) {
                 log_msg(LP_ERROR, "CPU: An error occured during dirty cache writeback. A previously existing cache entry does no longer exist [%s:%d]", __FILE__, __LINE__);
                 exit(1);
             }
-            cpu->device.data = cread;
+            cpu->device.data = dirty_value;
             cpu->device.processed = 0;
             cpu->device.device_state = DS_STORE;
             break;

@@ -83,7 +83,13 @@ int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_siz
     return 0;
 }
 
-int cache_is_dirty(Cache_t* cache, uint16_t address) {
+int cache_slot_is_dirty(Cache_t* cache, uint16_t cache_address) {
+    if (!cache) return 0;
+    if (cache_address > cache->capacity) return 0;
+    return cache->state[cache_address].dirty;
+}
+
+int cache_address_is_dirty(Cache_t* cache, uint16_t address) {
     if (!cache) return 0;
     uint16_t cache_address = cache_resolve_address(cache, address);
     if (cache->address[cache_address] != cache_address) return 0;
@@ -94,6 +100,13 @@ int cache_set_dirty_value(Cache_t* cache, uint16_t address, int dirty) {
     if (!cache) return 0;
     uint16_t cache_address = cache_resolve_address(cache, address);
     if (cache->address[cache_address] != cache_address) return 0;
+    cache->state[cache_address].dirty = dirty;
+    return 1;
+}
+
+int cache_slot_set_dirty_value(Cache_t* cache, uint16_t cache_address, int dirty) {
+    if (!cache) return 0;
+    if (cache_address > cache->capacity) return 0;
     cache->state[cache_address].dirty = dirty;
     return 1;
 }

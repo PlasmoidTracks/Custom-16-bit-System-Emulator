@@ -37,7 +37,11 @@ extern int cache_read(Cache_t* cache, uint16_t address, uint8_t* data);
 // cache_write returns 1 if a dirty write has happened, else 0
 extern int cache_write(Cache_t* cache, uint16_t address, uint8_t* data, size_t data_size, int dirty);
 
-extern int cache_is_dirty(Cache_t* cache, uint16_t address);
+extern int cache_slot_is_dirty(Cache_t* cache, uint16_t cache_address);
+
+extern int cache_address_is_dirty(Cache_t* cache, uint16_t cache_address);
+
+extern int cache_slot_set_dirty_value(Cache_t* cache, uint16_t address, int dirty);
 
 extern int cache_set_dirty_value(Cache_t* cache, uint16_t address, int dirty);
 

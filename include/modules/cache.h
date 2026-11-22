@@ -45,7 +45,7 @@ extern int cache_invalidate(Cache_t* cache, uint16_t address);
 
 extern int cache_invalidate_all(Cache_t* cache);
 
-extern int cache_contains_value(Cache_t* cache, uint16_t address);
+extern int cache_contains_address(Cache_t* cache, uint16_t address);
 
 extern uint16_t cache_get_occupied_address(Cache_t* cache, uint16_t address);
 
